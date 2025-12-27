@@ -598,21 +598,36 @@ function openModal(book, savedData = null) {
 
     const query = encodeURIComponent(`${info.title} ${info.authors ? info.authors[0] : ''}`);
 
-    if (isbn) {
-        linkGoodreads.href = `https://www.goodreads.com/search?q=${isbn}`;
-        linkAmazon.href = `https://www.amazon.com/s?k=${isbn}&i=stripbooks`;
-        linkLibrary.href = `https://search.worldcat.org/search?q=bn:${isbn}`;
-        linkLibrary.classList.remove('hidden');
+    // Re-query link elements to ensure we have the correct DOM references
+    const activeLinkGoodreads = document.getElementById('link-goodreads');
+    const activeLinkAmazon = document.getElementById('link-amazon');
+    const activeLinkLibrary = document.getElementById('link-library');
 
-        // Fetch Open Library Rating
-        fetchOpenLibraryRating(isbn, info.title, info.authors ? info.authors[0] : null);
+    if (activeLinkGoodreads && activeLinkAmazon && activeLinkLibrary) {
+        if (isbn) {
+            activeLinkGoodreads.href = `https://www.goodreads.com/search?q=${isbn}`;
+            // Use i=stripbooks to prioritize physical books over audiobooks
+            activeLinkAmazon.href = `https://www.amazon.com/s?k=${isbn}&i=stripbooks`;
+            // Use title+author keyword search - ISBN search often returns no results
+            activeLinkLibrary.href = `https://fcplcat.fairfaxcounty.gov/search/searchresults.aspx?term=${encodeURIComponent(info.title + ' ' + (info.authors ? info.authors[0] : ''))}&by=KW`;
+            activeLinkLibrary.classList.remove('hidden');
+
+            // Fetch Open Library Rating
+            fetchOpenLibraryRating(isbn, info.title, info.authors ? info.authors[0] : null);
+        } else {
+            activeLinkGoodreads.href = `https://www.goodreads.com/search?q=${query}`;
+            // Use i=stripbooks to prioritize physical books over audiobooks
+            activeLinkAmazon.href = `https://www.amazon.com/s?k=${query}&i=stripbooks`;
+            // Use title+author keyword search
+            activeLinkLibrary.href = `https://fcplcat.fairfaxcounty.gov/search/searchresults.aspx?term=${query}&by=KW`;
+            activeLinkLibrary.classList.remove('hidden'); // Show even without ISBN
+
+            // Try fetching rating without ISBN
+            fetchOpenLibraryRating(null, info.title, info.authors ? info.authors[0] : null);
+        }
+
     } else {
-        linkGoodreads.href = `https://www.goodreads.com/search?q=${query}`;
-        linkAmazon.href = `https://www.amazon.com/s?k=${query}&i=stripbooks`;
-        linkLibrary.classList.add('hidden'); // Hide if no ISBN
-
-        // Try fetching rating without ISBN
-        fetchOpenLibraryRating(null, info.title, info.authors ? info.authors[0] : null);
+        console.error('External link elements not found in modal.');
     }
 
     // eBook/Audiobook Availability (from Google Data)
@@ -2280,8 +2295,11 @@ function showSection(sectionName) {
     }
 }
 
-// Handle Navigation Links
+// Handle Navigation Links (only internal section links, not external links)
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    // Skip external links that open in new tabs
+    if (anchor.getAttribute('target') === '_blank') return;
+
     anchor.addEventListener('click', function (e) {
         e.preventDefault();
         const targetId = this.getAttribute('href').substring(1);
@@ -2634,7 +2652,7 @@ function renderDashboard() {
                         class="block px-3 py-1.5 text-xs text-stone-700 hover:bg-stone-50 font-medium">
                         Google Calendar
                     </a>
-                    <a href="#" onclick="downloadICS('${info.title.replace(/'/g, "\\'")}', '${book.target_date}')"
+                    <a href="#" onclick="downloadIcsFile('${info.title.replace(/'/g, "\\'")}', '${book.target_date}')"
                                     class="block px-3 py-1.5 text-xs text-stone-700 hover:bg-stone-50 font-medium">
                     Outlook / Apple (.ics)
                 </a>
@@ -3029,18 +3047,24 @@ function downloadIcsFile(title, dateStr) {
     document.body.removeChild(link);
 }
 
-function toggleCalendarDropdown(event) {
+function toggleCalendarDropdown(event, id = 'calendar-dropdown') {
     event.stopPropagation();
-    const dropdown = document.getElementById('calendar-dropdown');
-    dropdown.classList.toggle('hidden');
+    // Close others
+    document.querySelectorAll('[id^="calendar-dropdown"]').forEach(el => {
+        if (el.id !== id) el.classList.add('hidden');
+    });
+
+    const dropdown = document.getElementById(id);
+    if (dropdown) dropdown.classList.toggle('hidden');
 }
 
-// Close dropdown when clicking outside
+// Close dropdowns when clicking outside
 window.addEventListener('click', () => {
-    const dropdown = document.getElementById('calendar-dropdown');
-    if (dropdown && !dropdown.classList.contains('hidden')) {
-        dropdown.classList.add('hidden');
-    }
+    document.querySelectorAll('[id^="calendar-dropdown"]').forEach(dropdown => {
+        if (!dropdown.classList.contains('hidden')) {
+            dropdown.classList.add('hidden');
+        }
+    });
 });
 
 // --- Discussion Guide Logic ---
