@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Auth Debugger</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2.39.0/dist/umd/supabase.js"></script>
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.5;
+        }
+
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+
+        code {
+            background: #eee;
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+
+        pre {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 8px;
+            overflow-x: auto;
+            border: 1px solid #ddd;
+        }
+
+        button {
+            padding: 10px 20px;
+            cursor: pointer;
+            background: #333;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        input {
+            padding: 10px;
+            margin-right: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+            width: 250px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Supabase Auth Debugger</h1>
+
+    <div class="section">
+        <h2>1. Initialization</h2>
+        <div id="init-status">Initializing...</div>
+    </div>
+
+    <div class="section">
+        <h2>2. Session Check</h2>
+        <div id="session-status">Checking session...</div>
+        <pre id="session-details">Waiting...</pre>
+    </div>
+
+    <div class="section">
+        <h2>3. Test Login</h2>
+        <p>Enter your credentials to test <code>signInWithPassword</code> directly.</p>
+        <div style="margin-bottom: 10px;">
+            <input type="email" id="email" placeholder="Email" value="pam.rubin@gmail.com">
+            <input type="text" id="password" placeholder="Password">
+        </div>
+        <button onclick="testLogin()">Test Login</button>
+        <div id="login-result" style="margin-top: 15px;"></div>
+        <pre id="login-details"></pre>
+    </div>
+
+    <script>
+        // Keys from js/app.js
+        const supabaseUrl = 'https://rqbtntzqqkekdzvfilos.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxYnRudHpxcWtla2R6dmZpbG9zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ1MDEwMjUsImV4cCI6MjA4MDA3NzAyNX0.iKeTABH2Q_s9BjpMmigroSa0fqeyW8DDcmXRwDO0jjM';
+
+        let supabase;
+
+        // 1. Init
+        try {
+            const initDiv = document.getElementById('init-status');
+            if (!window.supabase) {
+                initDiv.innerHTML = '<span class="error">❌ Supabase library not loaded. Check CDN connection.</span>';
+            } else {
+                supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+                initDiv.innerHTML = '<span class="success">✅ Client initialized.</span><br>URL: <code>' + supabaseUrl + '</code>';
+            }
+        } catch (e) {
+            document.getElementById('init-status').innerHTML = '<span class="error">❌ Initialization Error: ' + e.message + '</span>';
+        }
+
+        // 2. Session
+        async function checkSession() {
+            if (!supabase) return;
+            try {
+                const { data, error } = await supabase.auth.getSession();
+                if (error) {
+                    document.getElementById('session-status').innerHTML = '<span class="error">❌ Error fetching session.</span>';
+                    document.getElementById('session-details').textContent = JSON.stringify(error, null, 2);
+                } else {
+                    document.getElementById('session-status').innerHTML = '<span class="success">✅ Session fetch executed.</span>';
+                    document.getElementById('session-details').textContent = data.session ?
+                        `User: ${data.session.user.email}\nID: ${data.session.user.id}` :
+                        'No active session (User is not logged in).';
+                }
+            } catch (e) {
+                document.getElementById('session-status').innerHTML = '<span class="error">❌ Unexpected Error: ' + e.message + '</span>';
+            }
+        }
+        checkSession();
+
+        // 3. Login
+        async function testLogin() {
+            if (!supabase) return;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const resultDiv = document.getElementById('login-result');
+            const detailsPre = document.getElementById('login-details');
+
+            resultDiv.innerHTML = 'Attempting login...';
+            detailsPre.textContent = '';
+
+            try {
+                const start = Date.now();
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email,
+                    password
+                });
+                const duration = Date.now() - start;
+
+                if (error) {
+                    resultDiv.innerHTML = `<span class="error">❌ Login Failed after ${duration}ms</span>`;
+                    detailsPre.textContent = `Error: ${error.message}\nStatus: ${error.status}\nName: ${error.name}`;
+
+                    if (error.message.includes('Email not confirmed')) {
+                        resultDiv.innerHTML += '<br><strong>💡 Tip:</strong> You might need to disable "Confirm Email" in Supabase > Authentication > Providers > Email.';
+                    }
+                } else {
+                    resultDiv.innerHTML = `<span class="success">✅ Login Successful! (Took ${duration}ms)</span>`;
+                    detailsPre.textContent = JSON.stringify(data.user, null, 2);
+                }
+            } catch (e) {
+                resultDiv.innerHTML = '<span class="error">❌ Exception during login</span>';
+                detailsPre.textContent = e.toString();
+            }
+        }
+    </script>
+</body>
+
+</html>
