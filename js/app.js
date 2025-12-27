@@ -40,6 +40,7 @@ const exportBtn = document.getElementById('nav-export-btn');
 
 // Filter Elements
 const filterTag = document.getElementById('filter-tag');
+const filterRating = document.getElementById('filter-rating');
 // filterYear removed (replaced by custom logic)
 // filterStatus removed (replaced by custom logic)
 const sortBy = document.getElementById('sort-by');
@@ -76,6 +77,7 @@ const modalSaveBtn = document.getElementById('modal-save-btn');
 const modalEditSection = document.getElementById('modal-edit-section');
 const editStatus = document.getElementById('edit-status');
 const editRating = document.getElementById('edit-rating');
+const refreshMetadataBtn = document.getElementById('refresh-metadata-btn');
 // const editTags = document.getElementById('edit-tags'); // Replaced by interactive UI
 const modalTagsContainer = document.getElementById('modal-tags-container');
 const addTagInput = document.getElementById('add-tag-input');
@@ -193,7 +195,136 @@ function updateFontSizeMenu(activeSize) {
     });
 }
 
-// Event Listeners
+// --- Helper: Render Rating Badges ---
+function renderRatingBadges(book, elementId) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+
+    if (book.rating) {
+        const source = book.rating_source || 'manual';
+        const count = book.rating_count;
+
+        // Format count
+        let countDisplay = '';
+        if (count) {
+            if (count >= 1000000) countDisplay = `(${Math.round(count / 100000) / 10}M)`;
+            else if (count >= 1000) countDisplay = `(${Math.round(count / 1000)}K)`;
+            else countDisplay = `(${count})`;
+        }
+
+        // Styles
+        let badgeClass = 'bg-stone-100 text-stone-600 border-stone-200';
+        let icon = '';
+        if (source === 'goodreads') {
+            badgeClass = 'bg-[#f4f1ea] text-[#382110] border-[#ece9df]';
+            icon = '<iconify-icon icon="fa6-brands:goodreads" class="mr-1"></iconify-icon>';
+        } else if (source === 'openlibrary') {
+            badgeClass = 'bg-blue-50 text-blue-700 border-blue-100';
+            icon = '<iconify-icon icon="fa6-solid:book-open" class="mr-1"></iconify-icon>';
+        }
+
+        el.innerHTML = `<span class="px-3 py-1 rounded-full border ${badgeClass} font-medium flex items-center justify-center gap-1.5 shadow-sm text-sm" title="Source: ${source}">
+            ${icon}
+            ★ ${book.rating} <span class="opacity-70 text-xs ml-0.5">${countDisplay}</span>
+        </span>`;
+        el.classList.remove('hidden');
+    }
+}
+
+// --- Metadata Refresh ---
+async function refreshBookMetadata(book) {
+    if (!refreshMetadataBtn) return;
+
+    try {
+        refreshMetadataBtn.innerHTML = '<iconify-icon icon="line-md:loading-loop" class="text-sm"></iconify-icon> Fetching...';
+        refreshMetadataBtn.disabled = true;
+
+        // 1. Ensure we have Google Data (for Tags)
+        let gData = book.google_data;
+        if (!gData) {
+            // If missing data, try to fetch it
+            const results = await smartBookSearch(`${book.title} ${book.author}`);
+            if (results && results.length > 0) gData = results[0];
+        }
+
+        // 2. Generate Tags
+        let newTags = [];
+        if (gData) {
+            // Use existing generateTags logic
+            const rawTags = generateTags(gData);
+            newTags = rawTags.split(',').map(t => t.trim()).filter(t => t);
+        }
+
+        // 3. Fetch Goodreads Rating
+        // Use gData for ISBN search if possible
+        const isbn = gData?.volumeInfo?.industryIdentifiers?.find(
+            id => id.type === 'ISBN_13' || id.type === 'ISBN_10'
+        )?.identifier;
+
+        const gr = await getGoodreadsRating(isbn, book.title, book.author);
+
+        // 4. Update DB
+        const updates = {};
+        if (newTags.length > 0) {
+            // Merge with existing tags (unique)
+            const existing = book.tags || [];
+            updates.tags = [...new Set([...existing, ...newTags])];
+        }
+
+        if (gr) {
+            updates.rating = parseFloat(gr.rating);
+            updates.rating_source = 'goodreads';
+            updates.rating_count = gr.count;
+        }
+
+        if (Object.keys(updates).length > 0) {
+            // Include google_data if we fetched it fresh
+            if (!book.google_data && gData) updates.google_data = gData;
+
+            const { error } = await supabase.from('book_club_list').update(updates).eq('id', book.id);
+            if (error) throw error;
+
+            // 5. Update Local State & UI
+            if (updates.tags) {
+                book.tags = updates.tags;
+                currentModalTags = updates.tags; // Update modal state
+                renderModalTags();
+            }
+            if (updates.rating) {
+                book.rating = updates.rating;
+                book.rating_source = updates.rating_source;
+                book.rating_count = updates.rating_count;
+                document.getElementById('edit-rating').value = updates.rating;
+
+                // Update badge if valid
+                renderRatingBadges(book, 'modal-rating');
+            }
+
+            // Sync to global list
+            const idx = allSavedBooks.findIndex(b => b.id === book.id);
+            if (idx !== -1) {
+                Object.assign(allSavedBooks[idx], updates);
+            }
+
+            // Re-render with current filters preserved
+            applyFilters();
+
+            showSimpleAlert('Metadata updated!');
+        } else {
+            showSimpleAlert('No new metadata found.');
+        }
+
+    } catch (e) {
+        console.error(e);
+        showError('Refresh failed: ' + e.message);
+    } finally {
+        refreshMetadataBtn.innerHTML = '<iconify-icon icon="solar:refresh-circle-broken" class="text-sm"></iconify-icon> Fetch Rating & Tags';
+        refreshMetadataBtn.disabled = false;
+    }
+}
+
+
+// --- Event Listeners ---
 if (textSizeBtn && textSizeMenu) {
     textSizeBtn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -307,6 +438,38 @@ searchInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') performSearch();
 });
 
+// --- Junk Book Filter (shared between search and import) ---
+function isJunkBook(item) {
+    const info = item.volumeInfo;
+    const date = info.publishedDate;
+    const bookTitle = (info.title || '').toLowerCase();
+    const publisher = (info.publisher || '').toLowerCase();
+
+    // Date filter
+    if (date && date.substring(0, 4) < "1900") return true;
+
+    // Title-based junk
+    if (bookTitle.includes('summary') || bookTitle.includes('summarized')) return true;
+    if (bookTitle.includes('study guide') || bookTitle.includes('analysis of')) return true;
+    if (bookTitle.includes('adapted') || bookTitle.includes('young readers')) return true;
+    if (bookTitle.includes('abridged') || bookTitle.includes('busy people')) return true;
+    if (bookTitle.includes('graphic novel') || bookTitle.includes('coloring book')) return true;
+    if (bookTitle.includes('bundle') || bookTitle.includes('box set') || bookTitle.includes('boxed set')) return true;
+    if (bookTitle.includes('-book set') || bookTitle.includes('book collection')) return true;
+    if (bookTitle.includes('conversation starter')) return true;
+    if (bookTitle.includes('amazing fact')) return true;
+    if (bookTitle.includes('digest and review') || bookTitle.includes('digest & review')) return true;
+    if (bookTitle.includes('trivia-on-books') || bookTitle.includes('trivia on books')) return true;
+    if (bookTitle.includes('reader\'s companion') || bookTitle.includes("readers companion")) return true;
+    if (bookTitle.includes('for fans of')) return true;
+
+    // Publisher-based junk
+    if (publisher.includes('trivion') || publisher.includes('dailybooks') || publisher.includes('daily books')) return true;
+    if (publisher.includes('g whiz') || publisher.includes('whiz books')) return true;
+
+    return false;
+}
+
 async function performSearch() {
     const query = searchInput.value.trim();
     if (!query) return;
@@ -317,13 +480,17 @@ async function performSearch() {
     resultsGrid.innerHTML = '<p class="text-center col-span-full text-stone-500">Searching Google Books...</p>';
 
     try {
-        const response = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=12&key=${GOOGLE_API_KEY}`);
+        const response = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&langRestrict=en&maxResults=12&key=${GOOGLE_API_KEY}`);
         const data = await response.json();
 
         resultsGrid.innerHTML = '';
 
         if (data.items && data.items.length > 0) {
-            data.items.forEach(book => {
+            // Filter out junk results
+            const cleanItems = data.items.filter(item => !isJunkBook(item));
+            const itemsToShow = cleanItems.length > 0 ? cleanItems : data.items;
+
+            itemsToShow.forEach(book => {
                 const card = createBookCard(book);
                 resultsGrid.appendChild(card);
             });
@@ -351,7 +518,7 @@ function createBookCard(book) {
     div.className = 'card-modern flex flex-row items-center h-full fade-in group relative';
     div.innerHTML = `
         <div class="book-frame-modern w-20 md:w-24 border-r border-stone-200 self-stretch">
-            <img src="${thumbnail}" alt="${info.title}" class="book-cover-shadow w-full h-auto object-contain max-h-full">
+            <img src="${thumbnail}" alt="${info.title}" class="book-cover-shadow w-full h-auto object-contain max-h-full" onerror="this.onerror=null; this.src='https://via.placeholder.com/128x192?text=No+Cover'">
         </div>
 
         <div class="p-3 md:p-4 flex flex-col justify-center min-w-0 flex-grow">
@@ -517,7 +684,9 @@ function generateTags(book) {
         tags.delete('Fiction');
     }
 
-    return Array.from(tags).join(', ');
+    // Final cleanup: Ensure "Read" is NEVER a tag (it's a status)
+    const finalTags = Array.from(tags).filter(t => t.toLowerCase() !== 'read');
+    return finalTags.join(', ');
 }
 
 // --- Modal Logic ---
@@ -581,11 +750,50 @@ function openModal(book, savedData = null) {
         modalRating.classList.add('hidden');
     }
 
+    // Display saved rating with source (overrides Google display)
+    // Display saved rating with source (overrides Google display)
+    if (savedData && savedData.rating) {
+        renderRatingBadges(savedData, 'modal-rating');
+    }
+
     // Reset Open Library Rating
     modalOlRating.classList.add('hidden');
     modalOlRating.textContent = '';
 
-    modalDescription.innerHTML = info.description || 'No description available.';
+    // Format description for readability: preserve paragraph breaks
+    let desc = info.description || 'No description available.';
+    // Convert multiple newlines or <br> sequences to proper paragraph breaks
+    desc = desc.replace(/\n\n+/g, '<br><br>');
+    desc = desc.replace(/(<br\s*\/?\s*>){2,}/gi, '<br><br>');
+    // Add break after sentences ending with quotes followed by em-dash OR double-hyphen
+    desc = desc.replace(/([.!?]["'])\s*[—-]{1,2}/g, '$1<br><br>—');
+    // 3. Add break after attribution lines (em-dash/double-hyphen + author name + start of new sentence)
+    desc = desc.replace(/([—-]{1,2}[A-Z][^.!?<]{5,60}?)\s+(?=[A-Z][a-z])/g, '$1<br><br>');
+
+    // 4. Add break before common narrative transition phrases
+    desc = desc.replace(/\.\s+(From the (?:award-winning |bestselling |#1 )?author)/gi, '.<br><br>$1');
+    desc = desc.replace(/\.\s+(In (?:her|his|this|the) (?:new |latest |biggest )?)/gi, '.<br><br>$1');
+    desc = desc.replace(/\.\s+(When (?:the|she|he|they) )/gi, '.<br><br>$1');
+    desc = desc.replace(/\.\s+(Now,? (?:she|he|they|the) )/gi, '.<br><br>$1');
+    desc = desc.replace(/\.\s+(As (?:she|he|they|the) )/gi, '.<br><br>$1');
+    desc = desc.replace(/\.\s+(With (?:the|her|his) )/gi, '.<br><br>$1');
+
+    // 5. Break long paragraphs: apply chunking PER PARAGRAPH (not just when no breaks exist)
+    const paragraphs = desc.split('<br><br>');
+    const chunkedParagraphs = paragraphs.map(p => {
+        const sentences = p.split(/(?<=[.!?])\s+(?=[A-Z])/);
+        if (sentences.length > 4) {
+            const chunks = [];
+            for (let i = 0; i < sentences.length; i += 3) {
+                chunks.push(sentences.slice(i, i + 3).join(' '));
+            }
+            return chunks.join('<br><br>');
+        }
+        return p;
+    });
+    desc = chunkedParagraphs.join('<br><br>');
+
+    modalDescription.innerHTML = desc;
 
     // Reset See More
     modalDescriptionContainer.classList.add('line-clamp-3');
@@ -630,17 +838,7 @@ function openModal(book, savedData = null) {
         console.error('External link elements not found in modal.');
     }
 
-    // eBook/Audiobook Availability (from Google Data)
-    // We can check info.saleInfo.isEbook or accessInfo.epub.isAvailable
-    // We'll append a badge to the year/pages section
-    const ebookAvailable = info.saleInfo?.isEbook || book.accessInfo?.epub?.isAvailable;
-    if (ebookAvailable) {
-        const badge = document.createElement('span');
-        badge.id = 'ebook-badge';
-        badge.className = 'bg-green-50 text-green-700 px-3 py-1 rounded-full border border-green-200';
-        badge.textContent = 'eBook Available';
-        modalPages.parentNode.appendChild(badge);
-    }
+    // Note: eBook badge removed - it was not wired to any action and caused confusion
 
     // Toggle Sections based on Saved Status
     if (isSaved) {
@@ -669,6 +867,7 @@ function openModal(book, savedData = null) {
             editNotes.value = savedData.user_notes || '';
 
             modalUpdateBtn.onclick = () => updateBook(savedData.id, book);
+            refreshMetadataBtn.onclick = () => refreshBookMetadata(savedData);
 
             // Setup Delete Button
             modalDeleteBtn.onclick = () => deleteBook(savedData.id);
@@ -823,18 +1022,20 @@ seeMoreBtn.addEventListener('click', () => {
 
 function renderModalTags() {
     modalTagsContainer.innerHTML = '';
-    currentModalTags.forEach(tag => {
-        const chip = document.createElement('span');
-        chip.className = `inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getTagColor(tag)}`;
-        chip.innerHTML = `
+    currentModalTags
+        .filter(tag => tag.toLowerCase() !== 'read') // Ensure "Read" is never shown as a tag
+        .forEach(tag => {
+            const chip = document.createElement('span');
+            chip.className = `inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getTagColor(tag)}`;
+            chip.innerHTML = `
             ${tag}
             <button type="button" class="ml-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full hover:bg-black/10 transition focus:outline-none" onclick="removeTagFromModal('${tag}')">
                 <span class="sr-only">Remove ${tag}</span>
                 <iconify-icon icon="solar:close-circle-broken" class="text-xs"></iconify-icon>
             </button>
         `;
-        modalTagsContainer.appendChild(chip);
-    });
+            modalTagsContainer.appendChild(chip);
+        });
 }
 
 function addTagToModal() {
@@ -953,14 +1154,14 @@ async function smartBookSearch(title, author, apiKey) {
         const firstAuthor = author.split(/\s+and\s+/i)[0].trim();
         searches.push({
             label: 'title+author',
-            url: `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(title + ' inauthor:' + firstAuthor)}&maxResults=10&key=${apiKey}`
+            url: `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(title + ' inauthor:' + firstAuthor)}&langRestrict=en&maxResults=10&key=${apiKey}`
         });
     }
 
     // Strategy 2: Title only (in case author is causing issues)
     searches.push({
         label: 'title-only',
-        url: `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(title)}&maxResults=10&key=${apiKey}`
+        url: `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(title)}&langRestrict=en&maxResults=10&key=${apiKey}`
     });
 
     // Strategy 3: Fuzzy title (remove apostrophes, common endings)
@@ -968,7 +1169,7 @@ async function smartBookSearch(title, author, apiKey) {
     if (fuzzyTitle !== title) {
         searches.push({
             label: 'fuzzy-title',
-            url: `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(fuzzyTitle)}&maxResults=10&key=${apiKey}`
+            url: `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(fuzzyTitle)}&langRestrict=en&maxResults=10&key=${apiKey}`
         });
     }
 
@@ -1066,25 +1267,8 @@ async function searchAndQueueBooks(queries) {
             if (searchResult.items && searchResult.items.length > 0) {
                 // Use filtered relevant results
                 const data = { items: searchResult.items };
-                // Phase 1: Filter junk results
-                const isJunk = (item) => {
-                    const info = item.volumeInfo;
-                    const date = info.publishedDate;
-                    const bookTitle = (info.title || '').toLowerCase();
-
-                    if (date && date.substring(0, 4) < "1900") return true;
-                    if (bookTitle.includes('summary') || bookTitle.includes('summarized')) return true;
-                    if (bookTitle.includes('study guide') || bookTitle.includes('analysis of')) return true;
-                    if (bookTitle.includes('adapted') || bookTitle.includes('young readers')) return true;
-                    if (bookTitle.includes('abridged') || bookTitle.includes('busy people')) return true;
-                    if (bookTitle.includes('graphic novel') || bookTitle.includes('coloring book')) return true;
-                    // Filter bundle sets and box sets
-                    if (bookTitle.includes('bundle') || bookTitle.includes('box set') || bookTitle.includes('boxed set')) return true;
-                    if (bookTitle.includes('-book set') || bookTitle.includes('book collection')) return true;
-                    return false;
-                };
-
-                const cleanItems = data.items.filter(item => !isJunk(item));
+                // Phase 1: Filter junk results (using shared function)
+                const cleanItems = data.items.filter(item => !isJunkBook(item));
                 const itemsToProcess = cleanItems.length > 0 ? cleanItems : data.items;
 
                 // Phase 3: Score by title relevance
@@ -2038,6 +2222,47 @@ saveImportBtn.addEventListener('click', async () => {
         return;
     }
 
+    // --- Fetch Goodreads Ratings ---
+    // Only fetch for books that don't already have a rating
+    for (let i = 0; i < booksToSave.length; i++) {
+        const book = booksToSave[i];
+        saveImportBtn.textContent = `Fetching Ratings (${i + 1}/${booksToSave.length})...`;
+
+        // Skip if already has a rating from input
+        if (book.rating) {
+            book.rating_source = 'manual';
+            continue;
+        }
+
+        // Try to get Goodreads rating
+        const isbn = book.google_data?.volumeInfo?.industryIdentifiers?.find(
+            id => id.type === 'ISBN_13' || id.type === 'ISBN_10'
+        )?.identifier;
+
+        const grRating = await getGoodreadsRating(isbn, book.title, book.author);
+
+        if (grRating) {
+            book.rating = parseFloat(grRating.rating);
+            book.rating_source = 'goodreads';
+            book.rating_count = grRating.count;
+        } else {
+            // Fallback to OpenLibrary if Goodreads fails
+            const olRating = await getOpenLibraryRating(isbn, book.title, book.author);
+            if (olRating && olRating.count > 50) {
+                book.rating = parseFloat(olRating.average);
+                book.rating_source = 'openlibrary';
+                book.rating_count = olRating.count;
+            }
+        }
+
+        // Small delay to avoid rate limiting
+        if (i < booksToSave.length - 1) {
+            await new Promise(r => setTimeout(r, 500));
+        }
+    }
+
+    saveImportBtn.textContent = 'Saving...';
+
     const { error } = await supabase
         .from('book_club_list')
         .insert(booksToSave);
@@ -2076,6 +2301,7 @@ viewTableBtn.addEventListener('click', () => switchView('table'));
 // filterStatus listener removed
 // filterYear listener removed
 filterTag.addEventListener('change', applyFilters);
+filterRating.addEventListener('change', applyFilters);
 sortBy.addEventListener('change', applyFilters);
 
 function switchView(view) {
@@ -2252,23 +2478,41 @@ function applyFilters() {
         filtered = filtered.filter(b => b.tags && b.tags.includes(tagVal));
     }
 
+    // 4. Filter by Rating
+    const ratingVal = filterRating.value;
+    if (ratingVal !== 'all') {
+        filtered = filtered.filter(b => {
+            const r = b.rating;
+            // Unrated (null, undefined, 0)
+            if (ratingVal === 'unrated') return !r;
+
+            // If book has no rating but we are filtering for a specific range, exclude it
+            if (!r) return false;
+
+            const val = parseFloat(r);
+            if (ratingVal === '4.5') return val >= 4.5;
+            if (ratingVal === '4.0') return val >= 4.0 && val < 4.5;
+            if (ratingVal === '3.5') return val >= 3.5 && val < 4.0;
+            if (ratingVal === 'under3.5') return val < 3.5;
+
+            return true;
+        });
+    }
+
     // 4. Sort
     const sortVal = sortBy.value;
     filtered.sort((a, b) => {
         switch (sortVal) {
-            case 'date_added_desc':
+            case 'newest':
                 return new Date(b.created_at) - new Date(a.created_at);
-            case 'date_added_asc':
+            case 'oldest':
                 return new Date(a.created_at) - new Date(b.created_at);
-            case 'rating_desc':
+            case 'rating':
                 return (b.rating || 0) - (a.rating || 0);
-            case 'target_date_asc':
-                // Handle nulls last
-                if (!a.target_date) return 1;
-                if (!b.target_date) return -1;
-                return new Date(a.target_date) - new Date(b.target_date);
-            case 'title_asc':
-                return a.title.localeCompare(b.title);
+            case 'title':
+                return (a.title || '').localeCompare(b.title || '');
+            case 'author':
+                return (a.author || '').localeCompare(b.author || '');
             default:
                 return 0;
         }
@@ -2282,6 +2526,11 @@ function showSection(sectionName) {
     document.getElementById('search-section').classList.add('hidden');
     document.getElementById('library-section').classList.add('hidden');
     dashboardSection.classList.add('hidden');
+
+    // Always hide search results when leaving search
+    if (sectionName !== 'search') {
+        resultsContainer.classList.add('hidden');
+    }
 
     // Show target
     if (sectionName === 'search') {
@@ -2557,7 +2806,8 @@ function renderDashboard() {
             <div class="w-1/3 md:w-56 bg-stone-100 flex-shrink-0 border-r border-stone-100 flex items-center justify-center p-4 rounded-l-2xl">
                 <img src="${nextInfo.imageLinks?.thumbnail?.replace('http:', 'https:') || 'https://via.placeholder.com/300x450?text=No+Cover'}" 
                     alt="${nextInfo.title}" 
-                    class="w-full h-auto shadow-md rounded-sm object-contain max-h-full">
+                    class="w-full h-auto shadow-md rounded-sm object-contain max-h-full"
+                    onerror="this.onerror=null; this.src='https://via.placeholder.com/300x450?text=No+Cover'">
             </div>
             
         <div class="flex-grow p-4 md:p-6 flex flex-col justify-center min-w-0">
@@ -2631,7 +2881,7 @@ function renderDashboard() {
             return `
         <div class="card-modern flex items-center fade-in group relative">
                     <div class="book-frame-modern w-24 border-r border-stone-200 cursor-pointer" onclick="openModal(allSavedBooks.find(b => b.id === ${book.id}).google_data, allSavedBooks.find(b => b.id === ${book.id}))">
-                        <img src="${thumbnail}" alt="${info.title}" class="book-cover-shadow h-auto max-h-full object-contain shadow-sm">
+                        <img src="${thumbnail}" alt="${info.title}" class="book-cover-shadow h-auto max-h-full object-contain shadow-sm" onerror="this.onerror=null; this.src='https://via.placeholder.com/128x196?text=No+Cover'">
                     </div>
 
         <div class="px-5 py-4 flex flex-col justify-center min-w-0 flex-grow">
@@ -2726,9 +2976,10 @@ function renderSavedBooks(books) {
         const card = document.createElement('div');
         card.className = 'card-modern flex flex-row items-center h-full fade-in group relative';
 
-        // Tags Badge
-        const tagsHtml = row.tags && row.tags.length > 0
-            ? `<div class="mt-2 flex flex-wrap gap-1"> ${row.tags.map(t => `
+        // Tags Badge - Filter out "Read" (it's a status) and duplicates (robust comparison)
+        const visibleTags = row.tags ? row.tags.filter(t => t.trim().toLowerCase() !== 'read' && t.trim().toLowerCase() !== status.toLowerCase()) : [];
+        const tagsHtml = visibleTags.length > 0
+            ? `<div class="mt-2 flex flex-wrap gap-1"> ${visibleTags.map(t => `
                 <span class="inline-flex items-center text-[10px] px-1.5 py-0.5 rounded font-medium ${getTagColor(t)} group/tag">
                     ${t}
                     <button onclick="removeTagFromCard(event, '${row.id}', '${t}')" class="ml-1 hidden group-hover/tag:inline-flex hover:text-black/50 items-center justify-center">
@@ -2743,7 +2994,7 @@ function renderSavedBooks(books) {
 
         card.innerHTML = `
                 <div class="book-frame-modern w-20 md:w-24 border-r border-stone-200 self-stretch">
-                    <img src="${thumbnail}" alt="${row.title}" class="book-cover-shadow w-full h-auto max-h-full object-contain shadow-sm">
+                    <img src="${thumbnail}" alt="${row.title}" class="book-cover-shadow w-full h-auto max-h-full object-contain shadow-sm" onerror="this.onerror=null; this.src='https://via.placeholder.com/128x192?text=No+Cover'">
                 </div>
 
         <div class="p-3 md:p-4 flex flex-col justify-center min-w-0 flex-grow">
@@ -2754,7 +3005,36 @@ function renderSavedBooks(books) {
 
             <div class="flex flex-wrap gap-2 mb-2">
                 ${statusHtml}
-                ${row.rating ? `<span class="text-[10px] px-2 py-0.5 rounded-full bg-yellow-50 text-yellow-700 border border-yellow-200 font-medium">★ ${row.rating}</span>` : ''}
+                ${(() => {
+                if (!row.rating) return '';
+                const source = row.rating_source || 'manual';
+                const count = row.rating_count;
+
+                // Format count (e.g. 1.2K, 3M)
+                let countDisplay = '';
+                if (count) {
+                    if (count >= 1000000) countDisplay = `(${Math.round(count / 100000) / 10}M)`;
+                    else if (count >= 1000) countDisplay = `(${Math.round(count / 1000)}K)`;
+                    else countDisplay = `(${count})`;
+                }
+
+                // Source Styling
+                let badgeClass = 'bg-stone-100 text-stone-600 border-stone-200'; // Default/Manual
+                let icon = ''; // No icon for manual
+
+                if (source === 'goodreads') {
+                    badgeClass = 'bg-[#f4f1ea] text-[#382110] border-[#ece9df]'; // Goodreads Beige/Brown theme
+                    icon = '<iconify-icon icon="fa6-brands:goodreads" class="mr-1"></iconify-icon>';
+                } else if (source === 'openlibrary') {
+                    badgeClass = 'bg-blue-50 text-blue-700 border-blue-100';
+                    icon = '<iconify-icon icon="fa6-solid:book-open" class="mr-1"></iconify-icon>';
+                }
+
+                return `<span class="text-[10px] px-2 py-0.5 rounded-full border ${badgeClass} font-medium flex items-center group/rating" title="Source: ${source}">
+                        ${icon}
+                        ★ ${row.rating} <span class="ml-1 opacity-60 text-[9px]">${countDisplay}</span>
+                    </span>`;
+            })()}
             </div>
 
             ${clubYear !== '-' ? `<p class="text-[10px] text-stone-500">Club Year: ${clubYear}</p>` : ''}
@@ -2863,14 +3143,130 @@ async function saveBook(button, bookData) {
         button.classList.remove('bg-white', 'text-rose-600', 'border', 'border-rose-200', 'hover:bg-rose-50');
         button.classList.add('bg-green-100', 'text-green-700', 'border-green-200', 'cursor-default');
 
-        // Refresh the saved list
-        fetchSavedBooks();
+        // Refresh the saved list and navigate to library
+        await fetchSavedBooks();
+        closeModal();
+        showSection('library'); // Navigate away from search results
+        resultsContainer.classList.add('hidden'); // Hide search results
 
     } catch (err) {
         console.error('Error saving book:', err);
         button.textContent = 'Error';
         showError('Could not save book. Please try again.');
         button.disabled = false;
+    }
+}
+
+// --- Goodreads Rating via CORS Proxy + Regex parsing ---
+// Uses CORS proxy to fetch Goodreads page, then extracts rating using regex
+
+async function getGoodreadsRating(isbn, title, author) {
+    try {
+        // Construct search query - prefer ISBN, fallback to title+author
+        const searchQuery = isbn || `${title} ${author || ''}`.trim();
+        const goodreadsUrl = `https://www.goodreads.com/search?q=${encodeURIComponent(searchQuery)}`;
+
+        // Proxy Strategy: Try AllOrigins first, then fallback to CorsProxy
+        let htmlContent = null;
+
+        const fetchWithTimeout = async (url, isJson = false) => {
+            const controller = new AbortController();
+            const id = setTimeout(() => controller.abort(), 5000); // 5s timeout
+            try {
+                const res = await fetch(url, { signal: controller.signal });
+                clearTimeout(id);
+                if (!res.ok) throw new Error('Request failed');
+                return isJson ? (await res.json()).contents : await res.text();
+            } catch (e) {
+                clearTimeout(id);
+                return null;
+            }
+        };
+
+        // Attempt 1: AllOrigins
+        htmlContent = await fetchWithTimeout(`https://api.allorigins.win/get?url=${encodeURIComponent(goodreadsUrl)}`, true);
+
+        // Attempt 2: CorsProxy (Fallback)
+        if (!htmlContent) {
+            console.warn('Goodreads: AllOrigins failed/timed out, trying fallback...');
+            htmlContent = await fetchWithTimeout(`https://corsproxy.io/?${encodeURIComponent(goodreadsUrl)}`, false);
+        }
+
+        if (!htmlContent) {
+            console.error('Goodreads: All proxies failed.');
+            return null;
+        }
+
+        const html = htmlContent;
+
+        if (!html || html.length < 1000) {
+            console.log('No valid HTML from Goodreads proxy');
+            return null;
+        }
+
+        // Extract rating using regex patterns
+        // Goodreads search results show ratings like "3.92 avg rating — 1,234,567 ratings"
+        // or in structured data as "ratingValue": "3.92"
+
+        let rating = null;
+        let count = null;
+
+        // Pattern 1: Look for "X.XX avg rating — Y ratings" format (handling literal dashes and &mdash;)
+        const avgRatingMatch = html.match(/(\d\.\d{1,2})\s*avg\s*rating\s*(?:[—–-]|&mdash;|&#8212;)\s*([\d,]+(?:\.\d+)?)\s*(K|M)?\s*ratings/i);
+        if (avgRatingMatch) {
+            rating = parseFloat(avgRatingMatch[1]);
+            let countStr = avgRatingMatch[2].replace(/,/g, '');
+            count = parseFloat(countStr);
+            if (avgRatingMatch[3] === 'K') count *= 1000;
+            if (avgRatingMatch[3] === 'M') count *= 1000000;
+            count = Math.round(count);
+        }
+
+        // Pattern 2: Look for structured data (JSON-LD) - usually safe from entities
+        if (!rating) {
+            const ratingValueMatch = html.match(/"ratingValue"\s*:\s*"?(\d\.\d{1,2})"?/);
+            const ratingCountMatch = html.match(/"ratingCount"\s*:\s*"?(\d+)"?/);
+
+            if (ratingValueMatch) {
+                rating = parseFloat(ratingValueMatch[1]);
+            }
+            if (ratingCountMatch) {
+                count = parseInt(ratingCountMatch[1]);
+            }
+        }
+
+        // Pattern 3: Look for minirating format with entity support
+        if (!rating) {
+            const miniRatingMatch = html.match(/class="[^"]*minirating[^"]*"[^>]*>[^<]*(\d\.\d{1,2})\s*(?:[—–-]|&mdash;|&#8212;)\s*([\d,]+)\s*ratings/i);
+            if (miniRatingMatch) {
+                rating = parseFloat(miniRatingMatch[1]);
+                count = parseInt(miniRatingMatch[2].replace(/,/g, ''));
+            }
+        }
+
+        // Pattern 4: Look for rating in aria-label or title attributes
+        if (!rating) {
+            const ariaMatch = html.match(/(?:aria-label|title)="[^"]*(\d\.\d{1,2})\s*(?:out of 5|stars|rating)[^"]*"/i);
+            if (ariaMatch) {
+                rating = parseFloat(ariaMatch[1]);
+            }
+        }
+
+        if (rating && rating > 0 && rating <= 5) {
+            console.log(`Goodreads parsed: rating=${rating}, count=${count}`);
+            return {
+                rating: rating.toFixed(2),
+                count: count || 0,
+                source: 'goodreads'
+            };
+        }
+
+        console.log('Could not extract rating from Goodreads HTML');
+        return null;
+
+    } catch (err) {
+        console.error('Error fetching Goodreads rating:', err);
+        return null;
     }
 }
 
@@ -2922,15 +3318,16 @@ async function getOpenLibraryRating(isbn, title = null, author = null) {
 }
 
 async function fetchOpenLibraryRating(isbn, title = null, author = null) {
-    const avg = await getOpenLibraryRating(isbn, title, author);
+    const olData = await getOpenLibraryRating(isbn, title, author);
 
-    if (avg) {
-        modalOlRating.textContent = `OpenLib: ★ ${avg}`;
+    if (olData && olData.average) {
+        const countStr = olData.count ? ` · ${olData.count}` : '';
+        modalOlRating.textContent = `OpenLib: ★ ${olData.average}${countStr}`;
         modalOlRating.classList.remove('hidden');
 
         // Auto-fill External Rating if empty
         if (editRating.value === '') {
-            editRating.value = avg;
+            editRating.value = olData.average;
         }
     }
 }

@@ -338,3 +338,16 @@ Notes: [Any additional context]
     *   **Hardcoded Versions:** Creating a dependency on specific model versions (e.g., `gemini-1.5-flash`) caused failures. New API keys often have access *only* to newer models (like `2.5`) or specific subsets, and Google returns a generic `404 Not Found` which is misleading.
 *   **The Fix:**
     *   **Use Aliases:** We switched to `gemini-flash-latest`. This alias automatically resolves to the best stable internal model available to the key, future-proofing the app against version deprecation or access tier differences.
+
+#### [Dec 27] Resilient Scraping Strategy
+*   **Proxy Redundancy:** When scraping external sites (like Goodreads) from the client-side, **single proxies fail**. Implement a fallback chain (e.g., AllOrigins -> CorsProxy).
+*   **Timeouts are Mandatory:** `fetch()` does not timeout by default. Always wrap proxy requests in a timeout (e.g., 5s) using `AbortController` to prevent the UI from checking "forever".
+*   **Robustness > Perfection:** If scraping fails, have a graceful fallback (e.g., OpenLibrary) and clear UI indicators (Color-coded badges) so the user understands the data source.
+
+#### [Dec 27] Metadata Repair Protocol
+*   **Immediate Persistence:** "Repair" actions (e.g., fetching missing data for an existing book) should commit to the database **immediately**, rather than waiting for a "Save" action. This reduces friction for legacy data cleanup.
+*   **UI Feedback:** Always provide immediate visual feedback (e.g., filling inputs, refreshing badges) so the user knows the repair succeeded.
+
+#### [Dec 27] Tags vs. Status
+*   **No Duplication:** Tags should never duplicate the active Status. The rendering logic must filter out any tags that match the current status (case-insensitive).
+*   **"Read" is not a Tag:** "Read" is strictly a status. It must be globally suppressed from tag generation and display.
