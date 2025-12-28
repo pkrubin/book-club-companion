@@ -234,6 +234,27 @@ logoutBtn.addEventListener('click', async () => {
 const settingsBtn = document.getElementById('settings-btn');
 const settingsMenu = document.getElementById('settings-menu');
 
+// --- Test Data Logic ---
+let showTestData = localStorage.getItem('bookClubShowTestData') === 'true';
+const testDataToggle = document.getElementById('toggle-test-data');
+
+function initTestData() {
+    if (testDataToggle) {
+        testDataToggle.checked = showTestData;
+        testDataToggle.addEventListener('change', (e) => {
+            showTestData = e.target.checked;
+            localStorage.setItem('bookClubShowTestData', showTestData);
+            // Re-fetch/render to apply new filter
+            fetchSavedBooks();
+        });
+    }
+}
+
+// Ensure init is called
+document.addEventListener('DOMContentLoaded', () => {
+    initTestData();
+});
+
 function initFontSize() {
     const saved = localStorage.getItem('bookClubFontSize') || '100%';
     setFontSize(saved, false); // false = don't save again
@@ -2743,6 +2764,11 @@ function updateTagFilterOptions() {
 
 function applyFilters() {
     let filtered = [...allSavedBooks];
+
+    // 0. Filter Test Data (Global)
+    if (!showTestData) {
+        filtered = filtered.filter(b => b.status !== 'Test');
+    }
 
     // 1. Filter by Status
     const statusVal = currentStatusFilter;
