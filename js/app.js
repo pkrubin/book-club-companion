@@ -2,6 +2,11 @@
 const GOOGLE_API_KEY = ''; // Add your API key here if needed for public deployment, currently using implicit or restricted key
 // Note: In a real production app, use a proxy server to hide API keys.
 
+// --- Gemini AI Configuration ---
+// Uses /api/gemini serverless function for secure API calls
+// API key is stored in Vercel environment variables, never exposed to browser
+const GEMINI_PROXY_URL = '/api/gemini';
+
 // --- Supabase Client ---
 const supabaseUrl = 'https://rqbtntzqqkekdzvfilos.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxYnRudHpxcWtla2R6dmZpbG9zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ1MDEwMjUsImV4cCI6MjA4MDA3NzAyNX0.iKeTABH2Q_s9BjpMmigroSa0fqeyW8DDcmXRwDO0jjM';
@@ -551,6 +556,159 @@ function showError(msg) {
 closeErrorBtn.addEventListener('click', () => {
     errorModal.classList.add('hidden');
 });
+
+// --- AI-Powered Tagging & Summary (Gemini) ---
+// Controlled vocabulary for AI-generated tags
+const TAG_VOCABULARY = {
+    genre: ['Literary Fiction', 'Historical Fiction', 'Mystery', 'Thriller', 'Romance', 'Sci-Fi', 'Fantasy', 'Biography & Autobiography', 'Memoir', 'History', 'Science', 'Self-Help', 'Business/Econ'],
+    era: ['1920s', '1930s', '1940s', 'WWII', '1950s', '1960s', '1970s', '1980s', '1990s', 'Contemporary'],
+    countries: ['USA', 'England', 'Ireland', 'France', 'Germany', 'Poland', 'Israel', 'Italy', 'Spain', 'Russia', 'Japan', 'China', 'India', 'Australia', 'Mexico', 'Canada'],
+    regions: ['New York', 'Paris', 'London', 'California', 'US South', 'Europe', 'Asia', 'Middle East', 'Africa'],
+    themes: ['Family', 'War', 'Love', 'Identity', 'Race', 'Feminism', 'Coming of Age', 'Survival']
+};
+
+async function generateTagsAI(title, author, description) {
+    const prompt = `You are a librarian categorizing books for a book club. Given the following book, generate 3-5 relevant tags.
+
+BOOK:
+Title: ${title}
+Author: ${author}
+Description: ${description}
+
+RULES:
+1. Use ONLY tags from this controlled vocabulary:
+   - Genre: ${TAG_VOCABULARY.genre.join(', ')}
+   - Era: ${TAG_VOCABULARY.era.join(', ')}
+   - Countries: ${TAG_VOCABULARY.countries.join(', ')}
+   - Regions/Cities: ${TAG_VOCABULARY.regions.join(', ')}
+   - Themes: ${TAG_VOCABULARY.themes.join(', ')}
+2. Do NOT invent new tags. Only use exact matches from the list above.
+3. Be accurate - don't tag "New York" just because "New York Times" appears in a blurb.
+4. Return ONLY a comma-separated list of tags, nothing else.
+
+TAGS:`;
+
+    try {
+        const response = await fetch(GEMINI_PROXY_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                prompt,
+                temperature: 0.3,
+                maxTokens: 100
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `API error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const tagText = data.text || '';
+
+        // Parse and validate tags
+        const tags = tagText.split(',').map(t => t.trim()).filter(t => t);
+        const allVocab = [...TAG_VOCABULARY.genre, ...TAG_VOCABULARY.era, ...TAG_VOCABULARY.countries, ...TAG_VOCABULARY.regions, ...TAG_VOCABULARY.themes];
+        return tags.filter(t => allVocab.includes(t));
+    } catch (e) {
+        console.error('AI Tag Generation Error:', e);
+        return null;
+    }
+}
+
+async function generateSummaryAI(title, author, description) {
+    const prompt = `You are writing the back-cover summary for a paperback book. Given the raw description below, write a compelling summary.
+
+BOOK:
+Title: ${title}
+Author: ${author}
+Raw Description: ${description}
+
+RULES:
+1. Write in the style of a paperback back-cover: short, punchy, hooks the reader.
+2. Set the stage for what the book is about without spoilers.
+3. Remove all testimonials, blurbs, and "Praise for..." quotes.
+4. Keep it to 2-3 short paragraphs maximum.
+5. Return ONLY the summary text, no headers or labels.
+
+SUMMARY:`;
+
+    try {
+        const response = await fetch(GEMINI_PROXY_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                prompt,
+                temperature: 0.7,
+                maxTokens: 300
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `API error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        return data.text?.trim() || null;
+    } catch (e) {
+        console.error('AI Summary Generation Error:', e);
+        return null;
+    }
+}
+
+// Console test function for Phase 2 proof of concept
+// Usage: testAIFunctions() or testAIFunctions('This is Happiness')
+async function testAIFunctions(bookTitle = null) {
+    // Find test books (status = 'Test')
+    const testBooks = allSavedBooks.filter(b => b.status === 'Test');
+
+    if (testBooks.length === 0) {
+        console.log('⚠️ No books with status="Test" found. Add some test books first.');
+        return;
+    }
+
+    const booksToTest = bookTitle
+        ? testBooks.filter(b => b.title.toLowerCase().includes(bookTitle.toLowerCase()))
+        : testBooks;
+
+    if (booksToTest.length === 0) {
+        console.log(`⚠️ No test book matching "${bookTitle}" found.`);
+        return;
+    }
+
+    console.log(`🧪 Testing AI functions on ${booksToTest.length} book(s)...\n`);
+
+    for (const book of booksToTest) {
+        const info = book.google_data?.volumeInfo || {};
+        const description = info.description || 'No description available';
+
+        console.log(`📚 BOOK: ${book.title} by ${book.author}`);
+        console.log('─'.repeat(50));
+
+        // Current tags
+        console.log('Current Tags:', book.tags?.join(', ') || 'None');
+
+        // AI Tags
+        console.log('⏳ Generating AI tags...');
+        const aiTags = await generateTagsAI(book.title, book.author, description);
+        console.log('AI Tags:', aiTags?.join(', ') || 'Failed');
+
+        // AI Summary
+        console.log('⏳ Generating AI summary...');
+        const aiSummary = await generateSummaryAI(book.title, book.author, description);
+        console.log('\nAI Summary:');
+        console.log(aiSummary || 'Failed');
+
+        console.log('\n' + '═'.repeat(50) + '\n');
+    }
+
+    console.log('✅ Test complete! (No database changes made)');
+}
+
+// Make test function globally available
+window.testAIFunctions = testAIFunctions;
 
 // --- Auto-Tagging Logic ---
 function generateTags(book) {

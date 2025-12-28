@@ -3,3 +3,8 @@ js/config.js
 node_modules/
 Backups/
 old/
+
+# Environment files (contain secrets)
+.env
+.env.local
+.env*.local
