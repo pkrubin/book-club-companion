@@ -13,9 +13,17 @@ Now you can turn it into a live website using Vercel.
     *   Once logged in, you will see a button labeled **"Add New..."** -> **"Project"**.
     *   You will see a list of your GitHub repositories.
     *   Find `book-club-companion` and click **"Import"**.
-4.  **Deploy:**
-    *   On the next screen ("Configure Project"), you don't need to change *anything*.
-    *   Just click the big blue **"Deploy"** button.
+    *   Find `book-club-companion` and click **"Import"**.
+
+4.  **Configure Secrets (Critical for AI):**
+    *   On the "Configure Project" screen, look for **"Environment Variables"**.
+    *   Add a new variable:
+        *   **Key:** `GEMINI_API_KEY`
+        *   **Value:** (Paste your Gemini API Key here - the one from `.env.local`)
+    *   *Note: Supabase keys are safe in your code, but the AI key must be hidden here.*
+
+5.  **Deploy:**
+    *   Click the big blue **"Deploy"** button.
 5.  **Wait 30 Seconds:** Vercel will build your site. Formatting... Optimizing...
 6.  **Done!** You will see a "Congratulations!" screen with a screenshot of your app. Click the screenshot to visit your live URL (something like `book-club-companion.vercel.app`).
 

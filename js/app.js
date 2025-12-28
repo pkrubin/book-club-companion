@@ -42,6 +42,56 @@ const viewGridBtn = document.getElementById('view-grid-btn');
 const viewTableBtn = document.getElementById('view-table-btn');
 const importBtn = document.getElementById('nav-import-btn');
 const exportBtn = document.getElementById('nav-export-btn');
+const exportScheduleBtn = document.getElementById('nav-export-schedule-btn');
+
+// ... existing code ...
+
+if (exportScheduleBtn) {
+    exportScheduleBtn.addEventListener('click', exportScheduleToCSV);
+}
+
+function exportScheduleToCSV() {
+    // 1. Filter: Status = 'Scheduled'
+    const scheduledBooks = allSavedBooks.filter(book => book.status === 'Scheduled');
+
+    if (scheduledBooks.length === 0) {
+        showSimpleAlert('No scheduled books found to export.');
+        return;
+    }
+
+    // 2. Sort: Date Scheduled (Ascending)
+    scheduledBooks.sort((a, b) => {
+        const dateA = new Date(a.target_date || '9999-12-31');
+        const dateB = new Date(b.target_date || '9999-12-31');
+        return dateA - dateB;
+    });
+
+    // 3. Generate CSV Content
+    // Header
+    let csvContent = "Book Title,Book Author,Date Scheduled,Host\n";
+
+    // Rows
+    scheduledBooks.forEach(book => {
+        const title = (book.title || '').replace(/,/g, ''); // Simple cleaning
+        const author = (book.author || '').replace(/,/g, '');
+        const date = book.target_date || '';
+        const host = (book.host_name || '').replace(/,/g, '');
+
+        csvContent += `${title},${author},${date},${host}\n`;
+    });
+
+    // 4. Trigger Download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", "book_club_schedule.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    showSimpleAlert(`Exported ${scheduledBooks.length} scheduled books.`);
+}
 
 // Filter Elements
 const filterTag = document.getElementById('filter-tag');
@@ -83,6 +133,7 @@ const modalEditSection = document.getElementById('modal-edit-section');
 const editStatus = document.getElementById('edit-status');
 const editRating = document.getElementById('edit-rating');
 const refreshMetadataBtn = document.getElementById('refresh-metadata-btn');
+const modalAiTagsBtn = document.getElementById('modal-ai-tags-btn');
 // const editTags = document.getElementById('edit-tags'); // Replaced by interactive UI
 const modalTagsContainer = document.getElementById('modal-tags-container');
 const addTagInput = document.getElementById('add-tag-input');
@@ -145,6 +196,8 @@ async function handleAuth(e) {
     }
 }
 
+let isInitialLoad = true;
+
 function updateUI() {
     if (user) {
         authSection.classList.add('hidden');
@@ -154,13 +207,19 @@ function updateUI() {
         // Init Font Size
         initFontSize();
 
-        // Default to Dashboard view
-        showSection('dashboard');
+        // Only default to dashboard on initial load or fresh login
+        // If we are already viewing a section (e.g. library), don't jump
+        if (isInitialLoad || appSection.classList.contains('hidden')) {
+            showSection('dashboard');
+            isInitialLoad = false;
+        }
+
         fetchSavedBooks(); // Load books then render dashboard
     } else {
         authSection.classList.remove('hidden');
         appSection.classList.add('hidden');
         navActions.classList.add('hidden');
+        isInitialLoad = true; // Reset so next login redirects
     }
 }
 
@@ -171,8 +230,9 @@ logoutBtn.addEventListener('click', async () => {
 });
 
 // --- Font Size Logic ---
-const textSizeBtn = document.getElementById('text-size-btn');
-const textSizeMenu = document.getElementById('text-size-menu');
+// --- Font Size Logic ---
+const settingsBtn = document.getElementById('settings-btn');
+const settingsMenu = document.getElementById('settings-menu');
 
 function initFontSize() {
     const saved = localStorage.getItem('bookClubFontSize') || '100%';
@@ -186,16 +246,15 @@ function setFontSize(size, save = true) {
 }
 
 function updateFontSizeMenu(activeSize) {
-    if (!textSizeMenu) return;
-    const buttons = textSizeMenu.querySelectorAll('button');
+    if (!settingsMenu) return;
+    const buttons = settingsMenu.querySelectorAll('.text-size-option');
     buttons.forEach(btn => {
-        const checkmark = btn.querySelector('span.text-stone-800') || btn.querySelector('span:last-child');
         if (btn.dataset.size === activeSize) {
-            btn.classList.add('active');
-            if (checkmark) checkmark.classList.remove('hidden');
+            btn.classList.add('font-bold', 'bg-stone-50', 'text-stone-800');
+            btn.classList.remove('text-stone-600');
         } else {
-            btn.classList.remove('active');
-            if (checkmark) checkmark.classList.add('hidden');
+            btn.classList.remove('font-bold', 'bg-stone-50', 'text-stone-800');
+            btn.classList.add('text-stone-600');
         }
     });
 }
@@ -244,37 +303,22 @@ async function refreshBookMetadata(book) {
         refreshMetadataBtn.innerHTML = '<iconify-icon icon="line-md:loading-loop" class="text-sm"></iconify-icon> Fetching...';
         refreshMetadataBtn.disabled = true;
 
-        // 1. Ensure we have Google Data (for Tags)
+        // 1. Ensure we have Google Data (needed for ISBN lookup for rating)
         let gData = book.google_data;
         if (!gData) {
-            // If missing data, try to fetch it
             const results = await smartBookSearch(`${book.title} ${book.author}`);
             if (results && results.length > 0) gData = results[0];
         }
 
-        // 2. Generate Tags
-        let newTags = [];
-        if (gData) {
-            // Use existing generateTags logic
-            const rawTags = generateTags(gData);
-            newTags = rawTags.split(',').map(t => t.trim()).filter(t => t);
-        }
-
-        // 3. Fetch Goodreads Rating
-        // Use gData for ISBN search if possible
+        // 2. Fetch Goodreads Rating
         const isbn = gData?.volumeInfo?.industryIdentifiers?.find(
             id => id.type === 'ISBN_13' || id.type === 'ISBN_10'
         )?.identifier;
 
         const gr = await getGoodreadsRating(isbn, book.title, book.author);
 
-        // 4. Update DB
+        // 3. Update DB
         const updates = {};
-        if (newTags.length > 0) {
-            // Merge with existing tags (unique)
-            const existing = book.tags || [];
-            updates.tags = [...new Set([...existing, ...newTags])];
-        }
 
         if (gr) {
             updates.rating = parseFloat(gr.rating);
@@ -289,12 +333,7 @@ async function refreshBookMetadata(book) {
             const { error } = await supabase.from('book_club_list').update(updates).eq('id', book.id);
             if (error) throw error;
 
-            // 5. Update Local State & UI
-            if (updates.tags) {
-                book.tags = updates.tags;
-                currentModalTags = updates.tags; // Update modal state
-                renderModalTags();
-            }
+            // 4. Update Local State & UI
             if (updates.rating) {
                 book.rating = updates.rating;
                 book.rating_source = updates.rating_source;
@@ -314,37 +353,42 @@ async function refreshBookMetadata(book) {
             // Re-render with current filters preserved
             applyFilters();
 
-            showSimpleAlert('Metadata updated!');
+            showSimpleAlert('Rating updated!');
         } else {
-            showSimpleAlert('No new metadata found.');
+            showSimpleAlert('No new rating found.');
         }
 
     } catch (e) {
         console.error(e);
         showError('Refresh failed: ' + e.message);
     } finally {
-        refreshMetadataBtn.innerHTML = '<iconify-icon icon="solar:refresh-circle-broken" class="text-sm"></iconify-icon> Fetch Rating & Tags';
+        refreshMetadataBtn.innerHTML = '<iconify-icon icon="solar:refresh-circle-broken" class="text-sm"></iconify-icon> Fetch Rating';
         refreshMetadataBtn.disabled = false;
     }
 }
 
 
 // --- Event Listeners ---
-if (textSizeBtn && textSizeMenu) {
-    textSizeBtn.addEventListener('click', (e) => {
+// --- Event Listeners ---
+if (settingsBtn && settingsMenu) {
+    settingsBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        textSizeMenu.classList.toggle('hidden');
+        settingsMenu.classList.toggle('hidden');
     });
 
-    textSizeMenu.querySelectorAll('button').forEach(btn => {
+    // Font Size Buttons
+    settingsMenu.querySelectorAll('.text-size-option').forEach(btn => {
         btn.addEventListener('click', () => {
             const size = btn.dataset.size;
             setFontSize(size);
         });
     });
 
-    window.addEventListener('click', () => {
-        textSizeMenu.classList.add('hidden');
+    // Close on Click Outside
+    window.addEventListener('click', (e) => {
+        if (!settingsBtn.contains(e.target) && !settingsMenu.contains(e.target)) {
+            settingsMenu.classList.add('hidden');
+        }
     });
 }
 
@@ -560,15 +604,30 @@ closeErrorBtn.addEventListener('click', () => {
 // --- AI-Powered Tagging & Summary (Gemini) ---
 // Controlled vocabulary for AI-generated tags
 const TAG_VOCABULARY = {
-    genre: ['Literary Fiction', 'Historical Fiction', 'Mystery', 'Thriller', 'Romance', 'Sci-Fi', 'Fantasy', 'Biography & Autobiography', 'Memoir', 'History', 'Science', 'Self-Help', 'Business/Econ'],
-    era: ['1920s', '1930s', '1940s', 'WWII', '1950s', '1960s', '1970s', '1980s', '1990s', 'Contemporary'],
-    countries: ['USA', 'England', 'Ireland', 'France', 'Germany', 'Poland', 'Israel', 'Italy', 'Spain', 'Russia', 'Japan', 'China', 'India', 'Australia', 'Mexico', 'Canada'],
-    regions: ['New York', 'Paris', 'London', 'California', 'US South', 'Europe', 'Asia', 'Middle East', 'Africa'],
-    themes: ['Family', 'War', 'Love', 'Identity', 'Race', 'Feminism', 'Coming of Age', 'Survival']
+    genre: ['Literary Fiction', 'Historical Fiction', 'Mystery', 'Thriller', 'Romance', 'Sci-Fi', 'Fantasy', 'Biography', 'Biography & Autobiography', 'Memoir', 'Non-Fiction', 'History', 'Science', 'Self-Help', 'Business/Econ'],
+    era: ['1800s', '1900s', '1920s', '1930s', '1940s', 'WWII', 'Civil War', '1950s', '1960s', '1970s', '1980s', '1990s', 'Contemporary'],
+    countries: ['USA', 'England', 'UK', 'Ireland', 'France', 'Germany', 'Poland', 'Israel', 'Italy', 'Spain', 'Russia', 'Japan', 'China', 'India', 'Australia', 'Mexico', 'Canada'],
+    regions: ['New York', 'Paris', 'London', 'California', 'US South', 'Europe', 'Asia', 'Middle East', 'Africa', 'Latin America'],
+    themes: ['Family', 'War', 'Love', 'Identity', 'Race', 'Feminism', 'Coming of Age', 'Survival', 'Art', 'Politics', 'Religion']
+};
+
+const TAG_ALIASES = {
+    'historical': 'Historical Fiction',
+    'fiction': 'Literary Fiction',
+    'southern': 'US South',
+    'south': 'US South',
+    'united states': 'USA',
+    'america': 'USA',
+    'us': 'USA',
+    'great britain': 'UK',
+    'england': 'UK',
+    'second world war': 'WWII',
+    'world war 2': 'WWII',
+    'world war ii': 'WWII'
 };
 
 async function generateTagsAI(title, author, description) {
-    const prompt = `You are a librarian categorizing books for a book club. Given the following book, generate 3-5 relevant tags.
+    const prompt = `You are an expert literary classifier. Analyze the book details to connect it with the most accurate tags from the vocabulary.
 
 BOOK:
 Title: ${title}
@@ -583,8 +642,9 @@ RULES:
    - Regions/Cities: ${TAG_VOCABULARY.regions.join(', ')}
    - Themes: ${TAG_VOCABULARY.themes.join(', ')}
 2. Do NOT invent new tags. Only use exact matches from the list above.
-3. Be accurate - don't tag "New York" just because "New York Times" appears in a blurb.
-4. Return ONLY a comma-separated list of tags, nothing else.
+3. Instructions: Identify highly relevant tags from any category (Genre, Era, Location, Theme).
+4. Aim for 3-5 tags that best describe the book.
+5. Return ONLY a comma-separated list of tags.
 
 TAGS:`;
 
@@ -608,12 +668,42 @@ TAGS:`;
         const tagText = data.text || '';
 
         // Parse and validate tags
-        const tags = tagText.split(',').map(t => t.trim()).filter(t => t);
+        const cleanText = tagText.replace(/^tags:?\s*/i, '').replace(/[\[\]"]/g, '');
+        const tags = cleanText.split(',').map(t => t.trim()).filter(t => t);
+
         const allVocab = [...TAG_VOCABULARY.genre, ...TAG_VOCABULARY.era, ...TAG_VOCABULARY.countries, ...TAG_VOCABULARY.regions, ...TAG_VOCABULARY.themes];
-        return tags.filter(t => allVocab.includes(t));
+
+        // Fuzzy Match (Case Insensitive + Aliases)
+        const validTags = [];
+        const filteredTags = [];
+
+        tags.forEach(userTag => {
+            let searchTag = userTag.toLowerCase();
+
+            // Check Alias
+            if (TAG_ALIASES[searchTag]) {
+                searchTag = TAG_ALIASES[searchTag].toLowerCase();
+            }
+
+            // Find canonical match in vocab
+            const match = allVocab.find(v => v.toLowerCase() === searchTag);
+            if (match) {
+                validTags.push(match);
+            } else {
+                filteredTags.push(userTag);
+            }
+        });
+
+        return {
+            success: true,
+            tags: [...new Set(validTags)], // Deduplicate
+            raw: tagText,
+            filtered: filteredTags
+        };
+
     } catch (e) {
         console.error('AI Tag Generation Error:', e);
-        return null;
+        return { success: false, error: e.message || 'Unknown error' };
     }
 }
 
@@ -1020,12 +1110,56 @@ function openModal(book, savedData = null) {
             editRating.value = savedData.rating ? String(savedData.rating) : ''; // Ensure it's a string for input value
             currentModalTags = savedData.tags && savedData.tags.length > 0 ? [...savedData.tags] : generateTags(book).split(', ').filter(t => t);
             renderModalTags();
+            const editDate = document.getElementById('edit-date');
+            const clearDateBtn = document.getElementById('clear-date-btn');
+
+            if (clearDateBtn && editDate) {
+                // Toggle button visibility
+                const toggleClearBtn = () => {
+                    if (editDate.value) {
+                        clearDateBtn.classList.remove('hidden');
+                    } else {
+                        clearDateBtn.classList.add('hidden');
+                    }
+                };
+
+                // Events
+                editDate.addEventListener('change', toggleClearBtn);
+                editDate.addEventListener('input', toggleClearBtn);
+                clearDateBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    editDate.value = '';
+                    toggleClearBtn();
+                });
+
+                // Helper to expose for modal open
+                window.checkDateClearButton = toggleClearBtn;
+            }
+
+            // ... existing code ...
+
             editDate.value = savedData.target_date || '';
+            if (window.checkDateClearButton) window.checkDateClearButton(); // Check initial state
             editHost.value = savedData.host_name || '';
             editNotes.value = savedData.user_notes || '';
 
             modalUpdateBtn.onclick = () => updateBook(savedData.id, book);
             refreshMetadataBtn.onclick = () => refreshBookMetadata(savedData);
+
+            // --- AI Compare Button Scope ---
+            if (modalAiTagsBtn) {
+                if (savedData.status === 'Test') {
+                    modalAiTagsBtn.classList.remove('hidden');
+                    // Clone to strip old listeners
+                    const newBtn = modalAiTagsBtn.cloneNode(true);
+                    modalAiTagsBtn.parentNode.replaceChild(newBtn, modalAiTagsBtn);
+                    newBtn.addEventListener('click', () => {
+                        openComparisonModal(savedData);
+                    });
+                } else {
+                    modalAiTagsBtn.classList.add('hidden');
+                }
+            }
 
             // Setup Delete Button
             modalDeleteBtn.onclick = () => deleteBook(savedData.id);
@@ -2665,6 +2799,13 @@ function applyFilters() {
                 return new Date(b.created_at) - new Date(a.created_at);
             case 'oldest':
                 return new Date(a.created_at) - new Date(b.created_at);
+            case 'scheduled':
+                // Sort by target_date ascending (Earliest date first)
+                // Books with dates come first, nulls pushed to bottom
+                const dateA = a.target_date || '9999-12-31';
+                const dateB = b.target_date || '9999-12-31';
+                if (dateA === dateB) return 0;
+                return dateA < dateB ? -1 : 1;
             case 'rating':
                 return (b.rating || 0) - (a.rating || 0);
             case 'title':
@@ -2922,8 +3063,9 @@ function renderDashboard() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Filter for future books (target_date >= today)
+    // Filter for future books (target_date >= today AND status == 'Scheduled')
     const upcomingBooks = allSavedBooks.filter(book => {
+        if (book.status !== 'Scheduled') return false;
         if (!book.target_date) return false;
         // Parse date (YYYY-MM-DD)
         const [year, month, day] = book.target_date.split('-').map(Number);
@@ -3161,14 +3303,14 @@ function renderSavedBooks(books) {
             </div>
             <p class="text-xs text-stone-600 mb-1 truncate">${authors}</p>
 
-            <div class="flex flex-wrap gap-2 mb-2">
+            <div class="flex flex-wrap gap-2 mb-2 items-center">
                 ${statusHtml}
                 ${(() => {
                 if (!row.rating) return '';
                 const source = row.rating_source || 'manual';
                 const count = row.rating_count;
 
-                // Format count (e.g. 1.2K, 3M)
+                // Format count
                 let countDisplay = '';
                 if (count) {
                     if (count >= 1000000) countDisplay = `(${Math.round(count / 100000) / 10}M)`;
@@ -3177,11 +3319,11 @@ function renderSavedBooks(books) {
                 }
 
                 // Source Styling
-                let badgeClass = 'bg-stone-100 text-stone-600 border-stone-200'; // Default/Manual
-                let icon = ''; // No icon for manual
+                let badgeClass = 'bg-stone-100 text-stone-600 border-stone-200';
+                let icon = '';
 
                 if (source === 'goodreads') {
-                    badgeClass = 'bg-[#f4f1ea] text-[#382110] border-[#ece9df]'; // Goodreads Beige/Brown theme
+                    badgeClass = 'bg-[#f4f1ea] text-[#382110] border-[#ece9df]';
                     icon = '<iconify-icon icon="fa6-brands:goodreads" class="mr-1"></iconify-icon>';
                 } else if (source === 'openlibrary') {
                     badgeClass = 'bg-blue-50 text-blue-700 border-blue-100';
@@ -3189,18 +3331,45 @@ function renderSavedBooks(books) {
                 }
 
                 return `<span class="text-[10px] px-2 py-0.5 rounded-full border ${badgeClass} font-medium flex items-center group/rating" title="Source: ${source}">
-                        ${icon}
-                        ★ ${row.rating} <span class="ml-1 opacity-60 text-[9px]">${countDisplay}</span>
+                        ${icon} ★ ${row.rating} <span class="ml-1 opacity-60 text-[9px]">${countDisplay}</span>
                     </span>`;
             })()}
+
+                ${(() => {
+                if (row.target_date) {
+                    // Parse "YYYY-MM-DD" safely
+                    const [y, m, d] = row.target_date.split('-').map(Number);
+                    const dateObj = new Date(y, m - 1, d);
+
+                    // Format: "Mar 04, 2026"
+                    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                    const monthName = months[dateObj.getMonth()];
+                    const dayStr = String(dateObj.getDate()).padStart(2, '0');
+                    const yearStr = dateObj.getFullYear();
+                    const formattedDate = `${monthName} ${dayStr}, ${yearStr}`;
+
+                    return `<span class="text-[10px] text-stone-500 flex items-center gap-1 border border-stone-100 px-2 py-0.5 rounded-full bg-stone-50" title="Scheduled Date">
+                            <iconify-icon icon="solar:calendar-bold" class="text-stone-400"></iconify-icon> ${formattedDate}
+                        </span>`;
+                }
+                return '';
+            })()}
             </div>
-
-            ${clubYear !== '-' ? `<p class="text-[10px] text-stone-500">Club Year: ${clubYear}</p>` : ''}
-            ${row.host_name ? `<p class="text-[10px] text-stone-500">Host: ${row.host_name}</p>` : ''}
-
+            
+            ${row.host_name ? `<p class="text-[10px] text-stone-500 mb-1">Host: ${row.host_name}</p>` : ''}
             ${tagsHtml}
+            
+            <div class="mt-auto pt-2">
+               <!-- Spacer -->
+            </div>
         </div>
     `;
+
+        // Add AI Click Listener
+        if (status === 'Test') {
+            // Removed logic
+        }
+
         card.addEventListener('click', () => openModal(row.google_data, row));
         savedGrid.appendChild(card);
 
@@ -3683,18 +3852,7 @@ const CURATED_QUESTIONS = {
     ]
 };
 
-const UNIVERSAL_QUESTIONS = [
-    "What was your initial reaction to the book? Did it hook you immediately, or did it take some time to get into?",
-    "Which character did you relate to the most, and why?",
-    "Was there a specific passage or quote that stood out to you?",
-    "How did the setting impact the story? Could this story have taken place anywhere else?",
-    "Did the book change your opinion or perspective on any real-world issues?",
-    "How did you feel about the pacing? Were there sections that felt too fast or too slow?",
-    "Was the ending satisfying? Did it resolve the main conflicts, or leave too much open?",
-    "How does the title relate to the story? Is it literal, symbolic, or ironic?",
-    "If this book were adapted into a movie or TV show, who would you cast as the main characters?",
-    "Who would you recommend this book to? Is there anyone you would specifically tell to avoid it?"
-];
+const GENERIC_FALLBACK_MSG = "<em>No pre-loaded guide available. Click 'Generate Guide AI' to create a custom one instantly.</em>";
 
 function getDiscussionQuestions(book) {
     if (book.discussion_questions) {
@@ -3705,8 +3863,70 @@ function getDiscussionQuestions(book) {
     if (CURATED_QUESTIONS[title]) {
         return CURATED_QUESTIONS[title].join('\n\n');
     }
-    // Fallback
-    return UNIVERSAL_QUESTIONS.join('\n\n');
+    // No fallback - return empty to trigger "Generate" prompt
+    return "";
+}
+
+async function generateDiscussionQuestionsAI() {
+    if (!currentDiscussionBook) return;
+    const btn = document.getElementById('btn-generate-ai');
+    const viewEl = document.getElementById('discussion-content-view');
+    const originalText = btn.innerHTML;
+
+    try {
+        btn.disabled = true;
+        btn.innerHTML = '<iconify-icon icon="line-md:loading-loop" class="text-lg"></iconify-icon> Generating...';
+        viewEl.innerHTML = '<div class="flex flex-col items-center justify-center p-8 text-stone-400 gap-3"><iconify-icon icon="line-md:loading-loop" class="text-4xl"></iconify-icon><p>Consulting literary archives...</p></div>';
+
+        const book = currentDiscussionBook;
+        const title = book.google_data.volumeInfo.title;
+        const author = book.google_data.volumeInfo.authors?.join(', ') || 'Unknown';
+        const description = book.google_data.volumeInfo.description || '';
+
+        const prompt = `Act as an expert literary discussion leader. Synthesize the top 15 most thought-provoking discussion questions for the book "${title}" by ${author}.
+Context: ${description.substring(0, 500)}...
+Rules:
+1. Questions must be specific to characters and plot points (no generic "did you like it?" filler).
+2. Look for moral dilemmas, character motivations, and thematic elements.
+3. Return ONLY the list of 15 questions, numbered 1-15.
+4. Do not include intro or outro text.`;
+
+        const response = await fetch(GEMINI_PROXY_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                prompt,
+                maxTokens: 2000 // Ensure enough length for 15 questions
+            })
+        });
+
+        if (!response.ok) throw new Error('AI Service Busy');
+
+        const data = await response.json();
+        let questions = data.text.trim();
+
+        // Cleanup response
+        questions = questions.replace(/[\*\"]/g, ''); // Remove bolding/quotes
+
+        // Save & Render
+        currentDiscussionBook.discussion_questions = questions;
+
+        // Update DB
+        if (currentDiscussionBook.id) {
+            await supabase.from('book_club_list').update({ discussion_questions: questions }).eq('id', currentDiscussionBook.id);
+        }
+
+        // Refresh UI
+        openDiscussionModal(currentDiscussionBook);
+        showSimpleAlert('Guide Generated!');
+
+    } catch (e) {
+        console.error(e);
+        viewEl.innerHTML = `<p class="text-rose-600">Error: ${e.message}. Please try again.</p>`;
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
 }
 
 function openDiscussionModal(book) {
@@ -3715,19 +3935,28 @@ function openDiscussionModal(book) {
     const titleEl = document.getElementById('discussion-modal-title');
     const viewEl = document.getElementById('discussion-content-view');
     const editEl = document.getElementById('discussion-content-edit');
+    const generateBtn = document.getElementById('btn-generate-ai');
+    const editBtn = document.getElementById('btn-edit-questions');
 
     titleEl.textContent = book.google_data.volumeInfo.title;
 
     const questions = getDiscussionQuestions(book);
 
-    // Populate View
-    // Populate View with Numbering
-    viewEl.innerHTML = questions.split('\n').filter(q => q.trim()).map((q, index) => {
-        // Check if it's already numbered (e.g. from user edit)
-        const isNumbered = /^\d+\./.test(q);
-        const text = isNumbered ? q : `${index + 1}. ${q}`;
-        return `<p class="mb-4 font-serif text-lg text-stone-800 leading-relaxed pl-4 -indent-4">${text}</p>`;
-    }).join('');
+    if (questions) {
+        // Show Questions
+        viewEl.innerHTML = questions.split('\n').filter(q => q.trim()).map((q, index) => {
+            const isNumbered = /^\d+\./.test(q);
+            const text = isNumbered ? q : `${index + 1}. ${q}`;
+            return `<p class="mb-4 font-serif text-lg text-stone-800 leading-relaxed pl-4 -indent-4">${text}</p>`;
+        }).join('');
+        generateBtn.classList.add('hidden');
+        editBtn.classList.remove('hidden');
+    } else {
+        // Show Fallback
+        viewEl.innerHTML = `<div class="p-8 text-center text-stone-500">${GENERIC_FALLBACK_MSG}</div>`;
+        generateBtn.classList.remove('hidden');
+        editBtn.classList.add('hidden'); // Hide edit until we have content
+    }
 
     // Populate Edit
     editEl.value = questions;
@@ -3735,7 +3964,7 @@ function openDiscussionModal(book) {
     // Reset State
     viewEl.classList.remove('hidden');
     editEl.classList.add('hidden');
-    document.getElementById('btn-edit-questions').textContent = 'Edit Questions';
+    if (editBtn) editBtn.textContent = 'Edit Questions';
     document.getElementById('btn-save-questions').classList.add('hidden');
 
     modal.classList.remove('hidden');
@@ -4151,3 +4380,198 @@ function printDiscussionGuide() {
         return JSON.parse(jsonStr);
     }
 })();
+
+// --- AI Comparison Modal Logic ---
+
+const comparisonModal = document.getElementById('comparison-modal');
+const closeComparisonBtn = document.getElementById('close-comparison-btn');
+const comparisonCancelBtn = document.getElementById('comparison-cancel-btn');
+const comparisonAcceptBtn = document.getElementById('comparison-accept-btn'); // Legacy, kept for safety but unused
+const comparisonAppendBtn = document.getElementById('comparison-append-btn');
+const comparisonReplaceBtn = document.getElementById('comparison-replace-btn');
+const comparisonRetryBtn = document.getElementById('comparison-retry-btn');
+const comparisonLoading = document.getElementById('comparison-loading');
+const comparisonContent = document.getElementById('comparison-content');
+const comparisonCurrentTags = document.getElementById('comparison-current-tags');
+const comparisonAiTags = document.getElementById('comparison-ai-tags');
+
+let currentComparisonBook = null;
+let currentAiTagsResult = null;
+
+function closeComparisonModal() {
+    comparisonModal.classList.add('hidden');
+    currentComparisonBook = null;
+    currentAiTagsResult = null;
+}
+
+if (closeComparisonBtn) closeComparisonBtn.addEventListener('click', closeComparisonModal);
+if (comparisonCancelBtn) comparisonCancelBtn.addEventListener('click', closeComparisonModal);
+
+async function openComparisonModal(book) {
+    currentComparisonBook = book;
+    comparisonModal.classList.remove('hidden');
+
+    // Reset State
+    const setButtons = (enabled) => {
+        [comparisonAppendBtn, comparisonReplaceBtn].forEach(btn => {
+            if (!btn) return;
+            btn.disabled = !enabled;
+            if (enabled) {
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            } else {
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+        });
+        if (comparisonRetryBtn) comparisonRetryBtn.disabled = true;
+    };
+
+    setButtons(false);
+    comparisonLoading.classList.remove('hidden');
+    comparisonContent.classList.add('hidden'); // Hide grid until loaded
+    comparisonAiTags.innerHTML = '';
+
+    // Populate Current Data
+    comparisonCurrentTags.innerHTML = '';
+    if (book.tags && book.tags.length > 0) {
+        book.tags.forEach(tag => {
+            const span = document.createElement('span');
+            span.className = `inline-flex items-center text-xs px-2 py-1 rounded font-medium ${window.getTagColor ? window.getTagColor(tag) : 'bg-stone-100 text-stone-800'}`;
+            span.textContent = tag;
+            comparisonCurrentTags.appendChild(span);
+        });
+    } else {
+        comparisonCurrentTags.innerHTML = '<span class="text-stone-400 italic text-xs">No tags set</span>';
+    }
+
+    // Call AI
+    try {
+        // Use clean description or fallback
+        const description = book.google_data?.volumeInfo?.description || "No description available.";
+        const result = await generateTagsAI(book.title, book.author, description);
+
+        // Render AI Tags
+        comparisonAiTags.innerHTML = '';
+
+        if (result && result.success && result.tags && result.tags.length > 0) {
+            currentAiTagsResult = result.tags; // Store for accept
+
+            // Show Tags
+            result.tags.forEach(tag => {
+                const span = document.createElement('span');
+                span.className = `inline-flex items-center text-xs px-2 py-1 rounded font-medium ${window.getTagColor ? window.getTagColor(tag) : 'bg-indigo-100 text-indigo-700'} border border-indigo-200`;
+                span.textContent = tag;
+                comparisonAiTags.appendChild(span);
+            });
+
+            // Show Filtered Warning
+            if (result.filtered && result.filtered.length > 0) {
+                const warning = document.createElement('div');
+                warning.className = "w-full text-[10px] text-amber-600 mt-2 p-1 border border-amber-200 bg-amber-50 rounded";
+                warning.innerHTML = `⚠️ Ignored ${result.filtered.length} invalid tags: ${result.filtered.join(', ')}`;
+                comparisonAiTags.appendChild(warning);
+            }
+
+            // Enable Buttons
+            setButtons(true);
+            if (comparisonRetryBtn) comparisonRetryBtn.disabled = false;
+
+        } else if (result && result.success) {
+            // Success but empty tags
+            let filteredHtml = '';
+            if (result.filtered && result.filtered.length > 0) {
+                filteredHtml = `<div class="w-full text-[10px] text-amber-600 mt-2 p-1 border border-amber-200 bg-amber-50 rounded">
+                    ⚠️ Ignored ${result.filtered.length} invalid tags: ${result.filtered.join(', ')}
+                </div>`;
+            }
+
+            comparisonAiTags.innerHTML = `
+                <div class="flex flex-col gap-1">
+                    <span class="text-stone-500 italic text-xs">AI returned text but no valid tags found.</span>
+                    ${filteredHtml}
+                    <details class="text-[9px] text-stone-400 cursor-pointer mt-2">
+                        <summary>Raw Output</summary>
+                        <pre class="whitespace-pre-wrap mt-1 p-1 bg-stone-100 rounded">${result.raw || 'Empty'}</pre>
+                    </details>
+                </div>`;
+        } else {
+            // Error
+            const errorMsg = result?.error || 'Unknown failure';
+            comparisonAiTags.innerHTML = `
+                <div class="flex flex-col gap-1">
+                    <span class="text-rose-500 italic text-xs font-bold">Generation Failed</span>
+                     <div class="text-[10px] text-rose-700 border border-rose-200 bg-rose-50 p-2 rounded">
+                        Error: ${errorMsg}
+                    </div>
+                </div>`;
+        }
+
+    } catch (error) {
+        console.error("Comparison Error:", error);
+        comparisonAiTags.innerHTML = '<span class="text-rose-500 italic text-xs">Error connecting to AI.</span>';
+        if (comparisonRetryBtn) comparisonRetryBtn.disabled = false;
+    } finally {
+        comparisonLoading.classList.add('hidden');
+        comparisonContent.classList.remove('hidden');
+        // Always enable Retry after attempt finishes
+        if (comparisonRetryBtn) comparisonRetryBtn.disabled = false;
+    }
+}
+
+async function saveTags(mode) {
+    if (!currentComparisonBook || !currentAiTagsResult) return;
+
+    // Choose Button based on mode
+    const btn = mode === 'append' ? comparisonAppendBtn : comparisonReplaceBtn;
+    const originalText = btn.innerHTML;
+
+    // Lock UI
+    [comparisonAppendBtn, comparisonReplaceBtn, comparisonRetryBtn].forEach(b => {
+        if (b) b.disabled = true;
+    });
+    btn.innerHTML = '<iconify-icon icon="solar:spinner-bold" class="animate-spin"></iconify-icon> Saving...';
+
+    try {
+        let finalTags = [];
+        if (mode === 'append') {
+            const existingTags = currentComparisonBook.tags || [];
+            finalTags = [...new Set([...existingTags, ...currentAiTagsResult])];
+        } else {
+            finalTags = currentAiTagsResult;
+        }
+
+        // Update Supabase
+        if (error) throw error;
+
+        // Update local state for parent modal
+        currentModalTags = finalTags;
+        renderModalTags();
+
+        // Update cache
+        const cacheIndex = allSavedBooks.findIndex(b => b.id === currentComparisonBook.id);
+        if (cacheIndex !== -1) {
+            allSavedBooks[cacheIndex].tags = finalTags;
+        }
+
+        // Success
+        closeComparisonModal();
+        fetchSavedBooks(); // Refresh the grid to show new tags
+        showSimpleAlert(mode === 'append' ? `Merged! Now has ${finalTags.length} tags.` : `Replaced! Now has ${finalTags.length} tags.`);
+
+    } catch (error) {
+        console.error('Error saving tags:', error);
+        showError('Failed to save AI tags. Please try again.');
+
+        // Reset UI
+        if (comparisonAppendBtn) comparisonAppendBtn.disabled = false;
+        if (comparisonReplaceBtn) comparisonReplaceBtn.disabled = false;
+        if (comparisonRetryBtn) comparisonRetryBtn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+}
+
+// Wire up Buttons
+if (comparisonAppendBtn) comparisonAppendBtn.addEventListener('click', () => saveTags('append'));
+if (comparisonReplaceBtn) comparisonReplaceBtn.addEventListener('click', () => saveTags('replace'));
+if (comparisonRetryBtn) comparisonRetryBtn.addEventListener('click', () => openComparisonModal(currentComparisonBook));
+
+window.openComparisonModal = openComparisonModal;
