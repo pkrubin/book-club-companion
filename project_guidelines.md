@@ -350,4 +350,13 @@ Notes: [Any additional context]
 
 #### [Dec 27] Tags vs. Status
 *   **No Duplication:** Tags should never duplicate the active Status. The rendering logic must filter out any tags that match the current status (case-insensitive).
-*   **"Read" is not a Tag:** "Read" is strictly a status. It must be globally suppressed from tag generation and display.
+
+#### [Dec 28] AI Service Architecture
+*   **Token Limits:** Default AI responses (often ~300 tokens) are too short for complex content like Discussion Guides. **Always explicitly set `maxTokens` (e.g., 2000)** in the API payload.
+*   **Method Consistency:** Ensure your client `fetch` method matches the server handler (e.g., if server expects `POST`, client must send `POST`). Mismatches cause generic 404/500 errors.
+*   **Environment Variables:** Local development uses `.env.local` + `local_server.js`, but production (Vercel) requires setting secrets in the Project Dashboard. **Never check API keys into git.**
+
+#### [Dec 28] Schema Verification (The Silent Killer)
+*   **Code != Schema:** Adding a field to `app.js` (e.g., `discussion_questions`) does NOT automatically add it to Supabase.
+*   **Symptom:** The app works locally (memory) but fails to persist on reload.
+*   **Protocol:** When adding new data fields, **ALWAYS** write the corresponding SQL migration (`ALTER TABLE...`) in `task.md` and verify it in the dashboard.
