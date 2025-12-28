@@ -21,8 +21,13 @@ export default async function handler(req, res) {
 
     console.log('Gemini Proxy: Processing request');
     try {
-        // Use 1.5-flash for higher rate limits (1500/day vs 20/day for experimental 2.5)
-        const MODELS = ['gemini-2.0-flash-exp', 'gemini-1.5-flash']; // Try Newest -> Fallback to Stable
+        // Prioritize reasoning (3 Pro) -> Speed (3 Flash) -> Fallback (2.0/1.5)
+        const MODELS = [
+            'gemini-3-pro-preview',
+            'gemini-3-flash-preview',
+            'gemini-2.0-flash-exp',
+            'gemini-1.5-flash'
+        ];
         let lastError = null;
 
         for (const model of MODELS) {
