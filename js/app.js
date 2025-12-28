@@ -3926,7 +3926,10 @@ Rules:
             })
         });
 
-        if (!response.ok) throw new Error('AI Service Busy');
+        if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            throw new Error(errData.error || `Server Error ${response.status}`);
+        }
 
         const data = await response.json();
         let questions = data.text.trim();
