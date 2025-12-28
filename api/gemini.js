@@ -21,30 +21,55 @@ export default async function handler(req, res) {
 
     console.log('Gemini Proxy: Processing request');
     try {
-        const model = 'gemini-flash-latest'; // Verified working model
-        const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`,
-            {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: prompt }] }],
-                    generationConfig: { temperature, maxOutputTokens: maxTokens }
-                })
-            }
-        );
+        // Use 1.5-flash for higher rate limits (1500/day vs 20/day for experimental 2.5)
+        const MODELS = ['gemini-2.0-flash-exp', 'gemini-1.5-flash']; // Try Newest -> Fallback to Stable
+        let lastError = null;
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Gemini API Error:', response.status, errorText);
-            return res.status(response.status).json({ error: `Gemini API error: ${errorText}` });
+        for (const model of MODELS) {
+            console.log(`Gemini Proxy: Attempting model ${model}...`);
+            try {
+                const response = await fetch(
+                    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`,
+                    {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: prompt }] }],
+                            generationConfig: { temperature, maxOutputTokens: maxTokens }
+                        })
+                    }
+                );
+
+                if (!response.ok) {
+                    const status = response.status;
+                    const errorText = await response.text();
+                    // If Rate Limit (429) or Not Found (404 - e.g. model doesn't exist yet), try next.
+                    if (status === 429 || status === 404 || status === 503) {
+                        console.warn(`Gemini Proxy: Model ${model} failed (${status}). Trying next...`);
+                        lastError = { status, message: errorText };
+                        continue;
+                    }
+                    // Other errors (400, 401) are fatal.
+                    console.error(`Gemini Proxy: Fatal error on ${model}:`, errorText);
+                    return res.status(status).json({ error: `Gemini Error (${model}): ${errorText}` });
+                }
+
+                const data = await response.json();
+                const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+                console.log(`Gemini Proxy: Success with ${model}`);
+                return res.status(200).json({ text, modelUsed: model });
+
+            } catch (error) {
+                console.error(`Gemini Proxy: Network error on ${model}:`, error);
+                lastError = { status: 500, message: error.message };
+            }
         }
 
-        const data = await response.json();
-        const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-        console.log('Gemini Proxy: Success, generated text length:', text.length);
-
-        return res.status(200).json({ text });
+        // If we get here, all models failed
+        console.error('Gemini Proxy: All models exhausted.');
+        return res.status(lastError?.status || 500).json({
+            error: `All AI models busy or quota exceeded. Last error: ${lastError?.message}`
+        });
     } catch (error) {
         console.error('Gemini proxy internal error:', error);
         return res.status(500).json({ error: 'Failed to call Gemini API' });
