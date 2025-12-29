@@ -360,3 +360,22 @@ Notes: [Any additional context]
 *   **Code != Schema:** Adding a field to `app.js` (e.g., `discussion_questions`) does NOT automatically add it to Supabase.
 *   **Symptom:** The app works locally (memory) but fails to persist on reload.
 *   **Protocol:** When adding new data fields, **ALWAYS** write the corresponding SQL migration (`ALTER TABLE...`) in `task.md` and verify it in the dashboard.
+
+#### [Dec 29] The "Stale Server" Trap
+*   **The Problem:** Changes to backend code (`api/*.js` or `local_server.js`) **do not auto-reload**. The code continues checking the *old* logic (e.g. old token limits) while the developer edits the file, leading to "impossible" bugs where the code looks right but acts wrong.
+*   **The Fix:** **Restart the Server.** If checking backend logic, the FIRST step is to kill (`Ctrl+C`) and restart (`node local_server.js`) the process to ensure 100% freshness.
+*   **Protocol:** Add a `restart_server` step to any plan involving backend API changes.
+
+#### [Dec 29] UI Simplicity > Complexity
+*   **Context:** We attempted to embed a "Discussion Guide" inside the existing "Book Details" modal using tabs. This caused rendering conflicts, hidden buttons, and scroll issues.
+*   **Lesson:** **Don't fight the DOM.** If a feature has distinct actions (generating content, printing) and distinct layout needs (long text vs. form fields), **give it its own Modal.**
+*   **Result:** Moving the Guide to a dedicated `DiscussionModal` solved 100% of the UI bugs instantly.
+
+#### [Dec 29] AI Data Attribution
+*   **Explicit > Implicit:** Relying on the AI to "sign its work" in the text is fragile (it might get cut off).
+*   **Structure:** Pass metadata (Model Name, Finish Reason) in the **JSON response**, not the body text.
+*   **Rendering:** Render the attribution in the *client UI footer*, ensuring it exists even if the text body is truncated.
+
+#### [Dec 29] Token Economics
+*   **Defaults are Dangerous:** Most APIs default to minimal tokens (e.g. 300). For long-form content (Discussion Guides), **always explicitly set `maxTokens: 4000`** (or higher) in the request.
+*   **Truncation:** If the text stops mid-sentence, it is *always* `maxTokens`. Check the backend default first.

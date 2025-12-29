@@ -585,6 +585,67 @@
                             class="px-4 py-2 rounded-lg text-amber-700 hover:bg-amber-50 transition font-medium border border-transparent hover:border-amber-200 text-sm">Delete</button>
                     </div>
                 </div>
+
+                <!-- Discussion Guide Section -->
+                <!-- Discussion Guide Link -->
+                <div class="mt-3 mb-1">
+                    <button id="btn-open-guide-modal"
+                        class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-lg hover:bg-indigo-100 transition font-bold text-sm shadow-sm">
+                        <iconify-icon icon="solar:chat-round-line-broken" class="text-lg"></iconify-icon>
+                        Open Discussion Guide
+                    </button>
+                </div>
+                <!-- Legacy Wrapper Hidden -->
+                <div id="modal-discussion-wrapper" class="hidden">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="font-serif text-lg font-bold text-stone-800 flex items-center gap-2">
+                            <iconify-icon icon="solar:chat-round-line-broken" class="text-indigo-600"></iconify-icon>
+                            Discussion Questions
+                        </h3>
+                        <div class="flex gap-2">
+                            <button id="btn-copy-guide"
+                                class="text-xs flex items-center gap-1 text-stone-500 hover:text-stone-800 transition px-2 py-1 rounded bg-stone-50 border border-stone-200"
+                                title="Copy to Clipboard">
+                                <iconify-icon icon="solar:copy-broken"></iconify-icon> Copy
+                            </button>
+                            <button id="btn-edit-guide"
+                                class="text-xs flex items-center gap-1 text-stone-500 hover:text-stone-800 transition px-2 py-1 rounded bg-stone-50 border border-stone-200"
+                                title="Edit / Paste">
+                                <iconify-icon icon="solar:pen-broken"></iconify-icon> Edit
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- View Mode -->
+                    <div id="modal-discussion-view"
+                        class="bg-stone-50/50 rounded-xl border border-stone-100 p-4 text-sm text-stone-700 leading-relaxed max-h-[300px] overflow-y-auto">
+                        <!-- Questions injected here -->
+                    </div>
+
+                    <!-- Edit Mode (Hidden) -->
+                    <div id="modal-discussion-edit" class="hidden">
+                        <textarea id="modal-discussion-input" rows="10"
+                            class="w-full text-sm p-3 border border-stone-200 rounded-xl focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 outline-none resize-none font-mono text-stone-700"
+                            placeholder="Paste your discussion questions here..."></textarea>
+                        <div class="flex justify-end gap-2 mt-2">
+                            <button id="btn-cancel-guide-edit"
+                                class="px-3 py-1.5 text-xs font-medium text-stone-600 hover:bg-stone-100 rounded-lg transition">Cancel</button>
+                            <button id="btn-save-guide-edit"
+                                class="px-3 py-1.5 text-xs font-medium bg-indigo-600 text-white rounded-lg shadow-sm hover:bg-indigo-700 transition flex items-center gap-1">
+                                <iconify-icon icon="solar:diskette-bold-duotone"></iconify-icon> Save Guide
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Generate Actions -->
+                    <div id="modal-discussion-actions" class="mt-3 flex justify-center">
+                        <button id="btn-generate-guide"
+                            class="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-xl hover:bg-indigo-100 transition font-medium text-sm w-full font-bold justify-center shadow-sm">
+                            <iconify-icon icon="solar:magic-stick-3-bold-duotone" class="text-lg"></iconify-icon>
+                            Generate Questions with AI
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <!-- Save Action (Only for unsaved books) -->

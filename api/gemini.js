@@ -13,7 +13,7 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: 'Gemini API key not configured' });
     }
 
-    const { prompt, temperature = 0.7, maxTokens = 300 } = req.body;
+    const { prompt, temperature = 0.7, maxTokens = 4000 } = req.body;
 
     if (!prompt) {
         return res.status(400).json({ error: 'Prompt is required' });

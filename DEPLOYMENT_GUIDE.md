@@ -5,7 +5,17 @@ Great news! Your code is now safely stored on GitHub.
 
 Now you can turn it into a live website using Vercel.
 
-## Phase 2: Go Live with Vercel
+## Phase 2: Local Development (Server Protocol)
+
+While developing locally, remember:
+*   **Frontend (HTML/JS/CSS):** Updates automatically when you refresh the page.
+*   **Backend (local_server.js, api/*.js):** **Does NOT update automatically.**
+*   **The Rule:** If you change any file in the `api/` folder or `local_server.js`, you MUST:
+    1.  Go to the terminal where the server is running.
+    2.  Press `Ctrl + C` to stop it.
+    3.  Type `node local_server.js` to start it again.
+
+## Phase 3: Go Live with Vercel
 
 1.  **Go to Vercel:** Visit [https://vercel.com](https://vercel.com) and click **"Sign Up"**.
 2.  **Connect GitHub:** Choose **"Continue with GitHub"**. It will ask for permission to see your repositories. Click **Authorize**.
