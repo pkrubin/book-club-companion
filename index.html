@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Book Club Companion</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com/3.4.1"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2.39.0/dist/umd/supabase.js"></script>
     <link
         href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;500;600&display=swap"
@@ -469,7 +469,7 @@
             </div>
 
             <!-- Modal Content Section -->
-            <div class="w-full md:w-2/3 p-5 flex flex-col">
+            <div class="w-full md:w-2/3 p-6 flex flex-col">
                 <div class="flex justify-between items-start mb-2">
                     <div>
                         <h2 id="modal-title" class="font-serif text-2xl font-bold text-stone-800 leading-tight mb-1">
@@ -482,12 +482,12 @@
                     </button>
                 </div>
 
-                <div class="flex flex-wrap gap-4 text-xs text-stone-500 mb-3 border-b border-stone-100 pb-2">
+                <div class="flex flex-wrap gap-4 text-xs text-stone-500 mb-4 border-b border-stone-100 pb-2">
                     <!-- Year removed -->
                     <span id="modal-pages"></span>
                 </div>
 
-                <div class="relative mb-3">
+                <div class="relative mb-4">
                     <div id="modal-description-container"
                         class="prose prose-stone prose-sm max-w-none line-clamp-3 overflow-hidden transition-all duration-300 leading-relaxed">
                         <div id="modal-description" class="text-stone-700"></div>
@@ -498,8 +498,8 @@
 
                 <!-- Edit Section (Only for saved books) -->
                 <div id="modal-edit-section"
-                    class="hidden bg-stone-50 rounded-xl p-3 mb-0 border border-stone-100 flex-grow flex flex-col">
-                    <div class="space-y-2 flex-grow overflow-y-auto pr-1 custom-scrollbar">
+                    class="hidden bg-stone-50 rounded-xl p-4 mb-0 border border-stone-100 flex-grow flex flex-col">
+                    <div class="space-y-3 flex-grow overflow-y-auto pr-1 custom-scrollbar">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-xs font-medium text-stone-700 mb-1">Status</label>
