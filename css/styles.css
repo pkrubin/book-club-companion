@@ -1,4 +1,11 @@
 /* Base Styles - 2025 Refresh */
+/* Explicit base font-size ensures consistent rem calculations across all environments */
+html {
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+
 body {
     background-color: #F7F6F3;
     /* Option A: Organic Paper - Warm, cozy, premium */

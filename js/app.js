@@ -1,9 +1,6 @@
-// Book Club Companion
-// Version 1.1.2 (Test Fix - UI Button Visibility)
-
 // --- Configuration ---
 const GOOGLE_API_KEY = ''; // Add your API key here if needed for public deployment, currently using implicit or restricted key
-const APP_VERSION = '1.1.2'; // Manually managed version number
+const APP_VERSION = '1.1.3'; // Font normalization fix
 // Note: In a real production app, use a proxy server to hide API keys.
 
 // --- Gemini AI Configuration ---
@@ -3979,11 +3976,6 @@ async function generateDiscussionQuestionsAI() {
         const title = book.google_data.volumeInfo.title;
         const author = book.google_data.volumeInfo.authors?.join(', ') || 'Unknown';
         const description = book.google_data.volumeInfo.description || '';
-        const validModels = [
-            'gemini-3-pro-preview',
-            'gemini-3-flash-preview',
-            'gemini-2.0-flash-exp'
-        ];
 
         const prompt = `Act as an expert literary discussion leader. Synthesize the top 15 most thought-provoking discussion questions for the book "${title}" by ${author}.
 Context: ${description.substring(0, 500)}...
@@ -4010,7 +4002,6 @@ Rules:
 
         const data = await response.json();
         let questions = data.text.trim();
-
 
         if (data.finishReason) {
             console.log(`AI Generation Finished. Reason: ${data.finishReason}`);
@@ -4539,12 +4530,6 @@ function printDiscussionGuide() {
 
         const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`;
 
-        const validModels = [
-            'gemini-3-pro-preview',
-            'gemini-3-flash-preview',
-            'gemini-2.0-flash-exp'
-        ];
-        // alert(`DEBUG: Requesting MAX TOKENS 4000. Current Len: ${questions.length}`);
         const payload = {
             contents: [{
                 parts: [
