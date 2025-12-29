@@ -1,6 +1,9 @@
+// Book Club Companion
+// Version 1.1.2 (Test Fix - UI Button Visibility)
+
 // --- Configuration ---
 const GOOGLE_API_KEY = ''; // Add your API key here if needed for public deployment, currently using implicit or restricted key
-const APP_VERSION = '1.1.1'; // Manually managed version number
+const APP_VERSION = '1.1.2'; // Manually managed version number
 // Note: In a real production app, use a proxy server to hide API keys.
 
 // --- Gemini AI Configuration ---
