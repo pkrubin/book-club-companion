@@ -34,3 +34,12 @@ Because we linked them, updating is automatic!
 1.  You (or the AI) make changes to the code on your computer.
 2.  To save them, simply ask the AI: *"Push my changes to GitHub."*
 3.  Vercel sees the change on GitHub and **automatically updates the live site** within seconds.
+
+### AI Resilience Strategy
+To ensure the AI works reliably despite "Rate Limits" on experimental models, the app uses a **Smart Fallback Chain**:
+1.  **Gemini 3.0 Pro** (Best Quality)
+2.  **Gemini 3.0 Flash** (High Speed)
+3.  **Gemini 2.0 Flash** (Experimental)
+4.  **Gemini 1.5 Flash** (Stable Backup)
+
+If one fails (fast busy signal), it instantly tries the next one. This logic is deployed to **Local, Test, and Production** environments automatically.

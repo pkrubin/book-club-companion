@@ -1,5 +1,6 @@
 // --- Configuration ---
 const GOOGLE_API_KEY = ''; // Add your API key here if needed for public deployment, currently using implicit or restricted key
+const APP_VERSION = '1.1.0'; // Manually managed version number
 // Note: In a real production app, use a proxy server to hide API keys.
 
 // --- Gemini AI Configuration ---
@@ -252,6 +253,11 @@ function initTestData() {
 
 // Ensure init is called
 document.addEventListener('DOMContentLoaded', () => {
+    // Inject Version
+    const versionEl = document.getElementById('app-version');
+    if (versionEl) versionEl.innerText = 'v' + APP_VERSION;
+
+    // Check for saved usertData();
     initTestData();
 });
 
@@ -3200,19 +3206,62 @@ function renderDashboard() {
         dashboardUpcomingList.innerHTML = laterBooks.map(book => {
             const info = book.google_data.volumeInfo;
             const bDate = new Date(book.target_date + 'T00:00:00');
-            const bDateStr = bDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-            const uniqueId = `cal - upcoming - ${book.id} `;
+            // Format Date with Year
+            const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            const bDateStr = `${months[bDate.getMonth()].toUpperCase()} ${bDate.getDate()}, ${bDate.getFullYear()}`;
+
+            const uniqueId = `cal-upcoming-${book.id}`;
             const thumbnail = info.imageLinks?.thumbnail?.replace('http:', 'https:') || 'https://via.placeholder.com/128x196?text=No+Cover';
+
+            // --- Rating Logic (Reused) ---
+            const ratingHtml = (() => {
+                if (!book.rating) return '';
+                const source = book.rating_source || 'manual';
+                const count = book.rating_count;
+                let countDisplay = '';
+                if (count) {
+                    if (count >= 1000000) countDisplay = `(${Math.round(count / 100000) / 10}M)`;
+                    else if (count >= 1000) countDisplay = `(${Math.round(count / 1000)}K)`;
+                    else countDisplay = `(${count})`;
+                }
+                let badgeClass = 'bg-stone-100 text-stone-600 border-stone-200';
+                let icon = '';
+                if (source === 'goodreads') {
+                    badgeClass = 'bg-[#f4f1ea] text-[#382110] border-[#ece9df]';
+                    icon = '<iconify-icon icon="fa6-brands:goodreads" class="mr-1"></iconify-icon>';
+                } else if (source === 'openlibrary') {
+                    badgeClass = 'bg-blue-50 text-blue-700 border-blue-100';
+                    icon = '<iconify-icon icon="fa6-solid:book-open" class="mr-1"></iconify-icon>';
+                }
+                return `<div class="mt-2 flex justify-center w-full px-1">
+                            <span class="text-[10px] px-1.5 py-0.5 rounded-full border ${badgeClass} font-medium flex items-center justify-center w-full whitespace-nowrap overflow-hidden" title="Source: ${source}">
+                            ${icon} ★ ${book.rating} <span class="ml-1 opacity-60 text-[9px]">${countDisplay}</span>
+                            </span>
+                        </div>`;
+            })();
+
+            // --- Host Logic (Reused) ---
+            const hostHtml = (() => {
+                if (book.host_name) {
+                    return `<div class="mt-1 text-center w-full"><p class="text-[10px] text-stone-500 truncate px-1">Host: ${book.host_name}</p></div>`;
+                } else {
+                    return `<div class="mt-1 flex justify-center w-full">
+                                <span class="text-[9px] px-1.5 py-0.5 rounded text-orange-700 bg-orange-100 border border-orange-200 font-medium">Host Needed</span>
+                             </div>`;
+                }
+            })();
 
             return `
         <div class="card-modern flex items-center fade-in group relative">
-                    <div class="book-frame-modern w-24 border-r border-stone-200 cursor-pointer" onclick="openModal(allSavedBooks.find(b => b.id === ${book.id}).google_data, allSavedBooks.find(b => b.id === ${book.id}))">
-                        <img src="${thumbnail}" alt="${info.title}" class="book-cover-shadow h-auto max-h-full object-contain shadow-sm" onerror="this.onerror=null; this.src='https://via.placeholder.com/128x196?text=No+Cover'">
+                    <div class="book-frame-modern w-28 border-r border-stone-200 cursor-pointer self-stretch flex flex-col items-center py-2 bg-stone-50/30" onclick="openModal(allSavedBooks.find(b => b.id === ${book.id}).google_data, allSavedBooks.find(b => b.id === ${book.id}))">
+                        <img src="${thumbnail}" alt="${info.title}" class="book-cover-shadow w-20 h-auto object-contain shadow-md" onerror="this.onerror=null; this.src='https://via.placeholder.com/128x196?text=No+Cover'">
+                        ${ratingHtml}
+                        ${hostHtml}
                     </div>
 
         <div class="px-5 py-4 flex flex-col justify-center min-w-0 flex-grow">
             <div onclick="openModal(allSavedBooks.find(b => b.id === ${book.id}).google_data, allSavedBooks.find(b => b.id === ${book.id}))" class="cursor-pointer pt-1">
-                <p class="text-[10px] font-bold text-rose-600 mb-1.5 uppercase tracking-wide leading-none">${bDateStr}</p>
+                <p class="text-[10px] font-bold text-indigo-600 mb-1.5 uppercase tracking-wider leading-none">${bDateStr}</p>
                 <h3 class="font-bold text-stone-900 text-sm leading-snug mb-1 truncate">${info.title}</h3>
                 <p class="text-xs text-stone-500 truncate mb-3">${info.authors ? info.authors[0] : 'Unknown'}</p>
             </div>
@@ -3318,71 +3367,81 @@ function renderSavedBooks(books) {
         // Status Badge
         const statusHtml = `<span class="text-[10px] px-2 py-0.5 rounded-full border ${statusClass} font-medium"> ${status}</span>`;
 
+        // Logic: Prepare Rating HTML (reusable)
+        const ratingHtml = (() => {
+            if (!row.rating) return '';
+            const source = row.rating_source || 'manual';
+            const count = row.rating_count;
+            let countDisplay = '';
+            if (count) {
+                if (count >= 1000000) countDisplay = `(${Math.round(count / 100000) / 10}M)`;
+                else if (count >= 1000) countDisplay = `(${Math.round(count / 1000)}K)`;
+                else countDisplay = `(${count})`;
+            }
+            let badgeClass = 'bg-stone-100 text-stone-600 border-stone-200';
+            let icon = '';
+            if (source === 'goodreads') {
+                badgeClass = 'bg-[#f4f1ea] text-[#382110] border-[#ece9df]';
+                icon = '<iconify-icon icon="fa6-brands:goodreads" class="mr-1"></iconify-icon>';
+            } else if (source === 'openlibrary') {
+                badgeClass = 'bg-blue-50 text-blue-700 border-blue-100';
+                icon = '<iconify-icon icon="fa6-solid:book-open" class="mr-1"></iconify-icon>';
+            }
+            return `<div class="mt-2 flex justify-center w-full px-1">
+                        <span class="text-[10px] px-1.5 py-0.5 rounded-full border ${badgeClass} font-medium flex items-center justify-center w-full whitespace-nowrap overflow-hidden" title="Source: ${source}">
+                        ${icon} ★ ${row.rating} <span class="ml-1 opacity-60 text-[9px]">${countDisplay}</span>
+                        </span>
+                    </div>`;
+        })();
+
+        // Logic: Prepare Host Badge (Left Column)
+        const hostHtml = (() => {
+            // Only show for Scheduled or History
+            if (status !== 'Scheduled' && status !== 'History') return '';
+
+            if (row.host_name) {
+                return `<div class="mt-1 text-center w-full"><p class="text-[10px] text-stone-500 truncate px-1">Host: ${row.host_name}</p></div>`;
+            } else if (status === 'Scheduled') {
+                // Call to Action
+                return `<div class="mt-1 flex justify-center w-full">
+                            <span class="text-[9px] px-1.5 py-0.5 rounded text-orange-700 bg-orange-100 border border-orange-200 font-medium">Host Needed</span>
+                         </div>`;
+            }
+            return '';
+        })();
+
+        // Logic: Prepare Date Eyebrow (Right Column)
+        const dateHtml = (() => {
+            if (!row.target_date) return '';
+            const [y, m, d] = row.target_date.split('-').map(Number);
+            const dateObj = new Date(y, m - 1, d);
+            const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            const monthName = months[dateObj.getMonth()].toUpperCase(); // Uppercase for eyebrow
+            const dayStr = String(dateObj.getDate());
+            const yearStr = dateObj.getFullYear();
+            const formattedDate = `${monthName} ${dayStr}, ${yearStr}`;
+
+            return `<p class="text-[10px] tracking-wider font-bold text-indigo-600 mb-1 uppercase">${formattedDate}</p>`;
+        })();
+
         card.innerHTML = `
-                <div class="book-frame-modern w-20 md:w-24 border-r border-stone-200 self-stretch">
-                    <img src="${thumbnail}" alt="${row.title}" class="book-cover-shadow w-full h-auto max-h-full object-contain shadow-sm" onerror="this.onerror=null; this.src='https://via.placeholder.com/128x192?text=No+Cover'">
+                <div class="book-frame-modern w-28 border-r border-stone-200 self-stretch flex flex-col items-center py-2 bg-stone-50/30">
+                    <img src="${thumbnail}" alt="${row.title}" class="book-cover-shadow w-20 h-auto object-contain shadow-md" onerror="this.onerror=null; this.src='https://via.placeholder.com/128x192?text=No+Cover'">
+                    ${ratingHtml}
+                    ${hostHtml}
                 </div>
 
         <div class="p-3 md:p-4 flex flex-col justify-center min-w-0 flex-grow">
+            ${dateHtml}
             <div class="flex justify-between items-start">
                 <h3 class="font-serif font-bold text-base text-stone-800 leading-tight mb-1 truncate" title="${row.title}">${row.title}</h3>
             </div>
-            <p class="text-xs text-stone-600 mb-1 truncate">${authors}</p>
+            <p class="text-xs text-stone-600 mb-2 truncate">${authors}</p>
 
             <div class="flex flex-wrap gap-2 mb-2 items-center">
                 ${statusHtml}
-                ${(() => {
-                if (!row.rating) return '';
-                const source = row.rating_source || 'manual';
-                const count = row.rating_count;
-
-                // Format count
-                let countDisplay = '';
-                if (count) {
-                    if (count >= 1000000) countDisplay = `(${Math.round(count / 100000) / 10}M)`;
-                    else if (count >= 1000) countDisplay = `(${Math.round(count / 1000)}K)`;
-                    else countDisplay = `(${count})`;
-                }
-
-                // Source Styling
-                let badgeClass = 'bg-stone-100 text-stone-600 border-stone-200';
-                let icon = '';
-
-                if (source === 'goodreads') {
-                    badgeClass = 'bg-[#f4f1ea] text-[#382110] border-[#ece9df]';
-                    icon = '<iconify-icon icon="fa6-brands:goodreads" class="mr-1"></iconify-icon>';
-                } else if (source === 'openlibrary') {
-                    badgeClass = 'bg-blue-50 text-blue-700 border-blue-100';
-                    icon = '<iconify-icon icon="fa6-solid:book-open" class="mr-1"></iconify-icon>';
-                }
-
-                return `<span class="text-[10px] px-2 py-0.5 rounded-full border ${badgeClass} font-medium flex items-center group/rating" title="Source: ${source}">
-                        ${icon} ★ ${row.rating} <span class="ml-1 opacity-60 text-[9px]">${countDisplay}</span>
-                    </span>`;
-            })()}
-
-                ${(() => {
-                if (row.target_date) {
-                    // Parse "YYYY-MM-DD" safely
-                    const [y, m, d] = row.target_date.split('-').map(Number);
-                    const dateObj = new Date(y, m - 1, d);
-
-                    // Format: "Mar 04, 2026"
-                    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-                    const monthName = months[dateObj.getMonth()];
-                    const dayStr = String(dateObj.getDate()).padStart(2, '0');
-                    const yearStr = dateObj.getFullYear();
-                    const formattedDate = `${monthName} ${dayStr}, ${yearStr}`;
-
-                    return `<span class="text-[10px] text-stone-500 flex items-center gap-1 border border-stone-100 px-2 py-0.5 rounded-full bg-stone-50" title="Scheduled Date">
-                            <iconify-icon icon="solar:calendar-bold" class="text-stone-400"></iconify-icon> ${formattedDate}
-                        </span>`;
-                }
-                return '';
-            })()}
             </div>
             
-            ${row.host_name ? `<p class="text-[10px] text-stone-500 mb-1">Host: ${row.host_name}</p>` : ''}
             ${tagsHtml}
             
             <div class="mt-auto pt-2">
