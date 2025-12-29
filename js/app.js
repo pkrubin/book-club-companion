@@ -3981,7 +3981,6 @@ async function generateDiscussionQuestionsAI() {
             'gemini-3-flash-preview',
             'gemini-2.0-flash-exp'
         ];
-        alert(`DEBUG: Requesting MAX TOKENS 4000. Current Len: ${questions ? questions.length : 0}`);
 
         const prompt = `Act as an expert literary discussion leader. Synthesize the top 15 most thought-provoking discussion questions for the book "${title}" by ${author}.
 Context: ${description.substring(0, 500)}...
@@ -4009,7 +4008,6 @@ Rules:
         const data = await response.json();
         let questions = data.text.trim();
 
-        alert(`DEBUG: Finished. Reason: ${data.finishReason || 'Unknown'}. Length: ${questions.length}`);
 
         if (data.finishReason) {
             console.log(`AI Generation Finished. Reason: ${data.finishReason}`);
