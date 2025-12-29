@@ -379,3 +379,38 @@ Notes: [Any additional context]
 #### [Dec 29] Token Economics
 *   **Defaults are Dangerous:** Most APIs default to minimal tokens (e.g. 300). For long-form content (Discussion Guides), **always explicitly set `maxTokens: 4000`** (or higher) in the request.
 *   **Truncation:** If the text stops mid-sentence, it is *always* `maxTokens`. Check the backend default first.
+
+#### [Dec 29] NEVER Push to Production Without Testing
+*   **Critical Failure:** AI pushed directly to `main` (Production) without verifying on `test` branch first, violating explicit user instructions.
+*   **The Rule:** ALWAYS deploy to `test` branch first, verify the site works, THEN merge to `main`.
+*   **Workflow:**
+    1. `git checkout test && git merge main && git push origin test`
+    2. Verify on TEST site
+    3. Only then: `git checkout main && git merge test && git push origin main`
+*   **Version Numbers:** ALWAYS bump version before deployment. The footer version confirms deployment success.
+
+#### [Dec 29] Browser Zoom Masks Layout Bugs
+*   **The Problem:** Modal layout looked fine on localhost (90% zoom) but button was cut off on Vercel (100% zoom).
+*   **Root Cause:** Developer's browser was accidentally set to 90% zoom on localhost domain.
+*   **The Fix:** Always test layouts at 100% zoom (`Cmd+0` on Mac).
+*   **Prevention:** Design with tighter margins to ensure content fits at 100% zoom.
+
+#### [Dec 29] Pin CDN Dependencies
+*   **The Problem:** Unpinned `cdn.tailwindcss.com` could serve different versions to different environments.
+*   **The Fix:** Use versioned URLs: `cdn.tailwindcss.com/3.4.1`
+*   **Rule:** All CDN dependencies must be pinned to specific versions.
+
+---
+
+## For Future AI Sessions
+
+> [!IMPORTANT]
+> **Read DEPLOYMENT_GUIDE.md before making ANY deployment.**
+
+### Critical Rules for AI Assistants:
+1. **TEST FIRST:** Never push to `main` without verifying on `test` branch first
+2. **VERSION ALWAYS:** Bump version in `app.js` AND `package.json` before any deployment
+3. **RESTART SERVER:** After backend changes, restart `local_server.js`
+4. **100% ZOOM:** Test layouts at 100% browser zoom, not 90%
+5. **LISTEN TO USER:** If user says "push to test", push to TEST - not production
+6. **SLOW DOWN:** When in doubt, ask. Don't assume.
