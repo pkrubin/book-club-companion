@@ -1,6 +1,6 @@
 // --- Configuration ---
 const GOOGLE_API_KEY = ''; // Add your API key here if needed for public deployment, currently using implicit or restricted key
-const APP_VERSION = '1.1.5'; // Pin Tailwind CDN version (root cause fix)
+const APP_VERSION = '1.1.6'; // Modal spacing for 100% zoom
 // Note: In a real production app, use a proxy server to hide API keys.
 
 // --- Gemini AI Configuration ---
