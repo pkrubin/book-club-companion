@@ -1,6 +1,6 @@
 // --- Configuration ---
 const GOOGLE_API_KEY = ''; // Add your API key here if needed for public deployment, currently using implicit or restricted key
-const APP_VERSION = '1.1.6'; // Modal spacing for 100% zoom
+const APP_VERSION = '1.1.7'; // Fix See More button visibility
 // Note: In a real production app, use a proxy server to hide API keys.
 
 // --- Gemini AI Configuration ---
@@ -1233,9 +1233,12 @@ function openModal(book, savedData = null) {
     modal.classList.remove('hidden');
     document.body.style.overflow = 'hidden'; // Prevent background scrolling
 
-    // Check for description overflow
+    // Check for description overflow - show "See more" if text is truncated OR sufficiently long
     setTimeout(() => {
-        if (modalDescriptionContainer.scrollHeight > modalDescriptionContainer.clientHeight) {
+        const descriptionText = modalDescription.textContent || '';
+        const isOverflowing = modalDescriptionContainer.scrollHeight > modalDescriptionContainer.clientHeight;
+        const isLongEnough = descriptionText.length > 100; // Show for descriptions over 100 chars (roughly 2 lines)
+        if (isOverflowing || isLongEnough) {
             seeMoreBtn.classList.remove('hidden');
         }
     }, 0);
