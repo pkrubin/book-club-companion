@@ -276,6 +276,43 @@ Notes: [Any additional context]
 - Better approach: weighted scoring, percentage thresholds, fuzzy matching.
 - **Action:** Document known limitations. Iterate based on real test failures.
 
+### Rule 8: Logging & Audit Trail
+**Silent failures are the worst bugs. Make errors visible.**
+
+#### Global Error Handler
+Add at the TOP of `app.js` to catch unhandled errors:
+```javascript
+window.onerror = function(msg, url, lineNo, columnNo, error) {
+    console.error('GLOBAL ERROR:', msg, 'at', url, ':', lineNo);
+    return false;
+};
+```
+
+#### Try-Catch Critical Sections
+Wrap initialization code to prevent cascade failures:
+```javascript
+try {
+    initializeFontSizeMenu();
+} catch (e) {
+    console.error('Font menu init failed:', e);
+    // App continues even if non-critical feature fails
+}
+```
+
+#### What to Log
+- ✅ Function entry/exit for critical flows
+- ✅ API call start/end with response status
+- ✅ User actions (clicks, form submissions)
+- ✅ State changes (logged in, book saved)
+- ❌ Don't log every DOM update (too noisy)
+- ❌ Don't log sensitive data (passwords, tokens)
+
+#### Debugging Workflow
+1. User reports "nothing happens"
+2. Ask user to open DevTools Console (Cmd+Option+J on Mac)
+3. Ask for screenshot or paste of console errors
+4. Find last successful log → error is right after that
+
 ### Import Matching: Known Issues (Dec 24)
 - Junk filter works: summaries, adaptations, pre-1900 filtered
 - Title relevance scoring works: best match appears first  

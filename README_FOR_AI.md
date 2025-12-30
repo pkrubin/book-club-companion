@@ -39,10 +39,15 @@
 
 ### Golden Rule of Development
 **Safety first. Small incremental changes. One thing at a time.**
+- DEV = localhost:8080 (where you make and test changes)
 - Make ONE small change
-- Test it immediately
+- Test it immediately on DEV
 - Only then proceed to the next change
 - Never make massive changes all at once
+- Log significant changes in `CHANGELOG.md`
+
+**Detailed best practices** (silent failure avoidance, no hardcoding, logging, etc.):
+→ See `project_guidelines.md` "Development Protocols & Lessons Learned" section
 
 ### Golden Rule of Testing
 **Human logs in, AI tests afterward. Localhost first, then promote.**
