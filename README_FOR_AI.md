@@ -80,19 +80,24 @@ When user says... | They mean... | URL
 git checkout test   # If not already on test
 ```
 
-**Step 1-4: Local Development (on test branch)**
+**Step 1-5: Local Development (on test branch)**
 1. Make changes locally
 2. Test on localhost:8080 (ensure server is running!)
-3. Bump version in BOTH `js/app.js` (line 3) AND `package.json`
-4. Commit: `git add . && git commit -m "v1.X.X: Description"`
-
-**Step 5: Deploy to TEST site**
-```bash
-git push origin test
-```
+3. **⚠️ BUMP VERSION** (REQUIRED before ANY deployment):
+   - Edit `js/app.js` line 3: `const APP_VERSION = 'X.X.X'`
+   - Edit `package.json`: `"version": "X.X.X"`
+4. Commit with version in message:
+   ```bash
+   git add . && git commit -m "v1.X.X: Description"
+   ```
+5. Push to TEST:
+   ```bash
+   git push origin test
+   ```
 
 **Step 6: STOP AND WAIT**
-- Tell user: "Deployed to TEST. Please verify."
+- Tell user: "Deployed to TEST (v1.X.X). Please verify."
+- User checks footer version matches
 - Wait for user confirmation
 - DO NOT proceed without explicit approval
 
@@ -103,6 +108,8 @@ git merge test
 git push origin main
 git checkout test   # Return to test for next work
 ```
+
+> ⚠️ **If footer shows old version**, deployment failed. Debug before proceeding.
 
 ---
 
@@ -116,17 +123,6 @@ git checkout test   # Return to test for next work
 5. THEN execute
 
 **Massive changes = NEVER. Small incremental changes = ALWAYS.**
-
----
-
-## Version Increment Checklist
-
-**BEFORE every deployment:**
-- [ ] Bump version in `js/app.js`: `const APP_VERSION = 'X.X.X'`
-- [ ] Bump version in `package.json`: `"version": "X.X.X"`
-- [ ] Commit with version: `v1.X.X: Description`
-
-The footer version confirms deployment success.
 
 ---
 
