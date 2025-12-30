@@ -1,6 +1,6 @@
 // --- Configuration ---
 const GOOGLE_API_KEY = ''; // Add your API key here if needed for public deployment, currently using implicit or restricted key
-const APP_VERSION = '1.6.4'; // Fix: Goodreads rating badge HTML rendering
+const APP_VERSION = '1.6.5'; // Fix: Discussion Guide print filename format
 // Note: In a real production app, use a proxy server to hide API keys.
 
 // --- Gemini AI Configuration ---
@@ -4239,7 +4239,7 @@ function printDiscussionGuide() {
     printWindow.document.write(`
         <html>
         <head>
-            <title>Discussion Guide: ${title}</title>
+            <title>${title}_Discussion Guide</title>
             <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
             <style>
                 @page { 
