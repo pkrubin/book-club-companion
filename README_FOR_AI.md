@@ -63,15 +63,16 @@ When user says... | They mean... | URL
 ### The Flow: localhost → test → prod
 
 ```
-[LOCALHOST] → [TEST] → [PROD]
-   Code        Staging   Live
-   changes     verify    deploy
+[LOCALHOST]    →    [TEST]    →    [PROD]
+  Develop           Verify         Deploy
+  & test            on remote      to live
+  locally           site
 ```
 
 ### Git Branches (IMPORTANT)
 - **`main`** branch = PRODUCTION (live site) - **PROTECTED, never work here directly**
-- **`test`** branch = Development + staging
-- **ALWAYS work on `test` branch, NEVER on `main`**
+- **`test`** branch = Development branch (pushes to TEST site for verification)
+- **ALWAYS work on `test` branch locally, NEVER on `main`**
 
 ### Deployment Workflow (MANDATORY)
 
@@ -80,9 +81,12 @@ When user says... | They mean... | URL
 git checkout test   # If not already on test
 ```
 
-**Step 1-5: Local Development (on test branch)**
-1. Make changes locally
+**Step 1-2: Develop & Test LOCALLY First**
+1. Make code changes locally
 2. Test on localhost:8080 (ensure server is running!)
+3. **Repeat steps 1-2 until localhost works correctly**
+
+**Step 3-5: When Localhost is Good → Push to TEST**
 3. **⚠️ BUMP VERSION** (REQUIRED before ANY deployment):
    - Edit `js/app.js` line 3: `const APP_VERSION = 'X.X.X'`
    - Edit `package.json`: `"version": "X.X.X"`
@@ -90,7 +94,7 @@ git checkout test   # If not already on test
    ```bash
    git add . && git commit -m "v1.X.X: Description"
    ```
-5. Push to TEST:
+5. Push to TEST site:
    ```bash
    git push origin test
    ```
