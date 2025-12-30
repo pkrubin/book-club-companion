@@ -35,9 +35,35 @@
 
 ---
 
+## ⭐ The Three Golden Rules
+
+### Golden Rule of Development
+**Safety first. Small incremental changes. One thing at a time.**
+- Make ONE small change
+- Test it immediately
+- Only then proceed to the next change
+- Never make massive changes all at once
+
+### Golden Rule of Testing
+**Human logs in, AI tests afterward. Localhost first, then promote.**
+- Test on localhost FIRST
+- Only push to TEST when localhost works
+- User verifies TEST before production
+- Never skip verification steps
+
+### Golden Rule of Deployment
+**DEV → TEST → PROD. Never skip a step. Always get approval.**
+- DEV = localhost:8080 (local development)
+- TEST = `test` branch pushed to GitHub (staging site)
+- PROD = `main` branch pushed to GitHub (live site)
+- Work on `test` branch, never `main`
+- Get explicit user approval before PROD
+
+---
+
 ## How We Work Together
 
-**The Golden Rule: Human logs in, AI tests afterward.**
+**The Testing Golden Rule: Human logs in, AI tests afterward.**
 
 - You CANNOT log in (you don't have credentials)
 - You CANNOT navigate to new URLs (breaks session)
