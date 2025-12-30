@@ -213,9 +213,19 @@ project/
 
 ## Git Protocol
 
-- Always run `git branch` before any git operation
+- **Default branch:** `test` (for development)
+- **Protected branch:** `main` (production only)
+- Always run `git branch` before any git operation to confirm you're on `test`
 - Project root: `/Users/pamrubin/Desktop/book-club/`
 - Always use ABSOLUTE paths in tool calls
+
+**Quick reference:**
+```bash
+git checkout test        # Switch to dev branch
+git branch               # Verify current branch
+git push origin test     # Deploy to TEST site
+git checkout main && git merge test && git push origin main  # Deploy to PROD (after approval)
+```
 
 ---
 
