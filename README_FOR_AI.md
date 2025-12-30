@@ -84,7 +84,7 @@ git checkout test   # If not already on test
 **Step 1-2: Develop & Test LOCALLY First**
 1. Make code changes locally
 2. Test on localhost:8080 (ensure server is running!)
-3. **Repeat steps 1-2 until localhost works correctly**
+   - Repeat until localhost works correctly
 
 **Step 3-5: When Localhost is Good → Push to TEST**
 3. **⚠️ BUMP VERSION** (REQUIRED before ANY deployment):
@@ -100,7 +100,8 @@ git checkout test   # If not already on test
    ```
 
 **Step 6: STOP AND WAIT**
-- Tell user: "Deployed to TEST (v1.X.X). Please verify."
+- Tell user: "Deployed to TEST (v1.X.X). Please verify at [TEST URL]."
+- TEST URL: `book-club-companion-git-test-pam-rubins-projects.vercel.app`
 - User checks footer version matches
 - Wait for user confirmation
 - DO NOT proceed without explicit approval
@@ -186,7 +187,13 @@ Before any large refactor:
 4. You're about to change more than 50 lines
 5. Human says "wait", "stop", "not yet"
 
-**DON'T keep trying. ASK.**
+**HOW to stop gracefully:**
+- Finish current atomic operation (don't leave partial edits)
+- Commit any completed work to avoid losing progress
+- Summarize current state: "I've done X, Y is pending"
+- Ask for direction before continuing
+
+**DON'T keep trying. DON'T leave things half-done. ASK.**
 
 ---
 
