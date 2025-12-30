@@ -1,6 +1,6 @@
 // --- Configuration ---
 const GOOGLE_API_KEY = ''; // Add your API key here if needed for public deployment, currently using implicit or restricted key
-const APP_VERSION = '1.1.8'; // Modal scroll and spacing polish
+const APP_VERSION = '1.6.3'; // Refinement: Logo mapping & Favicon crop
 // Note: In a real production app, use a proxy server to hide API keys.
 
 // --- Gemini AI Configuration ---
@@ -78,7 +78,7 @@ function exportScheduleToCSV() {
         const date = book.target_date || '';
         const host = (book.host_name || '').replace(/,/g, '');
 
-        csvContent += `${title},${author},${date},${host}\n`;
+        csvContent += `${title},${author},${date},${host} \n`;
     });
 
     // 4. Trigger Download
@@ -308,10 +308,10 @@ function renderRatingBadges(book, elementId) {
             icon = '<iconify-icon icon="fa6-solid:book-open" class="mr-1"></iconify-icon>';
         }
 
-        el.innerHTML = `<span class="px-3 py-1 rounded-full border ${badgeClass} font-medium flex items-center justify-center gap-1.5 shadow-sm text-sm" title="Source: ${source}">
-            ${icon}
+        el.innerHTML = `< span class="px-3 py-1 rounded-full border ${badgeClass} font-medium flex items-center justify-center gap-1.5 shadow-sm text-sm" title = "Source: ${source}" >
+    ${icon}
             ★ ${book.rating} <span class="opacity-70 text-xs ml-0.5">${countDisplay}</span>
-        </span>`;
+        </span > `;
         el.classList.remove('hidden');
     }
 }
@@ -327,7 +327,7 @@ async function refreshBookMetadata(book) {
         // 1. Ensure we have Google Data (needed for ISBN lookup for rating)
         let gData = book.google_data;
         if (!gData) {
-            const results = await smartBookSearch(`${book.title} ${book.author}`);
+            const results = await smartBookSearch(`${book.title} ${book.author} `);
             if (results && results.length > 0) gData = results[0];
         }
 
