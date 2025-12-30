@@ -1,6 +1,6 @@
 // --- Configuration ---
 const GOOGLE_API_KEY = ''; // Add your API key here if needed for public deployment, currently using implicit or restricted key
-const APP_VERSION = '1.6.5'; // Fix: Discussion Guide print filename format
+const APP_VERSION = '1.6.6'; // Add logo to Discussion Guide print layout
 // Note: In a real production app, use a proxy server to hide API keys.
 
 // --- Gemini AI Configuration ---
@@ -4268,7 +4268,14 @@ function printDiscussionGuide() {
                     text-transform: uppercase; 
                     letter-spacing: 2px; 
                     color: #be123c; /* Rose-700 */
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
                     margin-bottom: 12px; 
+                }
+                .brand-logo {
+                    height: 40px;
+                    width: auto;
                 }
                 h1 { 
                     font-family: 'Playfair Display', serif; 
@@ -4313,7 +4320,10 @@ function printDiscussionGuide() {
         </head>
         <body>
             <div class="header">
-                <div class="brand">Book Club Companion</div>
+                <div class="brand">
+                    <img src="${window.location.origin}/images/logo-icon.png" alt="Book Club Companion" class="brand-logo">
+                    Book Club Companion
+                </div>
                 <h1>${title}</h1>
             </div>
             
