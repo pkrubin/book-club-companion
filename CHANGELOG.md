@@ -4,6 +4,25 @@ All notable changes to the Book Club Companion project will be documented in thi
 
 ---
 
+## 2025-12-30 - Logo Integration & Favicon Refinement (v1.6.3)
+
+**Goal:** Integrate the new icon-only logo and ensure proper alignment and scaling across all platforms.
+
+**Changes:**
+
+| File | Change |
+|------|--------|
+| `index.html` | Integrated the new icon-only logo (`logo-icon.png`) for login and navigation. |
+| `index.html` | Scaled navigation logo to `w-16` and login logo to `w-40`. |
+| `index.html` | Pointed favicon to optimized `favicon-32.png`. |
+| `js/app.js` | Bumped version to `v1.6.3`. |
+| `package.json` | Bumped version to `1.6.3`. |
+| `images/` | Generated `favicon-32.png` via `sips` with a tight content crop for better tab alignment. |
+
+**Backup:** `Backups/20251230_164200_logo_refinement/`
+
+---
+
 ### [Dec 26] Data Backup System (Phase 1)
 *   **New:** "Backup" button in Dashboard header.
 *   **Feature:** Full JSON export of library (Books + Metadata).

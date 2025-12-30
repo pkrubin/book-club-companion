@@ -437,6 +437,12 @@ try {
 *   **The Fix:** Use versioned URLs: `cdn.tailwindcss.com/3.4.1`
 *   **Rule:** All CDN dependencies must be pinned to specific versions.
 
+#### [Dec 30] Logo Integration & Favicon Alignment
+*   **Asset Density vs. Container Scaling**: High-resolution source images (e.g., 2048px) can cause "intrinsic" layout pushing in local environments before CSS constraints apply. Always use `object-contain` and specific `max-h`/`max-w` to prevent layout jumps.
+*   **The "Tiny Favicon" Trap**: Source logos often have massive internal whitespace padding that isn't visible on transparency but shrinks the icon content in small spaces like browser tabs. **Mandatory Action**: Use `sips` or `Pillow` to tight-crop the image to its content bounding box before generating the favicon.
+*   **Inexplicable Localhost Bugs**: If the layout looks and measures "right" in code but "wrong" in the browser (e.g., global massive scaling), suspect browser tab corruption/stale state. **The Fix**: Close and reopen the tab/browser before deeply debugging CSS.
+*   **Version Parity**: Always synchronize the version number in BOTH `js/app.js` and `package.json`. The footer version is the only definitive way to confirm that a remote deployment (Vercel) actually picked up the latest code.
+
 ---
 
 ## For Future AI Sessions

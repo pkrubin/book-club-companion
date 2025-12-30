@@ -1,6 +1,6 @@
 // --- Configuration ---
 const GOOGLE_API_KEY = ''; // Add your API key here if needed for public deployment, currently using implicit or restricted key
-const APP_VERSION = '1.6.3'; // Refinement: Logo mapping & Favicon crop
+const APP_VERSION = '1.6.4'; // Fix: Goodreads rating badge HTML rendering
 // Note: In a real production app, use a proxy server to hide API keys.
 
 // --- Gemini AI Configuration ---
@@ -308,10 +308,9 @@ function renderRatingBadges(book, elementId) {
             icon = '<iconify-icon icon="fa6-solid:book-open" class="mr-1"></iconify-icon>';
         }
 
-        el.innerHTML = `< span class="px-3 py-1 rounded-full border ${badgeClass} font-medium flex items-center justify-center gap-1.5 shadow-sm text-sm" title = "Source: ${source}" >
-    ${icon}
-            ★ ${book.rating} <span class="opacity-70 text-xs ml-0.5">${countDisplay}</span>
-        </span > `;
+        el.innerHTML = `<span class="px-3 py-1 rounded-full border ${badgeClass} font-medium flex items-center justify-center gap-1.5 shadow-sm text-sm" title="Source: ${source}">
+            ${icon} ★ ${book.rating} <span class="opacity-70 text-xs ml-0.5">${countDisplay}</span>
+        </span>`;
         el.classList.remove('hidden');
     }
 }
