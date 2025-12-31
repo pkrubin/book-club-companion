@@ -1,6 +1,6 @@
 // --- Configuration ---
 const GOOGLE_API_KEY = ''; // Add your API key here if needed for public deployment, currently using implicit or restricted key
-const APP_VERSION = '1.7.0'; // Phase 1: Invite codes, User roles, UI Gating, Audit Trail
+const APP_VERSION = '1.7.1'; // Logout robustness and UI optimization final fix
 // Note: In a real production app, use a proxy server to hide API keys.
 
 // --- Gemini AI Configuration ---
@@ -197,6 +197,7 @@ let isInitialLoad = true;
 
 function updateUI() {
     if (user) {
+        document.body.classList.add('logged-in');
         authSection.classList.add('hidden');
         appSection.classList.remove('hidden');
         navActions.classList.remove('hidden');
@@ -216,6 +217,7 @@ function updateUI() {
 
         fetchSavedBooks(); // Load books then render dashboard
     } else {
+        document.body.classList.remove('logged-in');
         authSection.classList.remove('hidden');
         appSection.classList.add('hidden');
         navActions.classList.add('hidden');
@@ -371,7 +373,16 @@ if (signupForm) {
 }
 
 logoutBtn.addEventListener('click', async () => {
-    await supabase.auth.signOut();
+    try {
+        console.log('Logging out...');
+        const { error } = await supabase.auth.signOut();
+        if (error) throw error;
+        console.log('Sign out request successful');
+    } catch (err) {
+        console.error('Error during sign out:', err);
+        // Fallback: force a reload if sign out hangs or fails
+        window.location.reload();
+    }
 });
 
 // --- Font Size Logic ---
@@ -626,18 +637,28 @@ if (filterYearBtn && filterYearMenu) {
 
 // Ensure login persists
 supabase.auth.onAuthStateChange(async (event, session) => {
-    if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
-        user = session?.user;
-        if (user) {
-            updateUI(); // load UI immediately
-            fetchUserRole().then(() => {
-                applyRoleBasedUI(); // Refresh UI with specific role gating
-            });
-        }
-    } else if (event === 'SIGNED_OUT') {
+    console.log('Auth State Change:', event, session ? 'Session active' : 'No session');
+
+    if (session?.user) {
+        user = session.user;
+        updateUI(); // load UI immediately
+        fetchUserRole().then(() => {
+            applyRoleBasedUI(); // Refresh UI with specific role gating
+        });
+    } else {
+        // No session - treat as signed out
+        console.log('No session detected, resetting to guest state');
         user = null;
         currentUserRole = null;
-        window.location.reload();
+
+        // Only reload if we were previously logged in (to avoid infinite reload loops)
+        const wasLoggedIn = document.body.classList.contains('logged-in');
+        if (wasLoggedIn || event === 'SIGNED_OUT') {
+            console.log('Forcing reload for clean state');
+            window.location.reload();
+        } else {
+            updateUI(); // Ensure guest UI is shown
+        }
     }
 });
 
