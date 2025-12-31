@@ -1,6 +1,6 @@
 // --- Configuration ---
 const GOOGLE_API_KEY = ''; // Add your API key here if needed for public deployment, currently using implicit or restricted key
-const APP_VERSION = '1.7.1'; // Logout robustness and UI optimization final fix
+const APP_VERSION = '1.7.2'; // Logout robustness + Clean up obsolete refs
 // Note: In a real production app, use a proxy server to hide API keys.
 
 // --- Gemini AI Configuration ---
