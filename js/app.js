@@ -1,6 +1,6 @@
 // --- Configuration ---
 const GOOGLE_API_KEY = ''; // Add your API key here if needed for public deployment, currently using implicit or restricted key
-const APP_VERSION = '1.6.7'; // Unsaved changes modal, notes fix, WorldCat link
+const APP_VERSION = '1.7.0'; // Phase 1: Invite codes, User roles, UI Gating, Audit Trail
 // Note: In a real production app, use a proxy server to hide API keys.
 
 // --- Gemini AI Configuration ---
@@ -20,6 +20,7 @@ let allSavedBooks = []; // Store full list for client-side filtering
 // Font Size State
 const fontSizes = ['90%', '100%', '110%', '125%'];
 let currentFontSizeIndex = 1; // Default to 100%
+let currentUserRole = null; // 'admin' or null (member)
 
 // --- DOM Elements ---
 const authSection = document.getElementById('auth-section');
@@ -141,6 +142,7 @@ const editHost = document.getElementById('edit-host');
 const editNotes = document.getElementById('edit-notes');
 const modalUpdateBtn = document.getElementById('modal-update-btn');
 const modalDeleteBtn = document.getElementById('modal-delete-btn');
+const modalAuditInfo = document.getElementById('modal-audit-info');
 
 // Error Modal Elements
 const errorModal = document.getElementById('error-modal');
@@ -202,6 +204,9 @@ function updateUI() {
         // Init Font Size
         initFontSize();
 
+        // Apply role-based UI restrictions
+        applyRoleBasedUI();
+
         // Only default to dashboard on initial load or fresh login
         // If we are already viewing a section (e.g. library), don't jump
         if (isInitialLoad || appSection.classList.contains('hidden')) {
@@ -218,7 +223,152 @@ function updateUI() {
     }
 }
 
+// --- Role-Based UI Gating ---
+function applyRoleBasedUI() {
+    const isAdmin = currentUserRole === 'admin';
+
+    // Hide Import button for members
+    const importBtn = document.getElementById('nav-import-btn');
+    if (importBtn) {
+        importBtn.style.display = isAdmin ? '' : 'none';
+    }
+
+    // Hide mobile Import button
+    const mobileImportBtn = document.getElementById('mobile-import-btn');
+    if (mobileImportBtn) {
+        mobileImportBtn.style.display = isAdmin ? '' : 'none';
+    }
+
+    console.log('Role-based UI applied:', isAdmin ? 'admin (full access)' : 'member (restricted)');
+}
+
 loginForm.addEventListener('submit', handleAuth);
+
+// --- Auth Tab Switching ---
+function switchAuthTab(tab) {
+    const tabLogin = document.getElementById('auth-tab-login');
+    const tabSignup = document.getElementById('auth-tab-signup');
+    const formLogin = document.getElementById('login-form');
+    const formSignup = document.getElementById('signup-form');
+
+    if (tab === 'login') {
+        // Activate login tab
+        tabLogin.classList.add('bg-white', 'shadow-sm', 'text-stone-800');
+        tabLogin.classList.remove('text-stone-500');
+        tabSignup.classList.remove('bg-white', 'shadow-sm', 'text-stone-800');
+        tabSignup.classList.add('text-stone-500');
+        // Show login form
+        formLogin.classList.remove('hidden');
+        formSignup.classList.add('hidden');
+    } else {
+        // Activate signup tab
+        tabSignup.classList.add('bg-white', 'shadow-sm', 'text-stone-800');
+        tabSignup.classList.remove('text-stone-500');
+        tabLogin.classList.remove('bg-white', 'shadow-sm', 'text-stone-800');
+        tabLogin.classList.add('text-stone-500');
+        // Show signup form
+        formSignup.classList.remove('hidden');
+        formLogin.classList.add('hidden');
+    }
+}
+
+// Make switchAuthTab available globally for onclick
+window.switchAuthTab = switchAuthTab;
+
+// --- Signup Logic ---
+const signupForm = document.getElementById('signup-form');
+
+async function handleSignup(e) {
+    e.preventDefault();
+
+    const email = document.getElementById('signup-email').value.trim();
+    const password = document.getElementById('signup-password').value;
+    const code = document.getElementById('signup-code').value.trim().toUpperCase();
+    const submitBtn = signupForm.querySelector('button[type="submit"]');
+
+    // Disable button during processing
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Creating Account...';
+
+    try {
+        // 1. Validate invite code
+        const { data: codeData, error: codeError } = await supabase
+            .from('invite_codes')
+            .select('*')
+            .eq('code', code)
+            .single();
+
+        if (codeError || !codeData) {
+            throw new Error('Invalid invite code. Please check and try again.');
+        }
+
+        // Check if code is expired
+        if (codeData.valid_until && new Date(codeData.valid_until) < new Date()) {
+            throw new Error('This invite code has expired.');
+        }
+
+        // Check if code is not yet valid
+        if (codeData.valid_from && new Date(codeData.valid_from) > new Date()) {
+            throw new Error('This invite code is not yet active.');
+        }
+
+        // Check max uses
+        if (codeData.max_uses && codeData.current_uses >= codeData.max_uses) {
+            throw new Error('This invite code has reached its usage limit.');
+        }
+
+        // 2. Create auth user
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+            email,
+            password
+        });
+
+        if (authError) {
+            throw new Error(authError.message);
+        }
+
+        // 3. Create user profile (member role = null)
+        if (authData.user) {
+            const { error: profileError } = await supabase
+                .from('user_profiles')
+                .insert({
+                    id: authData.user.id,
+                    display_name: email.split('@')[0], // Use email prefix as default name
+                    role: null // Not admin
+                });
+
+            if (profileError) {
+                console.error('Profile creation error:', profileError);
+                // Don't throw - user is created, profile can be added later
+            }
+
+            // 4. Increment invite code usage
+            await supabase
+                .from('invite_codes')
+                .update({ current_uses: (codeData.current_uses || 0) + 1 })
+                .eq('id', codeData.id);
+        }
+
+        // 5. Show success message
+        showSimpleAlert('Account created! Please check your email to verify your account, then sign in.', 'success');
+
+        // Switch to login tab
+        switchAuthTab('login');
+
+        // Clear signup form
+        signupForm.reset();
+
+    } catch (error) {
+        showError(error.message);
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Create Account';
+    }
+}
+
+if (signupForm) {
+    signupForm.addEventListener('submit', handleSignup);
+}
 
 logoutBtn.addEventListener('click', async () => {
     await supabase.auth.signOut();
@@ -475,17 +625,54 @@ if (filterYearBtn && filterYearMenu) {
 }
 
 // Ensure login persists
-supabase.auth.onAuthStateChange((event, session) => {
+supabase.auth.onAuthStateChange(async (event, session) => {
     if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
         user = session?.user;
         if (user) {
-            updateUI(); // updateUI calls fetchSavedBooks internally
+            updateUI(); // load UI immediately
+            fetchUserRole().then(() => {
+                applyRoleBasedUI(); // Refresh UI with specific role gating
+            });
         }
     } else if (event === 'SIGNED_OUT') {
         user = null;
+        currentUserRole = null;
         window.location.reload();
     }
 });
+
+// Fetch user role from user_profiles
+async function fetchUserRole() {
+    if (!user) {
+        currentUserRole = null;
+        return;
+    }
+
+    try {
+        const { data, error } = await supabase
+            .from('user_profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+
+        if (error && error.code === 'PGRST116') {
+            // Profile doesn't exist, create it (member role)
+            await supabase
+                .from('user_profiles')
+                .insert({
+                    id: user.id,
+                    display_name: user.email?.split('@')[0] || 'User',
+                    role: null
+                });
+            currentUserRole = null;
+        } else if (data) {
+            currentUserRole = data.role; // 'admin' or null
+        }
+    } catch (e) {
+        console.error('Error fetching user role:', e);
+        currentUserRole = null;
+    }
+}
 
 // Check initial session (fallback if onAuthStateChange doesn't fire)
 supabase.auth.getSession().then(({ data: { session } }) => {
@@ -1063,10 +1250,15 @@ function openModal(book, savedData = null) {
 
     modalDescription.innerHTML = desc;
 
-    // Reset See More
-    modalDescriptionContainer.classList.add('line-clamp-3');
-    seeMoreBtn.textContent = 'See more';
-    seeMoreBtn.classList.add('hidden');
+    // Reset See More logic based on saved status
+    if (isSaved) {
+        modalDescriptionContainer.classList.add('line-clamp-3');
+        seeMoreBtn.textContent = 'See more';
+        seeMoreBtn.classList.add('hidden');
+    } else {
+        modalDescriptionContainer.classList.remove('line-clamp-3');
+        seeMoreBtn.classList.add('hidden'); // Always hidden for search results
+    }
 
     // Setup Research Links
     const isbnObj = info.industryIdentifiers?.find(id => id.type === 'ISBN_13') || info.industryIdentifiers?.find(id => id.type === 'ISBN_10');
@@ -1169,12 +1361,38 @@ function openModal(book, savedData = null) {
             currentModalBookId = savedData.id;
             captureModalInitialValues();
 
+            // --- Role-Based Modal Gating ---
+            const isAdmin = currentUserRole === 'admin';
+
+            // Hide Delete button for members
+            if (modalDeleteBtn) {
+                modalDeleteBtn.style.display = isAdmin ? '' : 'none';
+            }
+
+            // Disable Status dropdown for members
+            if (editStatus) {
+                editStatus.disabled = !isAdmin;
+                // Add visual indicator for members
+                const statusLabel = editStatus.previousElementSibling;
+                if (statusLabel && statusLabel.tagName === 'LABEL') {
+                    const adminOnlyBadge = statusLabel.querySelector('.admin-only-badge');
+                    if (!isAdmin && !adminOnlyBadge) {
+                        const badge = document.createElement('span');
+                        badge.className = 'admin-only-badge text-xs text-stone-400 ml-2';
+                        badge.textContent = '(admin only)';
+                        statusLabel.appendChild(badge);
+                    } else if (isAdmin && adminOnlyBadge) {
+                        adminOnlyBadge.remove();
+                    }
+                }
+            }
+
             modalUpdateBtn.onclick = () => updateBook(savedData.id, book);
             refreshMetadataBtn.onclick = () => refreshBookMetadata(savedData);
 
-            // --- AI Compare Button Scope ---
+            // --- AI Compare Button Scope (Admin Only) ---
             if (modalAiTagsBtn) {
-                if (savedData.status === 'Test') {
+                if (isAdmin && savedData.status === 'Test') {
                     modalAiTagsBtn.classList.remove('hidden');
                     // Clone to strip old listeners
                     const newBtn = modalAiTagsBtn.cloneNode(true);
@@ -1190,13 +1408,55 @@ function openModal(book, savedData = null) {
             // Setup Delete Button
             modalDeleteBtn.onclick = () => deleteBook(savedData.id);
 
-            // --- Discussion Guide Button Logic ---
+            // --- Audit Trail ---
+            if (modalAuditInfo) {
+                const fetchAuditInfo = async () => {
+                    let auditParts = [];
+
+                    if (savedData.proposed_by_user_id) {
+                        const { data } = await supabase
+                            .from('user_profiles')
+                            .select('display_name')
+                            .eq('id', savedData.proposed_by_user_id)
+                            .single();
+                        const name = data?.display_name || 'Unknown User';
+                        const date = savedData.created_at ? new Date(savedData.created_at).toLocaleDateString() : '';
+                        auditParts.push(`Proposed by ${name}${date ? ' on ' + date : ''}`);
+                    }
+
+                    if (savedData.last_modified_by) {
+                        const { data } = await supabase
+                            .from('user_profiles')
+                            .select('display_name')
+                            .eq('id', savedData.last_modified_by)
+                            .single();
+                        const name = data?.display_name || 'Unknown User';
+                        const date = savedData.last_modified_at ? new Date(savedData.last_modified_at).toLocaleDateString() : '';
+                        auditParts.push(`Last modified by ${name}${date ? ' on ' + date : ''}`);
+                    }
+
+                    if (auditParts.length > 0) {
+                        modalAuditInfo.textContent = auditParts.join(' | ');
+                        modalAuditInfo.classList.remove('hidden');
+                    } else {
+                        modalAuditInfo.classList.add('hidden');
+                    }
+                };
+                fetchAuditInfo();
+            }
+
+            // --- Discussion Guide Button Logic (Only for Scheduled books) ---
             const btnOpenGuide = document.getElementById('btn-open-guide-modal');
             if (btnOpenGuide) {
-                btnOpenGuide.onclick = () => {
-                    closeModal(); // Swap Effect: Close Details -> Open Guide
-                    openDiscussionModal(savedData || { google_data: book, id: book.id });
-                };
+                if (savedData.status === 'Scheduled') {
+                    btnOpenGuide.parentElement.classList.remove('hidden');
+                    btnOpenGuide.onclick = () => {
+                        closeModal(); // Swap Effect: Close Details -> Open Guide
+                        openDiscussionModal(savedData || { google_data: book, id: book.id });
+                    };
+                } else {
+                    btnOpenGuide.parentElement.classList.add('hidden');
+                }
             }
         } else {
             // Fallback if we somehow have the ID in the set but not the data (should be rare)
@@ -1210,6 +1470,15 @@ function openModal(book, savedData = null) {
     } else {
         modalSaveSection.classList.remove('hidden');
         modalEditSection.classList.add('hidden');
+
+        // Hide elements for unsaved books
+        if (modalAuditInfo) {
+            modalAuditInfo.classList.add('hidden');
+        }
+        const btnOpenGuide = document.getElementById('btn-open-guide-modal');
+        if (btnOpenGuide) {
+            btnOpenGuide.parentElement.classList.add('hidden');
+        }
 
         modalSaveBtn.textContent = 'Save to List';
         modalSaveBtn.disabled = false;
@@ -1233,14 +1502,17 @@ function openModal(book, savedData = null) {
     document.body.style.overflow = 'hidden'; // Prevent background scrolling
 
     // Check for description overflow - show "See more" if text is truncated OR sufficiently long
-    setTimeout(() => {
-        const descriptionText = modalDescription.textContent || '';
-        const isOverflowing = modalDescriptionContainer.scrollHeight > modalDescriptionContainer.clientHeight;
-        const isLongEnough = descriptionText.length > 100; // Show for descriptions over 100 chars (roughly 2 lines)
-        if (isOverflowing || isLongEnough) {
-            seeMoreBtn.classList.remove('hidden');
-        }
-    }, 0);
+    // ONLY for saved books where we want to preserve space for the edit section
+    if (isSaved) {
+        setTimeout(() => {
+            const descriptionText = modalDescription.textContent || '';
+            const isOverflowing = modalDescriptionContainer.scrollHeight > modalDescriptionContainer.clientHeight;
+            const isLongEnough = descriptionText.length > 100; // Show for descriptions over 100 chars (roughly 2 lines)
+            if (isOverflowing || isLongEnough) {
+                seeMoreBtn.classList.remove('hidden');
+            }
+        }, 0);
+    }
 }
 
 // --- Unsaved Changes Tracking ---
@@ -1336,10 +1608,11 @@ async function updateBook(id, googleBook) {
             status: editStatus.value || null,
             rating: editRating.value ? parseFloat(editRating.value) : null,
             tags: currentModalTags,
-            tags: currentModalTags,
             target_date: editDate.value || null,
             host_name: editHost.value || null,
-            user_notes: editNotes.value || null
+            user_notes: editNotes.value || null,
+            last_modified_by: user?.id || null,
+            last_modified_at: new Date().toISOString()
         };
 
         const { error } = await supabase
@@ -3626,7 +3899,9 @@ async function saveBook(button, bookData) {
                     author: info.authors ? info.authors.join(', ') : 'Unknown',
                     google_data: bookData,
                     tags: generateTags(bookData).split(', ').filter(t => t),
-                    rating: finalRating
+                    rating: finalRating,
+                    status: currentUserRole === 'admin' ? null : 'Proposed', // Members auto-set to Proposed
+                    proposed_by_user_id: user?.id || null // Track who proposed this book
                 }
             ]);
 
