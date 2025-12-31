@@ -1,6 +1,6 @@
 // --- Configuration ---
 const GOOGLE_API_KEY = ''; // Add your API key here if needed for public deployment, currently using implicit or restricted key
-const APP_VERSION = '1.7.2'; // Logout robustness + Clean up obsolete refs
+const APP_VERSION = '1.7.3'; // Phase 1 final: Architectural logout fix & UI polish
 // Note: In a real production app, use a proxy server to hide API keys.
 
 // --- Gemini AI Configuration ---
@@ -222,6 +222,19 @@ function updateUI() {
         appSection.classList.add('hidden');
         navActions.classList.add('hidden');
         isInitialLoad = true; // Reset so next login redirects
+
+        // --- CLEANUP: Clear all data on logout ---
+        allSavedBooks = [];
+        savedBookIds.clear();
+
+        // Clear grids to prevent ghost data
+        const resultsGrid = document.getElementById('results-grid');
+        const savedGrid = document.getElementById('saved-grid');
+        if (resultsGrid) resultsGrid.innerHTML = '';
+        if (savedGrid) savedGrid.innerHTML = '';
+
+        // Reset role
+        currentUserRole = null;
     }
 }
 
@@ -374,14 +387,15 @@ if (signupForm) {
 
 logoutBtn.addEventListener('click', async () => {
     try {
-        console.log('Logging out...');
-        const { error } = await supabase.auth.signOut();
+        console.log('Logging out (local scope)...');
+        // Use local scope to ensure the session is cleared in this browser even if server call fails (403/origin issues)
+        const { error } = await supabase.auth.signOut({ scope: 'local' });
         if (error) throw error;
-        console.log('Sign out request successful');
     } catch (err) {
-        console.error('Error during sign out:', err);
-        // Fallback: force a reload if sign out hangs or fails
-        window.location.reload();
+        console.error('Error during local sign out:', err);
+        // If even local signout fails, manually clear things and update UI
+        user = null;
+        updateUI();
     }
 });
 
@@ -639,6 +653,7 @@ if (filterYearBtn && filterYearMenu) {
 supabase.auth.onAuthStateChange(async (event, session) => {
     console.log('Auth State Change:', event, session ? 'Session active' : 'No session');
 
+    // The session object is the source of truth
     if (session?.user) {
         user = session.user;
         updateUI(); // load UI immediately
@@ -650,24 +665,14 @@ supabase.auth.onAuthStateChange(async (event, session) => {
         console.log('No session detected, resetting to guest state');
         user = null;
         currentUserRole = null;
-
-        // Only reload if we were previously logged in (to avoid infinite reload loops)
-        const wasLoggedIn = document.body.classList.contains('logged-in');
-        if (wasLoggedIn || event === 'SIGNED_OUT') {
-            console.log('Forcing reload for clean state');
-            window.location.reload();
-        } else {
-            updateUI(); // Ensure guest UI is shown
-        }
+        updateUI(); // Ensure guest UI is shown and data is cleared
     }
 });
 
 // Fetch user role from user_profiles
 async function fetchUserRole() {
-    if (!user) {
-        currentUserRole = null;
-        return;
-    }
+    if (!user) return; // Guard: don't fetch if logged out
+    console.log('Fetching user profile/role for:', user.id);
 
     try {
         const { data, error } = await supabase
@@ -2629,9 +2634,6 @@ function showOptionsModal(results, candidateIndex) {
     // Close modal function
     const closeModal = () => modal.remove();
 
-    // Cancel button
-    document.getElementById('options-cancel-btn').onclick = closeModal;
-
     // NOTE: Removed click-outside-to-close to prevent accidental dismissal
 
     // Option buttons
@@ -3020,7 +3022,8 @@ function switchView(view) {
 }
 
 async function fetchSavedBooks() {
-    if (!user) return;
+    if (!user) return; // Guard: don't fetch if logged out
+    const startTime = performance.now();
 
     refreshSavedBtn.textContent = 'Loading...';
     refreshSavedBtn.disabled = true;
