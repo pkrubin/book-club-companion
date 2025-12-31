@@ -1,6 +1,6 @@
 // --- Configuration ---
 const GOOGLE_API_KEY = ''; // Add your API key here if needed for public deployment, currently using implicit or restricted key
-const APP_VERSION = '1.6.6'; // Add logo to Discussion Guide print layout
+const APP_VERSION = '1.6.7'; // Unsaved changes modal, notes fix, WorldCat link
 // Note: In a real production app, use a proxy server to hide API keys.
 
 // --- Gemini AI Configuration ---
@@ -1084,8 +1084,8 @@ function openModal(book, savedData = null) {
             activeLinkGoodreads.href = `https://www.goodreads.com/search?q=${isbn}`;
             // Use i=stripbooks to prioritize physical books over audiobooks
             activeLinkAmazon.href = `https://www.amazon.com/s?k=${isbn}&i=stripbooks`;
-            // Use title+author keyword search - ISBN search often returns no results
-            activeLinkLibrary.href = `https://fcplcat.fairfaxcounty.gov/search/searchresults.aspx?term=${encodeURIComponent(info.title + ' ' + (info.authors ? info.authors[0] : ''))}&by=KW`;
+            // WorldCat - stable URLs, shows availability at nearby libraries
+            activeLinkLibrary.href = `https://www.worldcat.org/search?q=${encodeURIComponent(info.title + ' ' + (info.authors ? info.authors[0] : ''))}`;
             activeLinkLibrary.classList.remove('hidden');
 
             // Fetch Open Library Rating
@@ -1094,8 +1094,8 @@ function openModal(book, savedData = null) {
             activeLinkGoodreads.href = `https://www.goodreads.com/search?q=${query}`;
             // Use i=stripbooks to prioritize physical books over audiobooks
             activeLinkAmazon.href = `https://www.amazon.com/s?k=${query}&i=stripbooks`;
-            // Use title+author keyword search
-            activeLinkLibrary.href = `https://fcplcat.fairfaxcounty.gov/search/searchresults.aspx?term=${query}&by=KW`;
+            // WorldCat - stable URLs, shows availability at nearby libraries
+            activeLinkLibrary.href = `https://www.worldcat.org/search?q=${query}`;
             activeLinkLibrary.classList.remove('hidden'); // Show even without ISBN
 
             // Try fetching rating without ISBN
@@ -1162,12 +1162,12 @@ function openModal(book, savedData = null) {
                 };
 
                 editHost.value = savedData.host_name || '';
-                editNotes.value = savedData.notes || '';
+                editNotes.value = savedData.user_notes || '';
             }
 
-
-
-
+            // Capture initial values for unsaved changes detection
+            currentModalBookId = savedData.id;
+            captureModalInitialValues();
 
             modalUpdateBtn.onclick = () => updateBook(savedData.id, book);
             refreshMetadataBtn.onclick = () => refreshBookMetadata(savedData);
@@ -1243,17 +1243,87 @@ function openModal(book, savedData = null) {
     }, 0);
 }
 
+// --- Unsaved Changes Tracking ---
+let modalInitialValues = null;
+let currentModalBookId = null;
+
+function captureModalInitialValues() {
+    modalInitialValues = {
+        status: editStatus?.value || '',
+        rating: editRating?.value || '',
+        date: document.getElementById('edit-date')?.value || '',
+        host: editHost?.value || '',
+        notes: editNotes?.value || '',
+        tags: [...currentModalTags]
+    };
+}
+
+function hasUnsavedChanges() {
+    if (!modalInitialValues) return false;
+
+    const currentDate = document.getElementById('edit-date')?.value || '';
+
+    if (editStatus?.value !== modalInitialValues.status) return true;
+    if (editRating?.value !== modalInitialValues.rating) return true;
+    if (currentDate !== modalInitialValues.date) return true;
+    if (editHost?.value !== modalInitialValues.host) return true;
+    if (editNotes?.value !== modalInitialValues.notes) return true;
+
+    // Check tags (order-independent comparison)
+    if (currentModalTags.length !== modalInitialValues.tags.length) return true;
+    if (!currentModalTags.every(t => modalInitialValues.tags.includes(t))) return true;
+
+    return false;
+}
+
 function closeModal() {
     modal.classList.add('hidden');
     document.body.style.overflow = '';
+    modalInitialValues = null;
+    currentModalBookId = null;
 }
 
-closeModalBtn.addEventListener('click', closeModal);
-if (closeModalBottomBtn) closeModalBottomBtn.addEventListener('click', closeModal);
+function attemptCloseModal() {
+    // Only check for unsaved changes if we're in edit mode (saved book)
+    if (!modalEditSection.classList.contains('hidden') && hasUnsavedChanges()) {
+        showUnsavedChangesModal();
+    } else {
+        closeModal();
+    }
+}
+
+function showUnsavedChangesModal() {
+    document.getElementById('unsaved-changes-modal').classList.remove('hidden');
+}
+
+function hideUnsavedChangesModal() {
+    document.getElementById('unsaved-changes-modal').classList.add('hidden');
+}
+
+// Unsaved changes modal button handlers
+document.getElementById('unsaved-save-btn')?.addEventListener('click', async () => {
+    hideUnsavedChangesModal();
+    // Trigger the update button click (reuses existing save logic)
+    if (currentModalBookId && modalUpdateBtn) {
+        modalUpdateBtn.click();
+    }
+});
+
+document.getElementById('unsaved-discard-btn')?.addEventListener('click', () => {
+    hideUnsavedChangesModal();
+    closeModal();
+});
+
+document.getElementById('unsaved-cancel-btn')?.addEventListener('click', () => {
+    hideUnsavedChangesModal();
+});
+
+closeModalBtn.addEventListener('click', attemptCloseModal);
+if (closeModalBottomBtn) closeModalBottomBtn.addEventListener('click', attemptCloseModal);
 
 modal.addEventListener('click', (e) => {
     if (e.target === modal) {
-        closeModal();
+        attemptCloseModal();
     }
 });
 
