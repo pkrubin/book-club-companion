@@ -1,6 +1,6 @@
 // --- Configuration ---
 const GOOGLE_API_KEY = ''; // Add your API key here if needed for public deployment, currently using implicit or restricted key
-const APP_VERSION = '1.7.4'; // Phase 1 final: Architectural logout fix & Hero Card polish
+const APP_VERSION = '1.7.5'; // Phase 1 final: AI Overwrite Protection & Polish
 // Note: In a real production app, use a proxy server to hide API keys.
 
 // --- Gemini AI Configuration ---
@@ -4340,6 +4340,13 @@ function getDiscussionQuestions(book) {
 
 async function generateDiscussionQuestionsAI() {
     if (!currentDiscussionBook) return;
+
+    // Safety Guard: If content already exists, ask for confirmation
+    if (currentDiscussionBook.discussion_questions && currentDiscussionBook.discussion_questions.trim() !== '') {
+        const confirmed = await confirmAIOverwrite();
+        if (!confirmed) return;
+    }
+
     const btn = document.getElementById('btn-generate-ai');
     const viewEl = document.getElementById('discussion-content-view');
     const originalText = btn.innerHTML;
@@ -4413,6 +4420,38 @@ Rules:
         btn.disabled = false;
         btn.innerHTML = originalText;
     }
+}
+
+// --- AI Overwrite Confirmation Logic ---
+function confirmAIOverwrite() {
+    return new Promise((resolve) => {
+        const modal = document.getElementById('ai-overwrite-modal');
+        const confirmBtn = document.getElementById('ai-confirm-replace-btn'); // The Purple button (Overwrite)
+        const keepBtn = document.getElementById('ai-cancel-replace-btn');    // The Black button (Keep)
+        const closeBtn = document.getElementById('ai-close-replace-btn');     // The footer link (Cancel)
+
+        if (!modal || !confirmBtn || !keepBtn || !closeBtn) {
+            resolve(true); // Fallback if modal elements missing
+            return;
+        }
+
+        const cleanup = (result) => {
+            modal.classList.add('hidden');
+            confirmBtn.replaceWith(confirmBtn.cloneNode(true));
+            keepBtn.replaceWith(keepBtn.cloneNode(true));
+            closeBtn.replaceWith(closeBtn.cloneNode(true));
+            resolve(result);
+        };
+
+        const onConfirm = () => cleanup(true);
+        const onCancel = () => cleanup(false);
+
+        document.getElementById('ai-confirm-replace-btn').addEventListener('click', onConfirm);
+        document.getElementById('ai-cancel-replace-btn').addEventListener('click', onCancel);
+        document.getElementById('ai-close-replace-btn').addEventListener('click', onCancel);
+
+        modal.classList.remove('hidden');
+    });
 }
 
 function openDiscussionModal(book) {
