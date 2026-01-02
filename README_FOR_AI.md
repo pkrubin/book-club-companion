@@ -51,6 +51,9 @@
 
 ### Golden Rule of Testing
 **Human logs in, AI tests afterward. Localhost first, then promote.**
+- **DATA SAFETY**: If a test involves changing data (Update, Delete, Create), use ONLY books with the status **'Test'**. Never modify production data (e.g., 'Scheduled', 'Saved' books) for testing.
+- **AUDIT LOGS**: Maintain a session audit log for ALL data changes performed (as an artifact or in the walkthrough).
+- **EXPLICIT CLEANUP**: Every test plan must include specific instructions for cleaning up test data at the end.
 - Test on localhost FIRST
 - Only push to TEST when localhost works
 - User verifies TEST before production

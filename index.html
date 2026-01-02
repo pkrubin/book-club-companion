@@ -479,10 +479,19 @@
                 <img id="modal-image" src="" alt="Book Cover"
                     class="modal-book-float h-48 w-auto object-contain rounded-sm mb-4">
 
-                <!-- Rating (Moved here) -->
-                <div class="flex flex-col gap-1 items-center text-xs mb-4">
-                    <span id="modal-rating" class="text-yellow-600 font-medium hidden"></span>
-                    <span id="modal-ol-rating" class="text-blue-600 font-medium hidden"></span>
+                <!-- Rating & Refresh Action -->
+                <div class="flex flex-col items-center mb-4">
+                    <div class="flex items-center gap-2">
+                        <div id="modal-rating-container" class="flex flex-col gap-1 items-center">
+                            <span id="modal-rating" class="text-yellow-600 font-medium hidden"></span>
+                            <span id="modal-ol-rating" class="text-blue-600 font-medium hidden"></span>
+                        </div>
+                        <!-- New Refresh Icon (Revealed for visual verification) -->
+                        <button id="modal-refresh-rating-btn" class="text-indigo-600 hover:text-indigo-800 transition"
+                            title="Refresh Rating">
+                            <iconify-icon icon="solar:refresh-circle-bold" class="text-xl"></iconify-icon>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- External Links (Moved here) -->
@@ -548,6 +557,7 @@
                 <div id="modal-edit-section"
                     class="hidden bg-stone-50 rounded-xl p-3 mb-0 border border-stone-100 flex-grow flex flex-col">
                     <div class="space-y-2 flex-grow overflow-y-auto pr-1 custom-scrollbar">
+                        <!-- Row 1: Status & Host Name -->
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-xs font-medium text-stone-700 mb-1">Status</label>
@@ -565,6 +575,14 @@
                                 </select>
                             </div>
                             <div>
+                                <label class="block text-xs font-medium text-stone-700 mb-1">Host Name</label>
+                                <input type="text" id="edit-host" class="input-modern" placeholder="e.g. Sarah">
+                            </div>
+                        </div>
+
+                        <!-- Row 2: Target Date & Meeting Time -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div>
                                 <label class="block text-xs font-medium text-stone-700 mb-1">Target Date</label>
                                 <div class="relative">
                                     <input type="date" id="edit-date" class="input-modern bg-white pr-8">
@@ -574,6 +592,10 @@
                                         <iconify-icon icon="solar:trash-bin-trash-bold"></iconify-icon>
                                     </button>
                                 </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-stone-700 mb-1">Meeting Time</label>
+                                <input type="time" id="edit-time" class="input-modern bg-white">
                             </div>
                         </div>
 
@@ -588,7 +610,7 @@
                                     class="flex-grow min-w-[80px] px-1 py-0.5 text-xs outline-none bg-transparent placeholder-stone-400"
                                     placeholder="Add tag...">
                                 <datalist id="tag-suggestions"></datalist>
-                                <button id="add-tag-btn" </button>
+                                <button id="add-tag-btn" class="hidden"></button>
                             </div>
                             <!-- AI Tag Button Moved Here -->
                             <button id="modal-ai-tags-btn"
@@ -598,23 +620,9 @@
                             </button>
                         </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-xs font-medium text-stone-700 mb-1">Host Name</label>
-                                <input type="text" id="edit-host" class="input-modern" placeholder="e.g. Sarah">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-stone-700 mb-1">Rating (1-5)</label>
-                                <input type="number" id="edit-rating" min="1" max="5" step="0.1" class="input-modern"
-                                    placeholder="e.g. 4.5">
-
-                                <button id="refresh-metadata-btn"
-                                    class="text-xs text-rose-600 hover:text-rose-700 text-left font-medium flex items-center gap-1 transition">
-                                    <iconify-icon icon="solar:refresh-circle-broken" class="text-sm"></iconify-icon>
-                                    Fetch Rating
-                                </button>
-                            </div>
-                        </div>
+                        <!-- Rating row removed, prep for icon refactor in Step 3 -->
+                        <!-- Input still exists for JS compatibility but is hidden -->
+                        <input type="number" id="edit-rating" class="hidden">
                     </div>
 
                     <!-- Rating moved up -->
@@ -915,7 +923,7 @@
                 <button id="ai-confirm-replace-btn"
                     class="w-full inline-flex justify-center items-center gap-2 rounded-lg border border-rose-200 shadow-sm px-4 py-2.5 bg-white text-base font-medium text-rose-600 hover:bg-rose-50 transition">
                     <iconify-icon icon="solar:magic-stick-3-bold"></iconify-icon>
-                    Generate & Replace
+                    Generate &amp; Replace
                 </button>
                 <button id="ai-close-replace-btn"
                     class="w-full inline-flex justify-center rounded-lg px-4 py-2 text-sm font-medium text-stone-500 hover:text-stone-800 transition">

@@ -1,6 +1,6 @@
 // --- Configuration ---
 const GOOGLE_API_KEY = ''; // Add your API key here if needed for public deployment, currently using implicit or restricted key
-const APP_VERSION = '1.8.0'; // Default time 7:15 PM & UX polishes
+const APP_VERSION = '1.8.5'; // Restore AI Overwrite Protection modal
 // Note: In a real production app, use a proxy server to hide API keys.
 
 // --- Gemini AI Configuration ---
@@ -128,7 +128,7 @@ const modalSaveBtn = document.getElementById('modal-save-btn');
 const modalEditSection = document.getElementById('modal-edit-section');
 const editStatus = document.getElementById('edit-status');
 const editRating = document.getElementById('edit-rating');
-const refreshMetadataBtn = document.getElementById('refresh-metadata-btn');
+const modalRefreshRatingBtn = document.getElementById('modal-refresh-rating-btn');
 const modalAiTagsBtn = document.getElementById('modal-ai-tags-btn');
 // const editTags = document.getElementById('edit-tags'); // Replaced by interactive UI
 const modalTagsContainer = document.getElementById('modal-tags-container');
@@ -137,6 +137,7 @@ const tagSuggestions = document.getElementById('tag-suggestions');
 const addTagBtn = document.getElementById('add-tag-btn');
 let currentModalTags = []; // State for modal tags
 const editDate = document.getElementById('edit-date');
+const editTime = document.getElementById('edit-time');
 // editClubYear removed
 const editHost = document.getElementById('edit-host');
 const editNotes = document.getElementById('edit-notes');
@@ -172,6 +173,19 @@ const dashboardHero = document.getElementById('dashboard-hero');
 const dashboardUpcomingContainer = document.getElementById('dashboard-upcoming-container');
 const dashboardUpcomingList = document.getElementById('dashboard-upcoming-list');
 const dashboardEmpty = document.getElementById('dashboard-empty');
+
+// Smart Pair: Auto-populate time to 7:15 PM when date is selected
+if (editDate) {
+    // We use both 'input' and 'change' to capture all interactions
+    ['input', 'change'].forEach(eventType => {
+        editDate.addEventListener(eventType, () => {
+            // Only auto-fill if we have a date and the time is currently empty
+            if (editDate.value && !editTime.value) {
+                editTime.value = '19:15';
+            }
+        });
+    });
+}
 
 
 // --- Auth Logic ---
@@ -492,11 +506,11 @@ function renderRatingBadges(book, elementId) {
 
 // --- Metadata Refresh ---
 async function refreshBookMetadata(book) {
-    if (!refreshMetadataBtn) return;
+    if (!modalRefreshRatingBtn) return;
 
     try {
-        refreshMetadataBtn.innerHTML = '<iconify-icon icon="line-md:loading-loop" class="text-sm"></iconify-icon> Fetching...';
-        refreshMetadataBtn.disabled = true;
+        modalRefreshRatingBtn.innerHTML = '<iconify-icon icon="line-md:loading-loop" class="text-xl"></iconify-icon>';
+        modalRefreshRatingBtn.disabled = true;
 
         // 1. Ensure we have Google Data (needed for ISBN lookup for rating)
         let gData = book.google_data;
@@ -557,8 +571,8 @@ async function refreshBookMetadata(book) {
         console.error(e);
         showError('Refresh failed: ' + e.message);
     } finally {
-        refreshMetadataBtn.innerHTML = '<iconify-icon icon="solar:refresh-circle-broken" class="text-sm"></iconify-icon> Fetch Rating';
-        refreshMetadataBtn.disabled = false;
+        modalRefreshRatingBtn.innerHTML = '<iconify-icon icon="solar:refresh-circle-bold" class="text-xl"></iconify-icon>';
+        modalRefreshRatingBtn.disabled = false;
     }
 }
 
@@ -1237,9 +1251,10 @@ function openModal(book, savedData = null) {
         renderRatingBadges(savedData, 'modal-rating');
     }
 
-    // Reset Open Library Rating
+    // Reset Open Library Rating & Refresh Button
     modalOlRating.classList.add('hidden');
     modalOlRating.textContent = '';
+    if (modalRefreshRatingBtn) modalRefreshRatingBtn.classList.add('hidden');
 
     // Format description for readability: preserve paragraph breaks
     let desc = info.description || 'No description available.';
@@ -1376,8 +1391,16 @@ function openModal(book, savedData = null) {
                 // Clear Date Handler
                 clearDateBtn.onclick = () => {
                     editDate.value = '';
+                    editTime.value = '';
                     toggleClearBtn();
                 };
+
+                editTime.value = savedData.meeting_time || '';
+
+                // Smart Pair: If we have a date but NO time, default to 7:15 PM
+                if (editDate.value && !editTime.value) {
+                    editTime.value = '19:15';
+                }
 
                 editHost.value = savedData.host_name || '';
                 editNotes.value = savedData.user_notes || '';
@@ -1414,7 +1437,10 @@ function openModal(book, savedData = null) {
             }
 
             modalUpdateBtn.onclick = () => updateBook(savedData.id, book);
-            refreshMetadataBtn.onclick = () => refreshBookMetadata(savedData);
+            if (modalRefreshRatingBtn) {
+                modalRefreshRatingBtn.classList.remove('hidden');
+                modalRefreshRatingBtn.onclick = () => refreshBookMetadata(savedData);
+            }
 
             // --- AI Compare Button Scope (Admin Only) ---
             if (modalAiTagsBtn) {
@@ -1550,6 +1576,7 @@ function captureModalInitialValues() {
         status: editStatus?.value || '',
         rating: editRating?.value || '',
         date: document.getElementById('edit-date')?.value || '',
+        time: editTime?.value || '',
         host: editHost?.value || '',
         notes: editNotes?.value || '',
         tags: [...currentModalTags]
@@ -1564,6 +1591,7 @@ function hasUnsavedChanges() {
     if (editStatus?.value !== modalInitialValues.status) return true;
     if (editRating?.value !== modalInitialValues.rating) return true;
     if (currentDate !== modalInitialValues.date) return true;
+    if (editTime?.value !== modalInitialValues.time) return true;
     if (editHost?.value !== modalInitialValues.host) return true;
     if (editNotes?.value !== modalInitialValues.notes) return true;
 
@@ -1635,6 +1663,7 @@ async function updateBook(id, googleBook) {
             rating: editRating.value ? parseFloat(editRating.value) : null,
             tags: currentModalTags,
             target_date: editDate.value || null,
+            meeting_time: editTime.value || null,
             host_name: editHost.value || null,
             user_notes: editNotes.value || null,
             last_modified_by: user?.id || null,
@@ -3510,16 +3539,11 @@ function renderDashboard() {
     dashboardHero.classList.remove('hidden');
 
     // Apply container classes directly to dashboardHero to avoid "double card"
-    // Add cursor-pointer and hover effects for interactivity
-    dashboardHero.className = 'max-w-3xl mx-auto bg-white rounded-2xl shadow-sm border border-stone-200 overflow-hidden flex flex-row items-center mb-12 cursor-pointer transition-all hover:bg-stone-50/50 hover:border-rose-200 group';
-
-    // Entire card opens the modal
-    dashboardHero.onclick = () => {
-        openModal(nextBook.google_data, nextBook);
-    };
+    dashboardHero.className = 'max-w-3xl mx-auto bg-white rounded-2xl shadow-sm border border-stone-200 overflow-hidden flex flex-row items-center mb-12';
 
     dashboardHero.innerHTML = `
-            <div class="w-1/3 md:w-56 bg-stone-100 flex-shrink-0 border-r border-stone-100 flex items-center justify-center p-4 rounded-l-2xl">
+            <div class="w-1/3 md:w-56 bg-stone-100 flex-shrink-0 border-r border-stone-100 flex items-center justify-center p-4 rounded-l-2xl cursor-pointer hover:bg-stone-200 transition-colors"
+                onclick="openModal(allSavedBooks.find(b => b.id === ${nextBook.id}).google_data, allSavedBooks.find(b => b.id === ${nextBook.id}))">
                 <img src="${nextInfo.imageLinks?.thumbnail?.replace('http:', 'https:') || 'https://via.placeholder.com/300x450?text=No+Cover'}" 
                     alt="${nextInfo.title}" 
                     class="w-full h-auto shadow-md rounded-sm object-contain max-h-full"
@@ -3552,27 +3576,27 @@ function renderDashboard() {
             </div>
 
             <div class="flex flex-wrap gap-2 md:gap-3 mt-auto pt-2 md:pt-4">
-                <button onclick="event.stopPropagation(); openModal(allSavedBooks.find(b => b.id === ${nextBook.id}).google_data, allSavedBooks.find(b => b.id === ${nextBook.id}))"
+                <button onclick="openModal(allSavedBooks.find(b => b.id === ${nextBook.id}).google_data, allSavedBooks.find(b => b.id === ${nextBook.id}))"
                     class="bg-gradient-to-b from-stone-800 to-stone-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] text-white px-5 py-2.5 rounded-lg hover:from-stone-700 hover:to-stone-800 transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-0.5 font-bold text-sm tracking-wide">
                     View Details
                 </button>
 
-                <button onclick="event.stopPropagation(); openDiscussionModal(allSavedBooks.find(b => b.id === ${nextBook.id}))"
+                <button onclick="openDiscussionModal(allSavedBooks.find(b => b.id === ${nextBook.id}))"
                     class="bg-white text-stone-700 border border-stone-200 px-4 py-2.5 rounded-lg hover:bg-stone-50 hover:border-stone-300 transition-all duration-300 shadow-sm hover:shadow-md font-bold text-sm flex items-center gap-2">
                     <iconify-icon icon="solar:chat-round-dots-broken" class="text-base"></iconify-icon>
                     Guide
                 </button>
 
                 <div class="relative">
-                    <button onclick="event.stopPropagation(); toggleCalendarDropdown(event)" class="bg-white text-stone-700 border border-stone-200 px-4 py-2 rounded-lg hover:bg-stone-50 hover:border-stone-300 transition-all duration-300 shadow-sm hover:shadow-md font-bold text-sm flex items-center gap-2">
+                    <button onclick="toggleCalendarDropdown(event)" class="bg-white text-stone-700 border border-stone-200 px-4 py-2 rounded-lg hover:bg-stone-50 hover:border-stone-300 transition-all duration-300 shadow-sm hover:shadow-md font-bold text-sm flex items-center gap-2">
                         <iconify-icon icon="solar:calendar-add-broken" class="text-base"></iconify-icon>
                         Add to Calendar
                     </button>
-                    <div id="calendar-dropdown" class="absolute bottom-full left-0 mb-2 w-48 bg-white rounded-lg shadow-xl border border-stone-100 hidden z-10 overflow-hidden" onclick="event.stopPropagation()">
-                        <a href="${generateGoogleCalendarLink(nextBook)}" target="_blank" class="block px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 hover:text-rose-600 transition text-left border-b border-stone-50" onclick="event.stopPropagation()">
+                    <div id="calendar-dropdown" class="absolute bottom-full left-0 mb-2 w-48 bg-white rounded-lg shadow-xl border border-stone-100 hidden z-10 overflow-hidden">
+                        <a href="${generateGoogleCalendarLink(nextInfo.title, nextBook.target_date, nextBook.meeting_time)}" target="_blank" class="block px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 hover:text-rose-600 transition text-left border-b border-stone-50">
                             Google Calendar
                         </a>
-                        <button onclick="event.stopPropagation(); downloadIcsFile(${nextBook.id})" class="block w-full text-left px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 hover:text-rose-600 transition">
+                        <button onclick="downloadIcsFile('${nextInfo.title.replace(/'/g, "\\'")}', '${nextBook.target_date}', '${nextBook.meeting_time || ''}')" class="block w-full text-left px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 hover:text-rose-600 transition">
                         Outlook / Apple
                     </button>
                 </div>
@@ -3657,11 +3681,11 @@ function renderDashboard() {
                     Add to Calendar
                 </button>
                 <div id="${uniqueId}" class="hidden absolute bottom-full mb-1 left-0 w-40 bg-white rounded-lg shadow-lg border border-stone-100 py-1 z-20">
-                    <a href="${generateGoogleCalendarLink(book)}" target="_blank"
+                    <a href="${generateGoogleCalendarLink(info.title, book.target_date, book.meeting_time)}" target="_blank"
                         class="block px-3 py-1.5 text-xs text-stone-700 hover:bg-stone-50 font-medium">
                         Google Calendar
                     </a>
-                    <a href="#" onclick="event.stopPropagation(); downloadIcsFile(${book.id})"
+                    <a href="#" onclick="downloadIcsFile('${info.title.replace(/'/g, "\\'")}', '${book.target_date}', '${book.meeting_time || ''}')"
                                     class="block px-3 py-1.5 text-xs text-stone-700 hover:bg-stone-50 font-medium">
                     Outlook / Apple (.ics)
                 </a>
@@ -4194,60 +4218,31 @@ async function syncBookStatuses(books) {
     }
 }
 
-function generateGoogleCalendarLink(book) {
-    if (!book) return '#';
-    const title = book.google_data.volumeInfo.title;
-    const author = book.google_data.volumeInfo.authors?.join(', ') || 'Unknown';
-    const host = book.host_name || 'Book Club';
-    const dateStr = book.target_date;
-    const discussionQuestions = book.discussion_questions || '';
-
-    // Default to 7:15 PM - 9:15 PM on the target date
-    const startDate = new Date(dateStr + 'T19:15:00');
-    const endDate = new Date(dateStr + 'T21:15:00');
+function generateGoogleCalendarLink(title, dateStr, timeStr) {
+    const meetingTime = timeStr || '19:15';
+    // Use target date + custom time
+    const startDate = new Date(`${dateStr}T${meetingTime}:00`);
+    const endDate = new Date(startDate.getTime() + 2 * 60 * 60 * 1000); // Default to 2 hours duration
 
     const format = (date) => date.toISOString().replace(/-|:|\.\d\d\d/g, "");
-
-    let details = '';
-    if (discussionQuestions) {
-        details = `DISCUSSION GUIDE for ${title} by ${author}:\n\n${discussionQuestions}`;
-    } else {
-        details = `Discussing ${title} by ${author}.`;
-    }
 
     const params = new URLSearchParams({
         action: 'TEMPLATE',
         text: `Book Club: ${title}`,
-        details: details,
-        location: `${host}'s house`,
+        details: `Discussing ${title}. Find discussion questions here: https://www.google.com/search?q=${encodeURIComponent(title + ' book club discussion questions')}`,
         dates: `${format(startDate)}/${format(endDate)}`
     });
 
     return `https://calendar.google.com/calendar/render?${params.toString()}`;
 }
 
-function downloadIcsFile(bookId) {
-    const book = allSavedBooks.find(b => b.id === bookId);
-    if (!book) return;
-
-    const title = book.google_data.volumeInfo.title;
-    const author = book.google_data.volumeInfo.authors?.join(', ') || 'Unknown';
-    const host = book.host_name || 'Book Club';
-    const dateStr = book.target_date;
-    const discussionQuestions = (book.discussion_questions || '').replace(/\r?\n/g, '\\n');
-
-    const startDate = new Date(dateStr + 'T19:15:00');
-    const endDate = new Date(dateStr + 'T21:15:00');
+function downloadIcsFile(title, dateStr, timeStr) {
+    const meetingTime = timeStr || '19:15';
+    const startDate = new Date(`${dateStr}T${meetingTime}:00`);
+    const endDate = new Date(startDate.getTime() + 2 * 60 * 60 * 1000);
     const now = new Date();
 
     const format = (date) => date.toISOString().replace(/-|:|\.\d\d\d/g, "");
-
-    let description = '';
-    if (discussionQuestions) {
-        description = `DISCUSSION GUIDE for ${title} by ${author}:\\n\\n${discussionQuestions}`;
-    } else {
-        description = `Discussing ${title} by ${author}.`;
-    }
 
     const icsContent = [
         'BEGIN:VCALENDAR',
@@ -4259,8 +4254,7 @@ function downloadIcsFile(bookId) {
         `DTSTART:${format(startDate)}`,
         `DTEND:${format(endDate)}`,
         `SUMMARY:Book Club: ${title}`,
-        `DESCRIPTION:${description}`,
-        `LOCATION:${host}'s house`,
+        `DESCRIPTION:Discussing ${title}.`,
         'END:VEVENT',
         'END:VCALENDAR'
     ].join('\r\n');
@@ -4626,9 +4620,8 @@ function renderDiscussionGuideUI(book) {
 
             lines.forEach(line => {
                 const cleanLine = line.trim();
-                // Enhanced detection: match "Generated by" even if it has a leading number or underscores
-                if (/(?:^|\d+[\.\)]\s*)_?Generated by/i.test(cleanLine)) {
-                    attributionText = cleanLine.replace(/_/g, '').replace(/^\d+[\.\)]\s*/, '');
+                if (cleanLine.startsWith('_Generated by') || cleanLine.startsWith('Generated by')) {
+                    attributionText = cleanLine.replace(/_/g, '');
                 } else {
                     mainContent.push(line);
                 }
