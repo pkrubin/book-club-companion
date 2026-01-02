@@ -1,6 +1,6 @@
 // --- Configuration ---
 const GOOGLE_API_KEY = ''; // Add your API key here if needed for public deployment, currently using implicit or restricted key
-const APP_VERSION = '1.7.9'; // Calendar Invite location & polish
+const APP_VERSION = '1.8.0'; // Default time 7:15 PM & UX polishes
 // Note: In a real production app, use a proxy server to hide API keys.
 
 // --- Gemini AI Configuration ---
@@ -4202,9 +4202,9 @@ function generateGoogleCalendarLink(book) {
     const dateStr = book.target_date;
     const discussionQuestions = book.discussion_questions || '';
 
-    // Default to 7:00 PM - 9:00 PM on the target date
-    const startDate = new Date(dateStr + 'T19:00:00');
-    const endDate = new Date(dateStr + 'T21:00:00');
+    // Default to 7:15 PM - 9:15 PM on the target date
+    const startDate = new Date(dateStr + 'T19:15:00');
+    const endDate = new Date(dateStr + 'T21:15:00');
 
     const format = (date) => date.toISOString().replace(/-|:|\.\d\d\d/g, "");
 
@@ -4236,8 +4236,8 @@ function downloadIcsFile(bookId) {
     const dateStr = book.target_date;
     const discussionQuestions = (book.discussion_questions || '').replace(/\r?\n/g, '\\n');
 
-    const startDate = new Date(dateStr + 'T19:00:00');
-    const endDate = new Date(dateStr + 'T21:00:00');
+    const startDate = new Date(dateStr + 'T19:15:00');
+    const endDate = new Date(dateStr + 'T21:15:00');
     const now = new Date();
 
     const format = (date) => date.toISOString().replace(/-|:|\.\d\d\d/g, "");
