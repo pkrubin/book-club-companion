@@ -1,6 +1,6 @@
 // --- Configuration ---
 const GOOGLE_API_KEY = ''; // Add your API key here if needed for public deployment, currently using implicit or restricted key
-const APP_VERSION = '1.7.5'; // Phase 1 final: AI Overwrite Protection & Polish
+const APP_VERSION = '1.7.9'; // Calendar Invite location & polish
 // Note: In a real production app, use a proxy server to hide API keys.
 
 // --- Gemini AI Configuration ---
@@ -3569,10 +3569,10 @@ function renderDashboard() {
                         Add to Calendar
                     </button>
                     <div id="calendar-dropdown" class="absolute bottom-full left-0 mb-2 w-48 bg-white rounded-lg shadow-xl border border-stone-100 hidden z-10 overflow-hidden" onclick="event.stopPropagation()">
-                        <a href="${generateGoogleCalendarLink(nextInfo.title, nextBook.target_date)}" target="_blank" class="block px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 hover:text-rose-600 transition text-left border-b border-stone-50" onclick="event.stopPropagation()">
+                        <a href="${generateGoogleCalendarLink(nextBook)}" target="_blank" class="block px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 hover:text-rose-600 transition text-left border-b border-stone-50" onclick="event.stopPropagation()">
                             Google Calendar
                         </a>
-                        <button onclick="event.stopPropagation(); downloadIcsFile('${nextInfo.title.replace(/'/g, "\\'")}', '${nextBook.target_date}')" class="block w-full text-left px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 hover:text-rose-600 transition">
+                        <button onclick="event.stopPropagation(); downloadIcsFile(${nextBook.id})" class="block w-full text-left px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 hover:text-rose-600 transition">
                         Outlook / Apple
                     </button>
                 </div>
@@ -3657,11 +3657,11 @@ function renderDashboard() {
                     Add to Calendar
                 </button>
                 <div id="${uniqueId}" class="hidden absolute bottom-full mb-1 left-0 w-40 bg-white rounded-lg shadow-lg border border-stone-100 py-1 z-20">
-                    <a href="${generateGoogleCalendarLink(info.title, book.target_date)}" target="_blank"
+                    <a href="${generateGoogleCalendarLink(book)}" target="_blank"
                         class="block px-3 py-1.5 text-xs text-stone-700 hover:bg-stone-50 font-medium">
                         Google Calendar
                     </a>
-                    <a href="#" onclick="downloadIcsFile('${info.title.replace(/'/g, "\\'")}', '${book.target_date}')"
+                    <a href="#" onclick="event.stopPropagation(); downloadIcsFile(${book.id})"
                                     class="block px-3 py-1.5 text-xs text-stone-700 hover:bg-stone-50 font-medium">
                     Outlook / Apple (.ics)
                 </a>
@@ -4194,29 +4194,60 @@ async function syncBookStatuses(books) {
     }
 }
 
-function generateGoogleCalendarLink(title, dateStr) {
+function generateGoogleCalendarLink(book) {
+    if (!book) return '#';
+    const title = book.google_data.volumeInfo.title;
+    const author = book.google_data.volumeInfo.authors?.join(', ') || 'Unknown';
+    const host = book.host_name || 'Book Club';
+    const dateStr = book.target_date;
+    const discussionQuestions = book.discussion_questions || '';
+
     // Default to 7:00 PM - 9:00 PM on the target date
     const startDate = new Date(dateStr + 'T19:00:00');
     const endDate = new Date(dateStr + 'T21:00:00');
 
     const format = (date) => date.toISOString().replace(/-|:|\.\d\d\d/g, "");
 
+    let details = '';
+    if (discussionQuestions) {
+        details = `DISCUSSION GUIDE for ${title} by ${author}:\n\n${discussionQuestions}`;
+    } else {
+        details = `Discussing ${title} by ${author}.`;
+    }
+
     const params = new URLSearchParams({
         action: 'TEMPLATE',
         text: `Book Club: ${title}`,
-        details: `Discussing ${title}. Find discussion questions here: https://www.google.com/search?q=${encodeURIComponent(title + ' book club discussion questions')}`,
+        details: details,
+        location: `${host}'s house`,
         dates: `${format(startDate)}/${format(endDate)}`
     });
 
     return `https://calendar.google.com/calendar/render?${params.toString()}`;
 }
 
-function downloadIcsFile(title, dateStr) {
+function downloadIcsFile(bookId) {
+    const book = allSavedBooks.find(b => b.id === bookId);
+    if (!book) return;
+
+    const title = book.google_data.volumeInfo.title;
+    const author = book.google_data.volumeInfo.authors?.join(', ') || 'Unknown';
+    const host = book.host_name || 'Book Club';
+    const dateStr = book.target_date;
+    const discussionQuestions = (book.discussion_questions || '').replace(/\r?\n/g, '\\n');
+
     const startDate = new Date(dateStr + 'T19:00:00');
     const endDate = new Date(dateStr + 'T21:00:00');
     const now = new Date();
 
     const format = (date) => date.toISOString().replace(/-|:|\.\d\d\d/g, "");
+
+    let description = '';
+    if (discussionQuestions) {
+        description = `DISCUSSION GUIDE for ${title} by ${author}:\\n\\n${discussionQuestions}`;
+    } else {
+        description = `Discussing ${title} by ${author}.`;
+    }
 
     const icsContent = [
         'BEGIN:VCALENDAR',
@@ -4228,7 +4259,8 @@ function downloadIcsFile(title, dateStr) {
         `DTSTART:${format(startDate)}`,
         `DTEND:${format(endDate)}`,
         `SUMMARY:Book Club: ${title}`,
-        `DESCRIPTION:Discussing ${title}.`,
+        `DESCRIPTION:${description}`,
+        `LOCATION:${host}'s house`,
         'END:VEVENT',
         'END:VCALENDAR'
     ].join('\r\n');
@@ -4594,8 +4626,9 @@ function renderDiscussionGuideUI(book) {
 
             lines.forEach(line => {
                 const cleanLine = line.trim();
-                if (cleanLine.startsWith('_Generated by') || cleanLine.startsWith('Generated by')) {
-                    attributionText = cleanLine.replace(/_/g, '');
+                // Enhanced detection: match "Generated by" even if it has a leading number or underscores
+                if (/(?:^|\d+[\.\)]\s*)_?Generated by/i.test(cleanLine)) {
+                    attributionText = cleanLine.replace(/_/g, '').replace(/^\d+[\.\)]\s*/, '');
                 } else {
                     mainContent.push(line);
                 }
