@@ -16,8 +16,8 @@ body {
 /* 2025 Button Styles */
 /* Button Styles (Premium 2025) */
 .btn-primary {
-    background: linear-gradient(to bottom, #292524, #1c1917);
-    /* Stone-800 to Stone-900 */
+    background: linear-gradient(to bottom, #475569, #334155);
+    /* Slate-600 to Slate-700 */
     color: white;
     padding: 0.625rem 1.5rem;
     border-radius: 0.5rem;
@@ -35,8 +35,8 @@ body {
 }
 
 .btn-primary:hover {
-    background: linear-gradient(to bottom, #44403c, #292524);
-    /* Stone-700 to Stone-800 */
+    background: linear-gradient(to bottom, #334155, #1e293b);
+    /* Slate-700 to Slate-800 */
     box-shadow:
         0 10px 15px -3px rgba(0, 0, 0, 0.1),
         0 4px 6px -2px rgba(0, 0, 0, 0.05),

@@ -1,6 +1,6 @@
 // --- Configuration ---
 const GOOGLE_API_KEY = ''; // Add your API key here if needed for public deployment, currently using implicit or restricted key
-const APP_VERSION = '1.8.5'; // Restore AI Overwrite Protection modal
+const APP_VERSION = '1.8.7'; // Slate-600 button color polish
 // Note: In a real production app, use a proxy server to hide API keys.
 
 // --- Gemini AI Configuration ---
@@ -3577,7 +3577,7 @@ function renderDashboard() {
 
             <div class="flex flex-wrap gap-2 md:gap-3 mt-auto pt-2 md:pt-4">
                 <button onclick="openModal(allSavedBooks.find(b => b.id === ${nextBook.id}).google_data, allSavedBooks.find(b => b.id === ${nextBook.id}))"
-                    class="bg-gradient-to-b from-stone-800 to-stone-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] text-white px-5 py-2.5 rounded-lg hover:from-stone-700 hover:to-stone-800 transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-0.5 font-bold text-sm tracking-wide">
+                    class="bg-gradient-to-b from-slate-600 to-slate-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] text-white px-5 py-2.5 rounded-lg hover:from-slate-700 hover:to-slate-800 transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-0.5 font-bold text-sm tracking-wide">
                     View Details
                 </button>
 
