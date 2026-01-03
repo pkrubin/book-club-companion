@@ -1,6 +1,6 @@
 // --- Configuration ---
 const GOOGLE_API_KEY = ''; // Add your API key here if needed for public deployment, currently using implicit or restricted key
-const APP_VERSION = '1.8.7'; // Slate-600 button color polish
+const APP_VERSION = '1.8.9'; // Rating display polish (styled badges, 100 threshold)
 // Note: In a real production app, use a proxy server to hide API keys.
 
 // --- Gemini AI Configuration ---
@@ -509,7 +509,8 @@ async function refreshBookMetadata(book) {
     if (!modalRefreshRatingBtn) return;
 
     try {
-        modalRefreshRatingBtn.innerHTML = '<iconify-icon icon="line-md:loading-loop" class="text-xl"></iconify-icon>';
+        modalRefreshRatingBtn.innerHTML = '<iconify-icon icon="line-md:loading-loop" class="text-lg"></iconify-icon> <span class="text-xs">Working...</span>';
+        modalRefreshRatingBtn.classList.add('flex', 'items-center', 'gap-1');
         modalRefreshRatingBtn.disabled = true;
 
         // 1. Ensure we have Google Data (needed for ISBN lookup for rating)
@@ -572,6 +573,7 @@ async function refreshBookMetadata(book) {
         showError('Refresh failed: ' + e.message);
     } finally {
         modalRefreshRatingBtn.innerHTML = '<iconify-icon icon="solar:refresh-circle-bold" class="text-xl"></iconify-icon>';
+        modalRefreshRatingBtn.classList.remove('flex', 'items-center', 'gap-1');
         modalRefreshRatingBtn.disabled = false;
     }
 }
@@ -1238,8 +1240,17 @@ function openModal(book, savedData = null) {
     // modalYear assignment removed
     modalPages.textContent = info.pageCount ? `${info.pageCount} pages` : 'Page count unknown';
 
-    if (info.averageRating) {
-        modalRating.textContent = `Google: ★ ${info.averageRating}`;
+    if (info.averageRating && info.ratingsCount >= 100) {
+        // Format count display
+        let countDisplay = '';
+        if (info.ratingsCount >= 1000000) countDisplay = `(${Math.round(info.ratingsCount / 100000) / 10}M)`;
+        else if (info.ratingsCount >= 1000) countDisplay = `(${Math.round(info.ratingsCount / 1000)}K)`;
+        else countDisplay = `(${info.ratingsCount})`;
+
+        // Style Google rating as a badge (matching Goodreads/OpenLib style)
+        modalRating.innerHTML = `<span class="px-3 py-1 rounded-full border bg-stone-100 text-stone-600 border-stone-200 font-medium flex items-center justify-center gap-1.5 shadow-sm text-sm" title="Source: Google Books">
+            <iconify-icon icon="logos:google-icon" class="mr-1 text-xs"></iconify-icon> ★ ${info.averageRating} <span class="opacity-70 text-xs ml-0.5">${countDisplay}</span>
+        </span>`;
         modalRating.classList.remove('hidden');
     } else {
         modalRating.classList.add('hidden');
@@ -1321,8 +1332,8 @@ function openModal(book, savedData = null) {
             activeLinkLibrary.href = `https://www.worldcat.org/search?q=${encodeURIComponent(info.title + ' ' + (info.authors ? info.authors[0] : ''))}`;
             activeLinkLibrary.classList.remove('hidden');
 
-            // Fetch Open Library Rating
-            fetchOpenLibraryRating(isbn, info.title, info.authors ? info.authors[0] : null);
+            // Fetch Open Library Rating (only if no Goodreads rating exists)
+            fetchOpenLibraryRating(isbn, info.title, info.authors ? info.authors[0] : null, savedData);
         } else {
             activeLinkGoodreads.href = `https://www.goodreads.com/search?q=${query}`;
             // Use i=stripbooks to prioritize physical books over audiobooks
@@ -1331,8 +1342,8 @@ function openModal(book, savedData = null) {
             activeLinkLibrary.href = `https://www.worldcat.org/search?q=${query}`;
             activeLinkLibrary.classList.remove('hidden'); // Show even without ISBN
 
-            // Try fetching rating without ISBN
-            fetchOpenLibraryRating(null, info.title, info.authors ? info.authors[0] : null);
+            // Try fetching rating without ISBN (only if no Goodreads rating exists)
+            fetchOpenLibraryRating(null, info.title, info.authors ? info.authors[0] : null, savedData);
         }
 
     } else {
@@ -4139,12 +4150,31 @@ async function getOpenLibraryRating(isbn, title = null, author = null) {
     }
 }
 
-async function fetchOpenLibraryRating(isbn, title = null, author = null) {
+async function fetchOpenLibraryRating(isbn, title = null, author = null, savedData = null) {
+    // Skip if book already has a Goodreads rating (OpenLib is just a backup)
+    if (savedData && savedData.rating_source === 'goodreads') {
+        return;
+    }
+
     const olData = await getOpenLibraryRating(isbn, title, author);
 
     if (olData && olData.average) {
-        const countStr = olData.count ? ` · ${olData.count}` : '';
-        modalOlRating.textContent = `OpenLib: ★ ${olData.average}${countStr}`;
+        // Only show if rating count is meaningful (>= 100 ratings)
+        if (olData.count < 100) {
+            // Low count ratings are noise, not signal
+            return;
+        }
+
+        // Format count display
+        let countDisplay = '';
+        if (olData.count >= 1000000) countDisplay = `(${Math.round(olData.count / 100000) / 10}M)`;
+        else if (olData.count >= 1000) countDisplay = `(${Math.round(olData.count / 1000)}K)`;
+        else countDisplay = `(${olData.count})`;
+
+        // Render as styled badge (matching Goodreads style)
+        modalOlRating.innerHTML = `<span class="px-3 py-1 rounded-full border bg-blue-50 text-blue-700 border-blue-100 font-medium flex items-center justify-center gap-1.5 shadow-sm text-sm" title="Source: Open Library">
+            <iconify-icon icon="fa6-solid:book-open" class="mr-1"></iconify-icon> ★ ${olData.average} <span class="opacity-70 text-xs ml-0.5">${countDisplay}</span>
+        </span>`;
         modalOlRating.classList.remove('hidden');
 
         // Auto-fill External Rating if empty
