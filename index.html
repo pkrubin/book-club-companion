@@ -488,9 +488,9 @@
                     <!-- Refresh Icon (below ratings for cleaner alignment) -->
                     <button id="modal-refresh-rating-btn"
                         class="text-indigo-600 hover:text-indigo-800 transition text-xs flex items-center gap-1"
-                        title="Refresh Rating">
+                        title="Fetch or refresh rating from Goodreads">
                         <iconify-icon icon="solar:refresh-circle-bold" class="text-lg"></iconify-icon>
-                        Refresh
+                        <span id="refresh-btn-text">Get Rating</span>
                     </button>
                 </div>
 
@@ -612,11 +612,11 @@
                                 <datalist id="tag-suggestions"></datalist>
                                 <button id="add-tag-btn" class="hidden"></button>
                             </div>
-                            <!-- AI Tag Button Moved Here -->
+                            <!-- AI Tag Button -->
                             <button id="modal-ai-tags-btn"
                                 class="text-xs text-indigo-600 hover:text-indigo-700 text-left font-medium flex items-center gap-1 mt-1.5 transition hidden">
                                 <iconify-icon icon="solar:magic-stick-3-bold-duotone" class="text-sm"></iconify-icon>
-                                Compare AI Tags
+                                <span id="ai-tags-btn-text">Suggest Tags</span>
                             </button>
                         </div>
 
@@ -712,7 +712,6 @@
 
 
         </div>
-    </div>
     </div>
 
     <!-- Import Modal -->

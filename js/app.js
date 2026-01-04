@@ -1,6 +1,6 @@
 // --- Configuration ---
 const GOOGLE_API_KEY = ''; // Add your API key here if needed for public deployment, currently using implicit or restricted key
-const APP_VERSION = '1.8.9'; // Rating display polish (styled badges, 100 threshold)
+const APP_VERSION = '1.9.0'; // AI tagging improvements (simplified prompt, JSON output)
 // Note: In a real production app, use a proxy server to hide API keys.
 
 // --- Gemini AI Configuration ---
@@ -572,7 +572,8 @@ async function refreshBookMetadata(book) {
         console.error(e);
         showError('Refresh failed: ' + e.message);
     } finally {
-        modalRefreshRatingBtn.innerHTML = '<iconify-icon icon="solar:refresh-circle-bold" class="text-xl"></iconify-icon>';
+        // Restore button to default state with dynamic text
+        modalRefreshRatingBtn.innerHTML = '<iconify-icon icon="solar:refresh-circle-bold" class="text-lg"></iconify-icon> <span id="refresh-btn-text">Refresh Rating</span>';
         modalRefreshRatingBtn.classList.remove('flex', 'items-center', 'gap-1');
         modalRefreshRatingBtn.disabled = false;
     }
@@ -853,11 +854,11 @@ closeErrorBtn.addEventListener('click', () => {
 // --- AI-Powered Tagging & Summary (Gemini) ---
 // Controlled vocabulary for AI-generated tags
 const TAG_VOCABULARY = {
-    genre: ['Literary Fiction', 'Historical Fiction', 'Mystery', 'Thriller', 'Romance', 'Sci-Fi', 'Fantasy', 'Biography', 'Biography & Autobiography', 'Memoir', 'Non-Fiction', 'History', 'Science', 'Self-Help', 'Business/Econ'],
-    era: ['1800s', '1900s', '1920s', '1930s', '1940s', 'WWII', 'Civil War', '1950s', '1960s', '1970s', '1980s', '1990s', 'Contemporary'],
+    genre: ['Literary Fiction', 'Historical Fiction', 'Mystery', 'Thriller', 'Romance', 'Sci-Fi', 'Fantasy', 'Biography', 'Biography & Autobiography', 'Memoir', 'Non-Fiction', 'History', 'Science', 'Self-Help', 'Business/Econ', 'Young Adult', 'Dystopian', 'Classic', 'Women\'s Fiction'],
+    era: ['1800s', '1900s', '1920s', '1930s', '1940s', 'WWII', 'WWI', 'Civil War', 'Holocaust', '1950s', '1960s', '1970s', '1980s', '1990s', 'Contemporary', 'Cold War', 'Great Depression'],
     countries: ['USA', 'England', 'UK', 'Ireland', 'France', 'Germany', 'Poland', 'Israel', 'Italy', 'Spain', 'Russia', 'Japan', 'China', 'India', 'Australia', 'Mexico', 'Canada'],
     regions: ['New York', 'Paris', 'London', 'California', 'US South', 'Europe', 'Asia', 'Middle East', 'Africa', 'Latin America'],
-    themes: ['Family', 'War', 'Love', 'Identity', 'Race', 'Feminism', 'Coming of Age', 'Survival', 'Art', 'Politics', 'Religion']
+    themes: ['Family', 'Family Drama', 'War', 'Love', 'Identity', 'Race', 'Feminism', 'Coming of Age', 'Survival', 'Art', 'Politics', 'Religion', 'Jewish', 'Slavery', 'Civil Rights', 'Immigration', 'Award Winner', 'Book Club Pick']
 };
 
 const TAG_ALIASES = {
@@ -872,30 +873,41 @@ const TAG_ALIASES = {
     'england': 'UK',
     'second world war': 'WWII',
     'world war 2': 'WWII',
-    'world war ii': 'WWII'
+    'world war ii': 'WWII',
+    // New aliases
+    'judaism': 'Jewish',
+    'holocaust literature': 'Holocaust',
+    'concentration camp': 'Holocaust',
+    'nazi': 'Holocaust',
+    'slavery history': 'Slavery',
+    'immigrants': 'Immigration',
+    'immigrant': 'Immigration',
+    'refugee': 'Immigration',
+    'middle eastern': 'Middle East',
+    'nonfiction': 'Non-Fiction',
+    'sci fi': 'Sci-Fi',
+    'science fiction': 'Sci-Fi',
+    'ya': 'Young Adult'
 };
 
 async function generateTagsAI(title, author, description) {
-    const prompt = `You are an expert literary classifier. Analyze the book details to connect it with the most accurate tags from the vocabulary.
+    // Build a list of preferred formats from vocabulary for the prompt
+    const preferredFormats = [
+        ...TAG_VOCABULARY.genre,
+        ...TAG_VOCABULARY.era,
+        ...TAG_VOCABULARY.countries,
+        ...TAG_VOCABULARY.regions,
+        ...TAG_VOCABULARY.themes
+    ].join(', ');
 
-BOOK:
-Title: ${title}
-Author: ${author}
-Description: ${description}
+    const prompt = `Return JSON tags for: "${title}" by ${author}
 
-RULES:
-1. Use ONLY tags from this controlled vocabulary:
-   - Genre: ${TAG_VOCABULARY.genre.join(', ')}
-   - Era: ${TAG_VOCABULARY.era.join(', ')}
-   - Countries: ${TAG_VOCABULARY.countries.join(', ')}
-   - Regions/Cities: ${TAG_VOCABULARY.regions.join(', ')}
-   - Themes: ${TAG_VOCABULARY.themes.join(', ')}
-2. Do NOT invent new tags. Only use exact matches from the list above.
-3. Instructions: Identify highly relevant tags from any category (Genre, Era, Location, Theme).
-4. Aim for 3-5 tags that best describe the book.
-5. Return ONLY a comma-separated list of tags.
+Rules: 7-9 tags total. Prefer country over region (Australia not "New South Wales"). One genre, one location, one era, rest themes.
 
-TAGS:`;
+{"is_fiction":bool,"genre":[],"location":[],"time_period":[],"themes":[]}`;
+
+    // Debug: log what we're sending to AI
+    console.log('AI Tag Request:', { title, author });
 
     try {
         const response = await fetch(GEMINI_PROXY_URL, {
@@ -904,7 +916,7 @@ TAGS:`;
             body: JSON.stringify({
                 prompt,
                 temperature: 0.3,
-                maxTokens: 100
+                maxTokens: 1000
             })
         });
 
@@ -916,38 +928,103 @@ TAGS:`;
         const data = await response.json();
         const tagText = data.text || '';
 
-        // Parse and validate tags
-        const cleanText = tagText.replace(/^tags:?\s*/i, '').replace(/[\[\]"]/g, '');
-        const tags = cleanText.split(',').map(t => t.trim()).filter(t => t);
+        // Debug: log raw AI response
+        console.log('AI Tag Response (raw):', tagText);
 
-        const allVocab = [...TAG_VOCABULARY.genre, ...TAG_VOCABULARY.era, ...TAG_VOCABULARY.countries, ...TAG_VOCABULARY.regions, ...TAG_VOCABULARY.themes];
+        // Parse JSON response
+        let tags = [];
+        try {
+            // Clean up any markdown code blocks if present
+            let cleanJson = tagText.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
 
-        // Fuzzy Match (Case Insensitive + Aliases)
-        const validTags = [];
-        const filteredTags = [];
+            // Fix unquoted keys (JavaScript-style to valid JSON)
+            cleanJson = cleanJson.replace(/(\s*)(\w+)(\s*:)/g, '$1"$2"$3');
+            // Fix boolean values (true/false without quotes)
+            cleanJson = cleanJson.replace(/:\s*true/gi, ': true').replace(/:\s*false/gi, ': false');
 
-        tags.forEach(userTag => {
-            let searchTag = userTag.toLowerCase();
+            console.log('AI Tag Response (cleaned JSON):', cleanJson);
 
-            // Check Alias
-            if (TAG_ALIASES[searchTag]) {
-                searchTag = TAG_ALIASES[searchTag].toLowerCase();
+            const parsed = JSON.parse(cleanJson);
+
+            // Flatten all array fields into a single tags array
+            const allTags = [
+                ...(parsed.genre || []),
+                ...(parsed.subjects || []),
+                ...(parsed.location || []),
+                ...(parsed.time_period || []),
+                ...(parsed.themes || []),
+                ...(parsed.significant_events || [])
+            ];
+
+            // Deduplicate and filter empty
+            tags = [...new Set(allTags)].filter(t => t && t.length > 0 && typeof t === 'string');
+
+            console.log('AI Tags (parsed from JSON):', tags);
+        } catch (parseError) {
+            console.error('JSON parse error:', parseError);
+            console.error('Raw text was:', tagText);
+
+            // Better fallback: extract quoted strings from the response
+            const quotedStrings = tagText.match(/"([^"]+)"/g);
+            if (quotedStrings) {
+                tags = quotedStrings.map(s => s.replace(/"/g, '')).filter(t =>
+                    t.length > 0 &&
+                    t.length < 50 &&
+                    !t.includes('string') &&
+                    !t.includes('boolean')
+                );
+            }
+            console.log('AI Tags (fallback extraction):', tags);
+        }
+
+        // Final sanitization: remove any garbage tags (JSON artifacts, etc.)
+        const jsonFieldNames = ['genre', 'subjects', 'location', 'time_period', 'themes', 'significant_events'];
+        tags = tags.filter(t => {
+            if (!t || typeof t !== 'string') return false;
+            const lower = t.toLowerCase();
+            // Reject JSON field names themselves
+            if (jsonFieldNames.includes(lower)) return false;
+            // Reject tags with JSON/code artifacts
+            if (t.includes('{') || t.includes('}') || t.includes('[') || t.includes(']')) return false;
+            if (t.includes('\n') || t.includes('\\n')) return false;
+            if (lower.includes('is_fiction') || lower.includes('is fiction')) return false;
+            if (lower === 'true' || lower === 'false') return false;
+            if (lower.includes('string') || lower.includes('boolean')) return false;
+            if (t.startsWith(':') || t.endsWith(':')) return false;
+            // Must be reasonable length
+            if (t.length < 2 || t.length > 50) return false;
+            return true;
+        });
+
+        // Debug: log final tags
+        console.log('AI Tags (final, sanitized):', tags);
+
+        // Normalize tags using aliases (but don't filter out unrecognized ones)
+        const normalizedTags = tags.map(userTag => {
+            const lowerTag = userTag.toLowerCase();
+
+            // Check if there's an alias for this tag
+            if (TAG_ALIASES[lowerTag]) {
+                return TAG_ALIASES[lowerTag];
             }
 
-            // Find canonical match in vocab
-            const match = allVocab.find(v => v.toLowerCase() === searchTag);
-            if (match) {
-                validTags.push(match);
-            } else {
-                filteredTags.push(userTag);
+            // Check if it matches a vocabulary term (case-insensitive)
+            const allVocab = [...TAG_VOCABULARY.genre, ...TAG_VOCABULARY.era, ...TAG_VOCABULARY.countries, ...TAG_VOCABULARY.regions, ...TAG_VOCABULARY.themes];
+            const vocabMatch = allVocab.find(v => v.toLowerCase() === lowerTag);
+            if (vocabMatch) {
+                return vocabMatch; // Use canonical casing
             }
+
+            // Keep original tag with title case for consistency
+            return userTag.split(' ').map(word =>
+                word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+            ).join(' ');
         });
 
         return {
             success: true,
-            tags: [...new Set(validTags)], // Deduplicate
-            raw: tagText,
-            filtered: filteredTags
+            tags: [...new Set(normalizedTags)], // Deduplicate
+            raw: tagText
         };
 
     } catch (e) {
@@ -1078,17 +1155,25 @@ function generateTags(book) {
         'Mystery': ['mystery', 'detective', 'crime', 'thriller', 'murder'],
         'Sci-Fi': ['science fiction', 'sci-fi', 'space opera', 'alien', 'cyberpunk', 'time travel'],
         'Fantasy': ['fantasy', 'magic', 'wizard', 'dragon', 'sword', 'witch'],
-        'Historical': ['historical fiction', 'historical', 'ancient', 'medieval', 'victorian'], // Changed from 'Historical Fiction' to 'Historical'
+        'Historical': ['historical fiction', 'historical', 'ancient', 'medieval', 'victorian'],
         'Romance': ['romance', 'love story'],
         'Memoir': ['memoir', 'autobiography', 'diary'],
-        'Biography': ['biography'], // Removed 'life of' - too generic (e.g. "life of a sea woman")
+        'Biography': ['biography'],
         'Non-Fiction': ['non-fiction', 'history', 'psychology', 'business', 'self-help', 'science'],
         'Classic': ['classic literature', 'classic'],
         'Dystopian': ['dystopian', 'post-apocalyptic'],
         'Young Adult': ['young adult', 'ya '],
         'Thriller': ['thriller', 'suspense', 'psychological'],
         'Women\'s Fiction': ['women\'s fiction', 'female friendship'],
-        'Literary Fiction': ['literary fiction']
+        'Literary Fiction': ['literary fiction'],
+        // New categories
+        'Jewish': ['jewish', 'judaism', 'rabbi', 'synagogue', 'torah', 'orthodox jew', 'hasidic', 'yiddish', 'kibbutz', 'shtetl'],
+        'Slavery': ['slavery', 'slave', 'plantation', 'underground railroad', 'antebellum', 'enslaved'],
+        'Civil Rights': ['civil rights', 'segregation', 'jim crow', 'martin luther king', 'rosa parks'],
+        'Immigration': ['immigrant', 'immigration', 'refugee', 'diaspora', 'exile', 'migrant', 'asylum'],
+        'Family Drama': ['family saga', 'generational', 'mother and daughter', 'family secrets', 'estranged', 'inheritance'],
+        'Award Winner': ['pulitzer', 'booker prize', 'national book award', 'man booker', 'newbery', 'caldecott'],
+        'Book Club Pick': ['book club', 'reading group', 'oprah', 'reese witherspoon']
     };
 
     for (const [tag, words] of Object.entries(keywords)) {
@@ -1114,6 +1199,14 @@ function generateTags(book) {
     if (lowerText.includes('cold war')) tags.add('Cold War');
     if (lowerText.includes('depression') && lowerText.includes('great')) tags.add('Great Depression');
 
+    // Holocaust-related
+    if (lowerText.includes('holocaust') || lowerText.includes('auschwitz') || lowerText.includes('concentration camp') ||
+        lowerText.includes('birkenau') || lowerText.includes('nazi') || lowerText.includes('gestapo') ||
+        lowerText.includes('death camp') || lowerText.includes('treblinka') || lowerText.includes('dachau')) {
+        tags.add('Holocaust');
+        tags.add('WWII'); // Holocaust books are inherently WWII
+    }
+
     // C. Locations
     const locations = {
         'France': ['france', 'paris', 'french'],
@@ -1125,7 +1218,14 @@ function generateTags(book) {
         'Africa': ['africa', 'african', 'nigeria', 'kenya'],
         'Asia': ['asia', 'asian', 'china', 'japan', 'korea'],
         'Ireland': ['ireland', 'irish', 'dublin'],
-        'Israel': ['israel', 'jerusalem', 'tel aviv']
+        'Israel': ['israel', 'jerusalem', 'tel aviv'],
+        // New locations
+        'Germany': ['germany', 'german', 'berlin', 'munich', 'bavaria'],
+        'Poland': ['poland', 'polish', 'warsaw', 'krakow'],
+        'Russia': ['russia', 'russian', 'moscow', 'soviet', 'ussr', 'siberia'],
+        'Spain': ['spain', 'spanish', 'madrid', 'barcelona'],
+        'Australia': ['australia', 'australian', 'sydney', 'melbourne'],
+        'Middle East': ['middle east', 'arab', 'beirut', 'tehran', 'iraq', 'iran', 'syria', 'lebanon']
     };
 
     for (const [loc, words] of Object.entries(locations)) {
@@ -1451,21 +1551,64 @@ function openModal(book, savedData = null) {
             if (modalRefreshRatingBtn) {
                 modalRefreshRatingBtn.classList.remove('hidden');
                 modalRefreshRatingBtn.onclick = () => refreshBookMetadata(savedData);
+
+                // Update button text based on whether ratings exist
+                const refreshBtnText = document.getElementById('refresh-btn-text');
+                if (refreshBtnText) {
+                    refreshBtnText.textContent = savedData.rating ? 'Refresh Rating' : 'Get Rating';
+                }
             }
 
-            // --- AI Compare Button Scope (Admin Only) ---
-            if (modalAiTagsBtn) {
-                if (isAdmin && savedData.status === 'Test') {
-                    modalAiTagsBtn.classList.remove('hidden');
-                    // Clone to strip old listeners
-                    const newBtn = modalAiTagsBtn.cloneNode(true);
-                    modalAiTagsBtn.parentNode.replaceChild(newBtn, modalAiTagsBtn);
-                    newBtn.addEventListener('click', () => {
-                        openComparisonModal(savedData);
-                    });
-                } else {
-                    modalAiTagsBtn.classList.add('hidden');
-                }
+            // --- AI Suggest Tags Button (Available for all saved books) ---
+            // Re-query the button fresh to avoid stale reference after previous clone
+            const currentAiTagsBtn = document.getElementById('modal-ai-tags-btn');
+            if (currentAiTagsBtn) {
+                currentAiTagsBtn.classList.remove('hidden');
+                // Clone to strip old listeners
+                const newBtn = currentAiTagsBtn.cloneNode(true);
+                currentAiTagsBtn.parentNode.replaceChild(newBtn, currentAiTagsBtn);
+
+                newBtn.addEventListener('click', async () => {
+                    const btnText = newBtn.querySelector('#ai-tags-btn-text');
+                    const originalText = btnText?.textContent || 'Suggest Tags';
+
+                    try {
+                        // Loading state
+                        if (btnText) btnText.textContent = 'Thinking...';
+                        newBtn.disabled = true;
+
+                        // Get book info for AI
+                        const info = book.volumeInfo || book;
+                        const description = info.description || '';
+                        const title = info.title || savedData.title;
+                        const author = info.authors?.[0] || savedData.author;
+
+                        const result = await generateTagsAI(title, author, description);
+
+                        if (result.success && result.tags.length > 0) {
+                            // Merge AI tags with current tags (case-insensitive duplicate check)
+                            const currentLower = currentModalTags.map(t => t.toLowerCase());
+                            const newTags = result.tags.filter(t => !currentLower.includes(t.toLowerCase()));
+
+                            if (newTags.length > 0) {
+                                currentModalTags.push(...newTags);
+                                renderModalTags();
+                                showSimpleAlert(`Added ${newTags.length} tag${newTags.length > 1 ? 's' : ''}: ${newTags.join(', ')}`);
+                            } else {
+                                // Show what AI suggested even if all duplicates
+                                showSimpleAlert(`AI suggested: ${result.tags.join(', ')}\n\n(All already present)`);
+                            }
+                        } else {
+                            showSimpleAlert(result.error || 'Could not analyze this book for tags');
+                        }
+                    } catch (e) {
+                        console.error('AI Tag Error:', e);
+                        showSimpleAlert('Failed to get AI suggestions');
+                    } finally {
+                        if (btnText) btnText.textContent = originalText;
+                        newBtn.disabled = false;
+                    }
+                });
             }
 
             // Setup Delete Button
@@ -1618,6 +1761,10 @@ function closeModal() {
     document.body.style.overflow = '';
     modalInitialValues = null;
     currentModalBookId = null;
+
+    // Safety: remove any lingering alert modals that might block clicks
+    const alertModal = document.getElementById('simple-alert-modal');
+    if (alertModal) alertModal.remove();
 }
 
 function attemptCloseModal() {

@@ -443,6 +443,16 @@ try {
 *   **Inexplicable Localhost Bugs**: If the layout looks and measures "right" in code but "wrong" in the browser (e.g., global massive scaling), suspect browser tab corruption/stale state. **The Fix**: Close and reopen the tab/browser before deeply debugging CSS.
 *   **Version Parity**: Always synchronize the version number in BOTH `js/app.js` and `package.json`. The footer version is the only definitive way to confirm that a remote deployment (Vercel) actually picked up the latest code.
 
+#### [Jan 03] DOM Cloning Creates Stale References
+*   **The Problem:** A global `const modalAiTagsBtn = document.getElementById('...')` was initialized once at page load. The code then used `cloneNode()` and `replaceChild()` to swap in a fresh button each time the modal opened (to prevent duplicate event listeners). After the first clone, `modalAiTagsBtn` pointed to a **detached node** (no longer in the DOM), so `modalAiTagsBtn.parentNode` was `null`.
+*   **The Symptom:** On the *second* modal open, `replaceChild(...)` threw `TypeError: Cannot read properties of null (reading 'replaceChild')`. This crashed JavaScript execution, breaking all event handlers and causing the UI to appear "frozen."
+*   **The Fix:** Re-query the element fresh each time: `const currentBtn = document.getElementById('...')` inside the function, rather than relying on a stale `const` from the top of the file.
+*   **The Lesson:** **Cloning replaces the DOM node, but not your variable reference.** After `replaceChild`, the original reference is orphaned. Always re-query if you need the current version of a cloned element.
+*   **Prevention:**
+    *   Avoid clone-and-replace patterns for buttons. Instead, consider `removeEventListener()` before adding new ones.
+    *   If you must clone, re-query the element from the DOM each time, not from a stale variable.
+    *   When UI "freezes," **check the console first** - a JavaScript error often stops all subsequent code.
+
 ---
 
 ## For Future AI Sessions
