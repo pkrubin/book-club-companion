@@ -1,6 +1,6 @@
 // --- Configuration ---
 const GOOGLE_API_KEY = ''; // Add your API key here if needed for public deployment, currently using implicit or restricted key
-const APP_VERSION = '1.9.2'; // User profiles: admin-only audit trail, explicit 'member' role
+const APP_VERSION = '1.9.3'; // Hide Test Data toggle and Backup Data from members
 // Note: In a real production app, use a proxy server to hide API keys.
 
 // --- Gemini AI Configuration ---
@@ -266,6 +266,21 @@ function applyRoleBasedUI() {
     const mobileImportBtn = document.getElementById('mobile-import-btn');
     if (mobileImportBtn) {
         mobileImportBtn.style.display = isAdmin ? '' : 'none';
+    }
+
+    // Hide "Show Test Data" toggle for members (it's in a wrapper div)
+    const testDataToggle = document.getElementById('toggle-test-data');
+    if (testDataToggle) {
+        const wrapper = testDataToggle.closest('.px-4.py-2.border-t');
+        if (wrapper) {
+            wrapper.style.display = isAdmin ? '' : 'none';
+        }
+    }
+
+    // Hide "Backup Data" button for members
+    const backupBtn = document.getElementById('nav-export-btn');
+    if (backupBtn) {
+        backupBtn.style.display = isAdmin ? '' : 'none';
     }
 
     console.log('Role-based UI applied:', isAdmin ? 'admin (full access)' : 'member (restricted)');
