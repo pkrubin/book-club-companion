@@ -6,12 +6,12 @@
 
 **Read `SESSION_HANDOVER.md` immediately** - it contains:
 - Current version and recent deployments
-- What was worked on in the last few sessions
+- What was worked on in recent sessions
 - Known issues and in-progress items
-- Database state (constraints, RLS policies)
+- Database state and design decisions
 - What NOT to change without asking
 
-> **At END of every session:** Update SESSION_HANDOVER.md with what was accomplished.
+> **At END of every session:** Update SESSION_HANDOVER.md with what was accomplished in the session.
 
 ---
 
