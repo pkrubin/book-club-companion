@@ -2,6 +2,17 @@
 
 > ⛔ **STOP!** Before doing ANYTHING, read this entire file. It's short.
 
+## 📋 Session Handover (READ FIRST!)
+
+**Read `SESSION_HANDOVER.md` immediately** - it contains:
+- Current version and recent deployments
+- What was worked on in the last few sessions
+- Known issues and in-progress items
+- Database state (constraints, RLS policies)
+- What NOT to change without asking
+
+> **At END of every session:** Update SESSION_HANDOVER.md with what was accomplished.
+
 ---
 
 ## What Is This App?
