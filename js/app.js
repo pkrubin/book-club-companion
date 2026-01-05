@@ -1,6 +1,6 @@
 // --- Configuration ---
 const GOOGLE_API_KEY = ''; // Add your API key here if needed for public deployment, currently using implicit or restricted key
-const APP_VERSION = '1.9.1'; // UI polish: Discussion Guide moved to left, smaller description text, print citation fix
+const APP_VERSION = '1.9.2'; // User profiles: admin-only audit trail, explicit 'member' role
 // Note: In a real production app, use a proxy server to hide API keys.
 
 // --- Gemini AI Configuration ---
@@ -363,7 +363,7 @@ async function handleSignup(e) {
                 .insert({
                     id: authData.user.id,
                     display_name: email.split('@')[0], // Use email prefix as default name
-                    role: null // Not admin
+                    role: 'member' // Explicit member role
                 });
 
             if (profileError) {
@@ -705,7 +705,7 @@ async function fetchUserRole() {
                 .insert({
                     id: user.id,
                     display_name: user.email?.split('@')[0] || 'User',
-                    role: null
+                    role: 'member' // Explicit member role
                 });
             currentUserRole = null;
         } else if (data) {
@@ -1614,31 +1614,41 @@ function openModal(book, savedData = null) {
             // Setup Delete Button
             modalDeleteBtn.onclick = () => deleteBook(savedData.id);
 
-            // --- Audit Trail ---
-            if (modalAuditInfo) {
+            // --- Audit Trail (Admin only - to avoid RLS issues with user lookup) ---
+            if (modalAuditInfo && currentUserRole === 'admin') {
                 const fetchAuditInfo = async () => {
                     let auditParts = [];
 
                     if (savedData.proposed_by_user_id) {
-                        const { data } = await supabase
-                            .from('user_profiles')
-                            .select('display_name')
-                            .eq('id', savedData.proposed_by_user_id)
-                            .single();
-                        const name = data?.display_name || 'Unknown User';
-                        const date = savedData.created_at ? new Date(savedData.created_at).toLocaleDateString() : '';
-                        auditParts.push(`Proposed by ${name}${date ? ' on ' + date : ''}`);
+                        try {
+                            const { data } = await supabase
+                                .from('user_profiles')
+                                .select('display_name')
+                                .eq('id', savedData.proposed_by_user_id)
+                                .maybeSingle();
+                            const name = data?.display_name || 'Unknown User';
+                            const date = savedData.created_at ? new Date(savedData.created_at).toLocaleDateString() : '';
+                            auditParts.push(`Proposed by ${name}${date ? ' on ' + date : ''}`);
+                        } catch (e) {
+                            const date = savedData.created_at ? new Date(savedData.created_at).toLocaleDateString() : '';
+                            auditParts.push(`Proposed by Unknown User${date ? ' on ' + date : ''}`);
+                        }
                     }
 
                     if (savedData.last_modified_by) {
-                        const { data } = await supabase
-                            .from('user_profiles')
-                            .select('display_name')
-                            .eq('id', savedData.last_modified_by)
-                            .single();
-                        const name = data?.display_name || 'Unknown User';
-                        const date = savedData.last_modified_at ? new Date(savedData.last_modified_at).toLocaleDateString() : '';
-                        auditParts.push(`Last modified by ${name}${date ? ' on ' + date : ''}`);
+                        try {
+                            const { data } = await supabase
+                                .from('user_profiles')
+                                .select('display_name')
+                                .eq('id', savedData.last_modified_by)
+                                .maybeSingle();
+                            const name = data?.display_name || 'Unknown User';
+                            const date = savedData.last_modified_at ? new Date(savedData.last_modified_at).toLocaleDateString() : '';
+                            auditParts.push(`Last modified by ${name}${date ? ' on ' + date : ''}`);
+                        } catch (e) {
+                            const date = savedData.last_modified_at ? new Date(savedData.last_modified_at).toLocaleDateString() : '';
+                            auditParts.push(`Last modified by Unknown User${date ? ' on ' + date : ''}`);
+                        }
                     }
 
                     if (auditParts.length > 0) {
@@ -1649,6 +1659,8 @@ function openModal(book, savedData = null) {
                     }
                 };
                 fetchAuditInfo();
+            } else if (modalAuditInfo) {
+                modalAuditInfo.classList.add('hidden'); // Hide for non-admins
             }
 
             // --- Discussion Guide Button Logic (Only for Scheduled books) ---
@@ -4716,14 +4728,14 @@ function toggleEditQuestions() {
         // Switch to Edit Mode
         viewEl.classList.add('hidden');
         editEl.classList.remove('hidden');
-        editBtn.textContent = 'Cancel';
+        editBtn.innerHTML = '<iconify-icon icon="solar:close-circle-broken" class="text-base"></iconify-icon> Cancel';
         saveBtn.classList.remove('hidden');
         editEl.focus();
     } else {
         // Switch to View Mode (Cancel)
         editEl.classList.add('hidden');
         viewEl.classList.remove('hidden');
-        editBtn.textContent = 'Edit Questions';
+        editBtn.innerHTML = '<iconify-icon icon="solar:pen-new-square-broken" class="text-base"></iconify-icon> Edit Questions';
         saveBtn.classList.add('hidden');
         // Reset value
         editEl.value = getDiscussionQuestions(currentDiscussionBook);
@@ -4857,6 +4869,88 @@ function renderDiscussionGuideUI(book) {
 
 function displayDiscussionGuide(book) {
     renderDiscussionGuideUI(book);
+}
+
+// Export Discussion Guide to Word (.docx)
+async function exportToWord() {
+    if (!currentDiscussionBook) return;
+
+    const title = currentDiscussionBook.google_data.volumeInfo.title;
+    const questions = getDiscussionQuestions(currentDiscussionBook);
+
+    // Parse questions (filter out attribution line)
+    const questionLines = questions.split('\n').filter(q => {
+        const t = q.trim();
+        return t.length > 0 &&
+            !t.startsWith('_Generated by') &&
+            !t.startsWith('Generated by');
+    }).map(q => q.replace(/^\d+\.\s*/, '').trim()); // Remove existing numbering
+
+    try {
+        const { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } = docx;
+
+        // Build document
+        const doc = new Document({
+            numbering: {
+                config: [{
+                    reference: "questions",
+                    levels: [{
+                        level: 0,
+                        format: "decimal",
+                        text: "%1.",
+                        alignment: AlignmentType.LEFT,
+                        style: { paragraph: { indent: { left: 720, hanging: 360 } } }
+                    }]
+                }]
+            },
+            sections: [{
+                children: [
+                    // Title
+                    new Paragraph({
+                        children: [new TextRun({ text: title, bold: true, size: 48 })],
+                        heading: HeadingLevel.HEADING_1,
+                        spacing: { after: 200 }
+                    }),
+                    // Subtitle
+                    new Paragraph({
+                        children: [new TextRun({ text: "Discussion Guide", size: 28, color: "666666" })],
+                        spacing: { after: 400 }
+                    }),
+                    // Questions
+                    ...questionLines.map(q =>
+                        new Paragraph({
+                            children: [new TextRun({ text: q, size: 24 })],
+                            numbering: { reference: "questions", level: 0 },
+                            spacing: { after: 200 }
+                        })
+                    ),
+                    // Spacer
+                    new Paragraph({ text: "", spacing: { before: 400 } }),
+                    // Footer
+                    new Paragraph({
+                        children: [new TextRun({ text: "Generated by Book Club Companion", italics: true, size: 20, color: "999999" })],
+                        alignment: AlignmentType.RIGHT
+                    })
+                ]
+            }]
+        });
+
+        // Generate and download
+        const blob = await Packer.toBlob(doc);
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${title.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_')}_Discussion_Guide.docx`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        showSimpleAlert(`Discussion Guide exported as Word document!`);
+    } catch (error) {
+        console.error('Word export error:', error);
+        showSimpleAlert('Failed to export Word document. Please try again.');
+    }
 }
 
 function printDiscussionGuide() {
