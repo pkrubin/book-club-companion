@@ -44,6 +44,7 @@
 - [ ] Tag deletion UI may have issues with garbage tags from earlier versions
 - [ ] Multi-book-club support (Phase 3 - future)
 - [ ] Consider VIEW approach for user_profiles when email/phone added later
+- [ ] **Host Alerts**: Build notifications when a host claims a month or changes a meeting time
 
 ---
 

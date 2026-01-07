@@ -294,6 +294,8 @@ DO NOT start coding until you've confirmed understanding.
 
 ## Where to Find More
 
+- `SESSION_HANDOVER.md` - **Read first!** Current state and recent work
+- `FEATURES.md` - Complete feature inventory by page
 - `project_guidelines.md` - Detailed rules and lessons learned
 - `DEPLOYMENT_GUIDE.md` - Full deployment instructions  
 - `CHANGELOG.md` - Historical changes

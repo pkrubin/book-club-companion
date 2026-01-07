@@ -1,6 +1,6 @@
 // --- Configuration ---
 const GOOGLE_API_KEY = ''; // Add your API key here if needed for public deployment, currently using implicit or restricted key
-const APP_VERSION = '1.9.3'; // Hide Test Data toggle and Backup Data from members
+const APP_VERSION = '1.9.4'; // Export by Status feature, FEATURES.md documentation
 // Note: In a real production app, use a proxy server to hide API keys.
 
 // --- Gemini AI Configuration ---
@@ -93,6 +93,64 @@ function exportScheduleToCSV() {
     document.body.removeChild(link);
 
     showSimpleAlert(`Exported ${scheduledBooks.length} scheduled books.`);
+}
+
+// Export by Status (Admin only)
+const exportByStatusBtn = document.getElementById('export-by-status-btn');
+const exportStatusSelect = document.getElementById('export-status-select');
+
+if (exportByStatusBtn) {
+    exportByStatusBtn.addEventListener('click', exportByStatus);
+}
+
+function exportByStatus() {
+    const selectedStatus = exportStatusSelect?.value;
+
+    if (!selectedStatus) {
+        showSimpleAlert('Please select a status to export.');
+        return;
+    }
+
+    // Filter books by selected status
+    const filteredBooks = allSavedBooks.filter(book => book.status === selectedStatus);
+
+    if (filteredBooks.length === 0) {
+        showSimpleAlert(`No books found with status "${selectedStatus}".`);
+        return;
+    }
+
+    // Sort by date (ascending)
+    filteredBooks.sort((a, b) => {
+        const dateA = new Date(a.target_date || '9999-12-31');
+        const dateB = new Date(b.target_date || '9999-12-31');
+        return dateA - dateB;
+    });
+
+    // Generate CSV Content
+    let csvContent = "Title,Author,Status,Date,Host,Rating\n";
+
+    filteredBooks.forEach(book => {
+        const title = (book.title || '').replace(/,/g, '');
+        const author = (book.author || '').replace(/,/g, '');
+        const status = book.status || '';
+        const date = book.target_date || '';
+        const host = (book.host_name || '').replace(/,/g, '');
+        const rating = book.rating || '';
+
+        csvContent += `${title},${author},${status},${date},${host},${rating}\n`;
+    });
+
+    // Trigger Download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `book_club_${selectedStatus.toLowerCase()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    showSimpleAlert(`Exported ${filteredBooks.length} ${selectedStatus} books.`);
 }
 
 // Filter Elements
@@ -281,6 +339,12 @@ function applyRoleBasedUI() {
     const backupBtn = document.getElementById('nav-export-btn');
     if (backupBtn) {
         backupBtn.style.display = isAdmin ? '' : 'none';
+    }
+
+    // Hide "Export by Status" for members
+    const exportByStatusWrapper = document.getElementById('export-by-status-wrapper');
+    if (exportByStatusWrapper) {
+        exportByStatusWrapper.style.display = isAdmin ? '' : 'none';
     }
 
     console.log('Role-based UI applied:', isAdmin ? 'admin (full access)' : 'member (restricted)');

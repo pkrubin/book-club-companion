@@ -181,6 +181,29 @@
                                         <iconify-icon icon="solar:calendar-add-broken"></iconify-icon>
                                         Export Schedule
                                     </button>
+                                    <!-- Export by Status (Admin only) -->
+                                    <div id="export-by-status-wrapper" class="px-4 py-2">
+                                        <label class="text-xs font-medium text-stone-500 mb-1 block">Export by
+                                            Status</label>
+                                        <div class="flex gap-1">
+                                            <select id="export-status-select"
+                                                class="flex-1 text-sm border border-stone-200 rounded px-2 py-1 bg-white">
+                                                <option value="">Select status...</option>
+                                                <option value="Scheduled">Scheduled</option>
+                                                <option value="Read">Read</option>
+                                                <option value="Proposed">Proposed</option>
+                                                <option value="Priority">Priority</option>
+                                                <option value="Possible">Possible</option>
+                                                <option value="Later">Later</option>
+                                                <option value="Deprioritize">Deprioritize</option>
+                                                <option value="Test">Test</option>
+                                            </select>
+                                            <button id="export-by-status-btn"
+                                                class="px-2 py-1 bg-stone-100 hover:bg-stone-200 rounded text-sm">
+                                                <iconify-icon icon="solar:download-minimalistic-broken"></iconify-icon>
+                                            </button>
+                                        </div>
+                                    </div>
                                     <button id="nav-export-btn"
                                         class="w-full text-left px-4 py-2 text-sm text-stone-700 hover:bg-stone-50 rounded flex items-center gap-2">
                                         <iconify-icon icon="solar:download-minimalistic-broken"></iconify-icon>
