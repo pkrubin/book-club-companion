@@ -1,6 +1,6 @@
 // --- Configuration ---
 const GOOGLE_API_KEY = ''; // Add your API key here if needed for public deployment, currently using implicit or restricted key
-const APP_VERSION = '1.9.4'; // Export by Status feature, FEATURES.md documentation
+const APP_VERSION = '1.9.5'; // Recent Changes notification dropdown
 // Note: In a real production app, use a proxy server to hide API keys.
 
 // --- Gemini AI Configuration ---
@@ -683,6 +683,88 @@ if (settingsBtn && settingsMenu) {
     });
 }
 
+// --- Notification Bell Logic ---
+const notificationsBtn = document.getElementById('notifications-btn');
+const notificationsMenu = document.getElementById('notifications-menu');
+const notificationsBadge = document.getElementById('notifications-badge');
+const notificationsList = document.getElementById('notifications-list');
+const notificationsEmpty = document.getElementById('notifications-empty');
+const markAllReadBtn = document.getElementById('mark-all-read-btn');
+
+if (notificationsBtn && notificationsMenu) {
+    notificationsBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        notificationsMenu.classList.toggle('hidden');
+        // Close settings menu if open
+        if (settingsMenu) settingsMenu.classList.add('hidden');
+    });
+
+    // Close on Click Outside
+    window.addEventListener('click', (e) => {
+        if (!notificationsBtn.contains(e.target) && !notificationsMenu.contains(e.target)) {
+            notificationsMenu.classList.add('hidden');
+        }
+    });
+
+    // Mark All as Read
+    if (markAllReadBtn) {
+        markAllReadBtn.addEventListener('click', async () => {
+            try {
+                // Update last_seen_at to now
+                await supabase
+                    .from('user_profiles')
+                    .update({ last_seen_at: new Date().toISOString() })
+                    .eq('id', user.id);
+
+                userLastSeenAt = new Date().toISOString();
+
+                // Re-render to update styling
+                renderNotifications();
+
+                // Hide badge
+                if (notificationsBadge) notificationsBadge.classList.add('hidden');
+            } catch (e) {
+                console.error('Error marking all as read:', e);
+            }
+        });
+    }
+
+    // Clear All button
+    const clearAllBtn = document.getElementById('clear-all-btn');
+    if (clearAllBtn) {
+        clearAllBtn.addEventListener('click', async () => {
+            try {
+                // Get all visible notification IDs
+                const items = notificationsList.querySelectorAll('.notification-item');
+                const changeIds = Array.from(items).map(item => parseInt(item.dataset.id));
+
+                if (changeIds.length === 0) return;
+
+                // Insert all as dismissed for this user
+                const dismissals = changeIds.map(change_id => ({
+                    user_id: user.id,
+                    change_id: change_id
+                }));
+
+                const { error } = await supabase
+                    .from('user_dismissed_notifications')
+                    .upsert(dismissals, { onConflict: 'user_id,change_id' });
+
+                if (error) throw error;
+
+                // Clear UI immediately
+                notificationsList.innerHTML = '';
+                notificationsList.classList.add('hidden');
+                notificationsEmpty.classList.remove('hidden');
+                notificationsBadge.classList.add('hidden');
+
+            } catch (e) {
+                console.error('Error clearing all notifications:', e);
+            }
+        });
+    }
+}
+
 // --- Custom Status Dropdown Logic ---
 const filterStatusBtn = document.getElementById('filter-status-btn');
 const filterStatusMenu = document.getElementById('filter-status-menu');
@@ -766,6 +848,8 @@ supabase.auth.onAuthStateChange(async (event, session) => {
 });
 
 // Fetch user role from user_profiles
+let userLastSeenAt = null; // Track when user last viewed the app
+
 async function fetchUserRole() {
     if (!user) return; // Guard: don't fetch if logged out
     console.log('Fetching user profile/role for:', user.id);
@@ -773,7 +857,7 @@ async function fetchUserRole() {
     try {
         const { data, error } = await supabase
             .from('user_profiles')
-            .select('role')
+            .select('role, last_seen_at')
             .eq('id', user.id)
             .single();
 
@@ -787,9 +871,18 @@ async function fetchUserRole() {
                     role: 'member' // Explicit member role
                 });
             currentUserRole = null;
+            userLastSeenAt = null;
         } else if (data) {
             currentUserRole = data.role; // 'admin' or null
+            userLastSeenAt = data.last_seen_at; // Store for "new changes" comparison
         }
+
+        // Update last_seen_at to now (so next login shows new changes)
+        await supabase
+            .from('user_profiles')
+            .update({ last_seen_at: new Date().toISOString() })
+            .eq('id', user.id);
+
     } catch (e) {
         console.error('Error fetching user role:', e);
         currentUserRole = null;
@@ -1920,6 +2013,13 @@ async function updateBook(id, googleBook) {
         modalUpdateBtn.textContent = 'Updating...';
         modalUpdateBtn.disabled = true;
 
+        // Fetch current values BEFORE update (for change logging)
+        const { data: currentBook } = await supabase
+            .from('book_club_list')
+            .select('title, host_name, target_date, meeting_time, status')
+            .eq('id', id)
+            .single();
+
         const updates = {
             status: editStatus.value || null,
             rating: editRating.value ? parseFloat(editRating.value) : null,
@@ -1938,6 +2038,58 @@ async function updateBook(id, googleBook) {
             .eq('id', id);
 
         if (error) throw error;
+
+        // Log changes for Scheduled books
+        const isScheduled = updates.status === 'Scheduled' || currentBook?.status === 'Scheduled';
+        if (isScheduled && currentBook) {
+            const changes = [];
+            const userName = user?.email?.split('@')[0] || 'Unknown';
+
+            // Check host change
+            if ((currentBook.host_name || '') !== (updates.host_name || '')) {
+                changes.push({
+                    book_id: id,
+                    book_title: currentBook.title,
+                    change_type: 'host',
+                    old_value: currentBook.host_name || '(none)',
+                    new_value: updates.host_name || '(none)',
+                    changed_by_name: userName
+                });
+            }
+
+            // Check date change
+            if ((currentBook.target_date || '') !== (updates.target_date || '')) {
+                changes.push({
+                    book_id: id,
+                    book_title: currentBook.title,
+                    change_type: 'date',
+                    old_value: currentBook.target_date || '(none)',
+                    new_value: updates.target_date || '(none)',
+                    changed_by_name: userName
+                });
+            }
+
+            // Check time change
+            if ((currentBook.meeting_time || '') !== (updates.meeting_time || '')) {
+                changes.push({
+                    book_id: id,
+                    book_title: currentBook.title,
+                    change_type: 'time',
+                    old_value: currentBook.meeting_time || '(none)',
+                    new_value: updates.meeting_time || '(none)',
+                    changed_by_name: userName
+                });
+            }
+
+            // Insert changes
+            if (changes.length > 0) {
+                const { error: logError } = await supabase
+                    .from('schedule_changes')
+                    .insert(changes);
+                if (logError) console.error('Error logging changes:', logError);
+                else console.log('Logged schedule changes:', changes.length);
+            }
+        }
 
         // Refresh list and close
         await fetchSavedBooks();
@@ -3960,6 +4112,199 @@ function renderDashboard() {
     } else {
         dashboardUpcomingContainer.classList.add('hidden');
     }
+
+    // Render notifications in bell dropdown
+    renderNotifications();
+}
+
+// Render notifications in the bell dropdown
+async function renderNotifications() {
+    if (!notificationsList || !notificationsEmpty || !notificationsBadge) return;
+
+    try {
+        // Fetch changes from last 14 days
+        const fourteenDaysAgo = new Date();
+        fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+
+        // Fetch all changes
+        const { data: allChanges, error } = await supabase
+            .from('schedule_changes')
+            .select('*')
+            .gte('created_at', fourteenDaysAgo.toISOString())
+            .order('created_at', { ascending: false })
+            .limit(50);
+
+        if (error) {
+            console.error('Error fetching notifications:', error);
+            notificationsList.classList.add('hidden');
+            notificationsEmpty.classList.remove('hidden');
+            return;
+        }
+
+        // Fetch this user's dismissed notifications
+        const { data: dismissed } = await supabase
+            .from('user_dismissed_notifications')
+            .select('change_id')
+            .eq('user_id', user.id);
+
+        const dismissedIds = new Set((dismissed || []).map(d => d.change_id));
+
+        // Filter out dismissed items
+        const changes = (allChanges || []).filter(c => !dismissedIds.has(c.id)).slice(0, 20);
+
+        if (changes.length === 0) {
+            notificationsList.classList.add('hidden');
+            notificationsEmpty.classList.remove('hidden');
+            notificationsBadge.classList.add('hidden');
+            return;
+        }
+
+        // Count new items (since last login)
+        const newCount = userLastSeenAt
+            ? changes.filter(c => new Date(c.created_at) > new Date(userLastSeenAt)).length
+            : changes.length;
+
+        // Update badge
+        if (newCount > 0) {
+            notificationsBadge.textContent = newCount;
+            notificationsBadge.classList.remove('hidden');
+        } else {
+            notificationsBadge.classList.add('hidden');
+        }
+
+        // Render changes
+        notificationsList.innerHTML = changes.map(change => {
+            const isNew = !userLastSeenAt || new Date(change.created_at) > new Date(userLastSeenAt);
+            const timeAgo = getTimeAgo(change.created_at);
+
+            // Icon based on change type
+            let icon = 'solar:user-bold';
+            let changeDescription = '';
+
+            if (change.change_type === 'host') {
+                icon = 'solar:user-bold';
+                if (!change.new_value || change.new_value === '(none)') {
+                    changeDescription = 'Host was removed';
+                } else if (!change.old_value || change.old_value === '(none)') {
+                    changeDescription = `${change.new_value} is now hosting`;
+                } else {
+                    changeDescription = `Host changed to ${change.new_value}`;
+                }
+            } else if (change.change_type === 'date') {
+                icon = 'solar:calendar-bold';
+                if (!change.new_value) {
+                    changeDescription = 'Meeting date was removed';
+                } else {
+                    // Format date nicely: "Jan 15" or "Jan 15, 2027"
+                    const newDate = new Date(change.new_value + 'T00:00:00');
+                    const formattedDate = newDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    changeDescription = `Moved to ${formattedDate}`;
+                }
+            } else if (change.change_type === 'time') {
+                icon = 'solar:clock-circle-bold';
+                if (!change.new_value) {
+                    changeDescription = 'Meeting time was removed';
+                } else {
+                    // Format time nicely: "7:15 PM"
+                    const [hours, minutes] = change.new_value.split(':');
+                    const hour = parseInt(hours);
+                    const ampm = hour >= 12 ? 'PM' : 'AM';
+                    const hour12 = hour % 12 || 12;
+                    const formattedTime = `${hour12}:${minutes} ${ampm}`;
+                    changeDescription = `Time changed to ${formattedTime}`;
+                }
+            }
+
+            return `
+                <div class="notification-item px-4 py-3 border-b border-stone-100 hover:bg-stone-50 transition ${isNew ? 'bg-indigo-50/50 border-l-4 border-l-indigo-400' : ''}" data-id="${change.id}">
+                    <div class="flex items-start gap-3">
+                        <iconify-icon icon="${icon}" class="text-lg ${isNew ? 'text-indigo-500' : 'text-stone-400'} flex-shrink-0 mt-0.5"></iconify-icon>
+                        <div class="flex-grow min-w-0">
+                            <p class="text-sm ${isNew ? 'font-semibold text-stone-800' : 'font-normal text-stone-600'}">${change.book_title}</p>
+                            <p class="text-xs ${isNew ? 'text-stone-600' : 'text-stone-500'} mt-0.5">${changeDescription}</p>
+                            <p class="text-[10px] text-stone-400 mt-1">by ${change.changed_by_name || 'Unknown'} • ${timeAgo}</p>
+                        </div>
+                        <button class="dismiss-notification-btn flex-shrink-0 text-stone-400 hover:text-rose-500 transition p-1" title="Dismiss" data-id="${change.id}">
+                            <iconify-icon icon="solar:close-circle-bold" class="text-lg"></iconify-icon>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        notificationsList.classList.remove('hidden');
+        notificationsEmpty.classList.add('hidden');
+
+        // Add dismiss handlers
+        notificationsList.querySelectorAll('.dismiss-notification-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const changeId = btn.dataset.id;
+                await dismissNotification(changeId);
+            });
+        });
+
+    } catch (e) {
+        console.error('Error rendering notifications:', e);
+        notificationsList.classList.add('hidden');
+        notificationsEmpty.classList.remove('hidden');
+    }
+}
+
+// Dismiss a single notification (per-user - doesn't delete the shared change)
+async function dismissNotification(changeId) {
+    try {
+        // Insert into per-user dismissal table
+        const { error } = await supabase
+            .from('user_dismissed_notifications')
+            .insert({
+                user_id: user.id,
+                change_id: parseInt(changeId)
+            });
+
+        if (error) {
+            // Ignore duplicate key errors (already dismissed)
+            if (!error.message.includes('duplicate')) throw error;
+        }
+
+        // Remove from DOM immediately
+        const item = notificationsList.querySelector(`[data-id="${changeId}"]`);
+        if (item) {
+            item.style.opacity = '0';
+            item.style.height = '0';
+            item.style.padding = '0';
+            item.style.overflow = 'hidden';
+            item.style.transition = 'all 0.2s ease-out';
+            setTimeout(() => {
+                item.remove();
+                // Check if empty
+                if (notificationsList.children.length === 0) {
+                    notificationsList.classList.add('hidden');
+                    notificationsEmpty.classList.remove('hidden');
+                    notificationsBadge.classList.add('hidden');
+                }
+            }, 200);
+        }
+    } catch (e) {
+        console.error('Error dismissing notification:', e);
+    }
+}
+
+// Helper: Get human-readable time ago
+function getTimeAgo(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
 function renderSavedBooks(books) {
