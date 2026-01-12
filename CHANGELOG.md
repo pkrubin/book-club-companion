@@ -4,6 +4,50 @@ All notable changes to the Book Club Companion project will be documented in thi
 
 ---
 
+## 2026-01-11 - Tester's Handbook & Deployment Safety (v1.9.6)
+
+**Goal:** Finalize the Tester's Handbook and implement strict deployment protocols to prevent rushing.
+
+**Changes:**
+
+| File | Change |
+|------|--------|
+| `guide.html` | Integrated comprehensive Tester's Handbook with 9 detailed sections and 7 Missions. |
+| `project_guidelines.md` | Added "The 10-Second Stop" and formal Deployment Protocols. |
+| `README_FOR_AI.md` | Updated with mandatory testing rules and environment URLs. |
+| `js/app.js` | Bumped version to `v1.9.6`. |
+
+---
+
+## 2026-01-11 - Recent Changes Notifications (v1.9.5)
+
+**Goal:** Add a user-facing notification system for app updates and data changes.
+
+**Changes:**
+
+| File | Change |
+|------|--------|
+| `index.html` | Added Bell icon with notification badge and dropdown UI. |
+| `js/app.js` | Implemented `RecentChanges` system with per-user dismiss, "Mark all read", and "Clear all" features. |
+| `js/app.js` | Bumped version to `v1.9.5`. |
+
+---
+
+## 2026-01-09 - Export by Status & Role-Based UI (v1.9.4)
+
+**Goal:** Enhance data management with filtered exports and restrict advanced features to admin users.
+
+**Changes:**
+
+| File | Change |
+|------|--------|
+| `js/app.js` | Implemented "Export by Status" feature in Settings. |
+| `js/app.js` | Added role-based gating to hide "Backup Data" and "Show Test Data" from members. |
+| `FEATURES.md` | Updated with new export and role features. |
+| `js/app.js` | Bumped version to `v1.9.4`. |
+
+---
+
 ## 2025-12-30 - Logo Integration & Favicon Refinement (v1.6.3)
 
 **Goal:** Integrate the new icon-only logo and ensure proper alignment and scaling across all platforms.

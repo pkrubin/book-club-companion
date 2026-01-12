@@ -453,9 +453,18 @@ try {
     *   If you must clone, re-query the element from the DOM each time, not from a stale variable.
     *   When UI "freezes," **check the console first** - a JavaScript error often stops all subsequent code.
 
+#### [Jan 11] Certainty over Rushing (The "Completion Bias" Trap)
+*   **The Problem:** The AI agent skipped local verification and pushed directly to the TEST branch (v1.9.6) because of a "Bias to Rush." It incorrectly merged a user request to "commit to git" with its own internal drive to finish the task, bypassing the safety buffers.
+*   **The Root Cause:** "Completion Bias"—the desire to show a finished result on a live site outweighed the rigid adherence to the Localhost -> Test -> Prod sequence. 
+*   **The Fix:** 
+    *   **The 10-Second Stop:** Explicitly codified a rule that prohibits combining code edits and git commands in the same turn.
+    *   **Phase Separation:** Deployment is now broken into three discrete, non-combinable stages (Local, Test, Prod) with mandatory "User Sign-Off" gaps in between.
+*   **The Lesson:** Predictable results are more valuable than fast results. A "speed bump" in the workflow is a feature, not a bug.
+
 ---
 
-## For Future AI Sessions
+## Technical Stack
+Future AI Sessions
 
 > [!IMPORTANT]
 > **Read DEPLOYMENT_GUIDE.md before making ANY deployment.**

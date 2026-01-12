@@ -65,10 +65,11 @@
 - **DATA SAFETY**: If a test involves changing data (Update, Delete, Create), use ONLY books with the status **'Test'**. Never modify production data (e.g., 'Scheduled', 'Saved' books) for testing.
 - **AUDIT LOGS**: Maintain a session audit log for ALL data changes performed (as an artifact or in the walkthrough).
 - **EXPLICIT CLEANUP**: Every test plan must include specific instructions for cleaning up test data at the end.
-- Test on localhost FIRST
-- Only push to TEST when localhost works
-- User verifies TEST before production
-- Never skip verification steps
+- **THE 10-SECOND STOP (MANDATORY)**: Never combine code edits and git commands (add, commit, push) in the same turn. You MUST pause after editing and ask the user to verify on localhost first.
+- Test on localhost FIRST.
+- Only push to TEST when localhost works AND the user gives explicit "Localhost verified" approval.
+- User verifies TEST before production.
+- Never skip verification steps.
 
 ### Golden Rule of Deployment
 **DEV → TEST → PROD. Never skip a step. Always get approval.**
@@ -146,7 +147,6 @@ git checkout test   # If not already on test
 
 **Step 6: STOP AND WAIT**
 - Tell user: "Deployed to TEST (v1.X.X). Please verify at [TEST URL]."
-- TEST URL: `book-club-companion-git-test-pam-rubins-projects.vercel.app`
 - User checks footer version matches
 - Wait for user confirmation
 - DO NOT proceed without explicit approval
