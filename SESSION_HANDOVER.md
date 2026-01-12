@@ -1,13 +1,40 @@
 # Session Handover
 
 ## Current State
-- **Version:** 1.9.3
+- **Version:** 1.9.6
 - **Branch:** test (always work on test, never main directly)
-- **Last deployment:** PROD on 2026-01-05
+- **Last deployment:** TEST (v1.9.6) on 2026-01-11
 
 ---
 
 ## Session Log
+
+### Session: Jan 11-12, 2026
+**Started:** 2026-01-11
+**Ended:** 2026-01-12
+
+**Deployments:**
+- v1.9.6 (Deployed to TEST - interrupted by reboot)
+
+**Work Completed:**
+- **Autopsy & Restoration:** Successfully recovered work interrupted by system reboot (Jan 11-12).
+- **Tester's Guide Finalization:**
+    - Added Section 4: "Exploring Book Details (Ratings & Links)".
+    - Renumbered all subsequent sections and missions (1-9).
+    - Added cautionary note about ratings retrieval time (can take ~1 min).
+    - Added warning for testers about shared discussion guides.
+    - Explained "Export Library/Status" feature in Settings.
+- **Safety & Protocols:**
+    - Codified "The 10-Second Stop" in `project_guidelines.md`.
+    - Updated `DEPLOYMENT_GUIDE.md` and `README_FOR_AI.md` with correct Vercel environment URLs.
+- **Documentation Sync:** Brought `CHANGELOG.md` and `SESSION_HANDOVER.md` up to date with v1.9.6 state.
+
+**Issues Discovered:**
+- "Completion Bias" led to skipping local verification before the Jan 11 push to TEST.
+- Mission numbering in `guide.html` was inconsistent after renumbering sections.
+- Documentation (Changelog/Handover) had lagged behind actual versioned code.
+
+---
 
 ### Session: Jan 4-5, 2026
 **Started:** 2026-01-04  

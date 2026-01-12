@@ -98,7 +98,7 @@ If one fails (fast busy signal), it instantly tries the next one. This logic is 
     git commit -m "v1.X.X: Description of changes"
     git push origin test
     ```
-8.  **STOP & ASK:** Tell the user: *"Deployed to TEST (v1.X.X). Please verify at https://book-club-companion-git-test-pkrubin.vercel.app. Is this ready for production?"*
+8.  **STOP & ASK:** Tell the user: *"Deployed to TEST (v1.X.X). Please verify at https://book-club-companion-git-test-pam-rubins-projects.vercel.app/. Is this ready for production?"*
 
 ### 🚀 STAGE 3: Production Deployment
 *Only proceed here after explicit user approval of the TEST site.*

@@ -147,7 +147,6 @@ git checkout test   # If not already on test
 
 **Step 6: STOP AND WAIT**
 - Tell user: "Deployed to TEST (v1.X.X). Please verify at [TEST URL]."
-- TEST URL: `book-club-companion-git-test-pam-rubins-projects.vercel.app`
 - User checks footer version matches
 - Wait for user confirmation
 - DO NOT proceed without explicit approval

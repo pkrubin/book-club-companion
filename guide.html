@@ -160,11 +160,12 @@
                     <li><a href="#dashboard">1. The Dashboard</a></li>
                     <li><a href="#finding-books">2. Finding & Saving Books</a></li>
                     <li><a href="#library">3. Our Library</a></li>
-                    <li><a href="#scheduling">4. How to Schedule a Meeting</a></li>
-                    <li><a href="#ratings-tags">5. Updating Ratings and Tags</a></li>
-                    <li><a href="#discussion-guides">6. Managing Discussion Guides</a></li>
-                    <li><a href="#settings">7. Settings & Accessibility</a></li>
-                    <li><a href="#recent-changes">8. Recent Changes</a></li>
+                    <li><a href="#book-details">4. Exploring Book Details (Ratings & Links)</a></li>
+                    <li><a href="#scheduling">5. How to Schedule a Meeting</a></li>
+                    <li><a href="#ratings-tags">6. Updating Ratings and Tags</a></li>
+                    <li><a href="#discussion-guides">7. Managing Discussion Guides</a></li>
+                    <li><a href="#settings">8. Settings & Accessibility</a></li>
+                    <li><a href="#recent-changes">9. Recent Changes</a></li>
                     <li><a href="#support">Signing Out & Support</a></li>
                 </ul>
             </div>
@@ -255,8 +256,35 @@
                 </div>
             </section>
 
+            <section id="book-details">
+                <h2>🔍 4. Exploring Book Details (Ratings & Links)</h2>
+                <p>When you click on a book in our Library, a window pops up with everything we know about it.</p>
+                <div class="image-container">
+                    <img src="images/handbook/tags_ratings.png" alt="Book Details Modal">
+                </div>
+                <h3>What’s in the Left Column:</h3>
+                <ul>
+                    <li><strong>⭐ Star Ratings:</strong> See what the rest of the world thinks! We pull ratings from
+                        places like <strong>Goodreads</strong>. It shows the star score (like 4.2) and how many
+                        thousands of people voted.</li>
+                    <li><strong>🔄 Refresh Rating:</strong> If a book doesn't have a rating yet, or if it looks old,
+                        click the <strong>"Refresh Rating"</strong> button. The app will go out and find the latest
+                        score for you. (Note: This can sometimes take up to a minute to retrieve).</li>
+                    <li><strong>🔗 External Links:</strong> Under the rating, you'll see links like
+                        <strong>"Goodreads"</strong> and <strong>"Amazon"</strong>. Click these to open that book's page
+                        on those websites for more reviews or to buy a copy.
+                    </li>
+                    <li><strong>🏫 Library Link:</strong> This link helps you find the book in a global library catalog,
+                        making it easier to see if it's available near you!</li>
+                </ul>
+                <div class="tip-box">
+                    <strong>Mission 4:</strong> Open a book and try clicking the <strong>"Goodreads"</strong> link. It
+                    will open in a new tab so you don't lose your place in our app!
+                </div>
+            </section>
+
             <section id="scheduling">
-                <h2>📅 4. How to Schedule a Meeting</h2>
+                <h2>📅 5. How to Schedule a Meeting</h2>
                 <p>Once you’ve found a book the club wants to read, you can schedule it so it shows up on everyone's
                     Dashboard with the meeting details.</p>
                 <h3>Step 1: Find and Save the Book</h3>
@@ -281,20 +309,15 @@
                     <img src="images/handbook/hero_scheduled.png" alt="Scheduled Book on Dashboard">
                 </div>
                 <div class="tip-box">
-                    <strong>Mission 4:</strong> Try scheduling a "Test Book" for a future date. Set yourself as the host
+                    <strong>Mission 5:</strong> Try scheduling a "Test Book" for a future date. Set yourself as the host
                     and pick a time. Go back to the <strong>Dashboard</strong> to see if it appeared in the "Coming Up
                     Later" list at the bottom!
                 </div>
             </section>
 
             <section id="ratings-tags">
-                <h2>⭐ 5. Updating Ratings and Tags</h2>
-                <p>You can keep each book's information fresh by fetching latest ratings and adding descriptive tags.
-                </p>
-                <h3>How to Fetch a Rating</h3>
-                <p>When you open a book modal, you may see an old rating or none at all. Click the <strong>"Refresh
-                        Rating"</strong> (or "Get Rating") button under the book cover. The app will search for the
-                    latest score and update it for you!</p>
+                <h2>⭐ 6. Updating Ratings and Tags</h2>
+                <p>You can keep each book's information fresh by managing tags and descriptive labels.</p>
                 <h3>How to Manage Tags</h3>
                 <p>Tags help us organize our books by genre or topic (like "Classic" or "Must Read").</p>
                 <ul>
@@ -309,14 +332,14 @@
                     <img src="images/handbook/tags_ratings.png" alt="Ratings and Tags">
                 </div>
                 <div class="tip-box">
-                    <strong>Mission 5:</strong> Open any book in the Library. Try clicking <strong>"Refresh
+                    <strong>Mission 6:</strong> Open any book in the Library. Try clicking <strong>"Refresh
                         Rating"</strong> to see it update. Then, add a new tag like <strong>"Highly
                         Recommended"</strong> and save your changes!
                 </div>
             </section>
 
             <section id="discussion-guides">
-                <h2>🎨 6. Managing Discussion Guides</h2>
+                <h2>🎨 7. Managing Discussion Guides</h2>
                 <p>Our app can help you prepare for book club by generating discussion questions using AI!</p>
                 <h3>How to Generate a Guide</h3>
                 <ol>
@@ -325,6 +348,12 @@
                     <li>Click the purple <strong>"Generate Questions with AI"</strong> button.</li>
                     <li>Wait a few seconds, and a list of questions will appear!</li>
                 </ol>
+                <div class="tip-box">
+                    <strong>Note for Testers:</strong> Any changes or generations you make to a discussion guide are
+                    <strong>live for everyone</strong> in the club. To avoid overwriting existing guides during
+                    testing, we recommend finding a <strong>new book</strong> (via Find Books) and generating a guide
+                    there!
+                </div>
                 <div class="image-container">
                     <img src="images/handbook/discussion_gen.png" alt="Generated Questions">
                 </div>
@@ -344,13 +373,13 @@
                     <img src="images/handbook/discussion_download.png" alt="Download and Print">
                 </div>
                 <div class="tip-box">
-                    <strong>Mission 6:</strong> Find a book you like, generate AI questions for it, and then try
+                    <strong>Mission 7:</strong> Find a book you like, generate AI questions for it, and then try
                     clicking <strong>"Export to Word"</strong>. See if the file opens correctly on your device!
                 </div>
             </section>
 
             <section id="settings">
-                <h2>⚙️ 7. Settings & Accessibility</h2>
+                <h2>⚙️ 8. Settings & Accessibility</h2>
                 <p>Next to the "Sign Out" button, you'll see a small <strong>Gear icon (⚙️)</strong>.</p>
                 <div class="image-container">
                     <img src="images/handbook/settings.png" alt="Settings Menu">
@@ -360,11 +389,15 @@
                     <li><strong>Make Text Larger:</strong> If the writing is too small, click the <strong>"Text
                             Size"</strong> box and choose a larger percentage (like 125%). Everything will get bigger
                         and easier to read!</li>
+                    <li><strong>📁 Export Library:</strong> If you are an organizer, you'll see an <strong>"Export By
+                            Status"</strong> option. Choose a status (like "Scheduled") and click <strong>"Export
+                            JSON"</strong> to download a backup of those books. This is great for keeping archive
+                        records of our club's history!</li>
                 </ul>
             </section>
 
             <section id="recent-changes">
-                <h2>🔔 8. Recent Changes</h2>
+                <h2>🔔 9. Recent Changes</h2>
                 <p>Click the <strong>Bell icon (🔔)</strong> next to the gear.</p>
                 <div class="image-container">
                     <img src="images/handbook/recent_changes.png" alt="Recent Changes">
