@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tester's Handbook - Book Club Companion</title>
+    <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+    <link rel="icon" type="image/png" href="images/favicon-32.png">
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #fcfbf9;
+            color: #44403c;
+        }
+
+        .font-serif {
+            font-family: 'Playfair Display', serif;
+        }
+
+        .handbook-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        .prose h1,
+        .prose h2,
+        .prose h3 {
+            font-family: 'Playfair Display', serif;
+            color: #1c1917;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .prose h1 {
+            font-size: 2.5rem;
+            border-bottom: 2px solid #e7e5e4;
+            padding-bottom: 0.5rem;
+        }
+
+        .prose h2 {
+            font-size: 1.875rem;
+            border-bottom: 1px solid #e7e5e4;
+            padding-bottom: 0.25rem;
+        }
+
+        .prose h3 {
+            font-size: 1.5rem;
+        }
+
+        .prose p {
+            margin-bottom: 1.25rem;
+            line-height: 1.75;
+        }
+
+        .prose ul,
+        .prose ol {
+            margin-bottom: 1.25rem;
+            padding-left: 1.5rem;
+        }
+
+        .prose li {
+            margin-bottom: 0.5rem;
+        }
+
+        .image-container {
+            margin: 2rem 0;
+            background: white;
+            padding: 0.75rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #f5f5f4;
+        }
+
+        .image-container img {
+            width: 100%;
+            border-radius: 0.5rem;
+            display: block;
+        }
+
+        .tip-box {
+            background-color: #fef2f2;
+            border-left: 4px solid #f43f5e;
+            padding: 1rem 1.5rem;
+            margin: 2rem 0;
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+
+        .tip-box strong {
+            color: #9f1239;
+        }
+
+        .toc {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            border: 1px solid #e7e5e4;
+            margin: 2rem 0;
+        }
+
+        .toc ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .toc li {
+            margin-bottom: 0.5rem;
+        }
+
+        .toc a {
+            color: #6366f1;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .toc a:hover {
+            color: #4338ca;
+            text-decoration: underline;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #78716c;
+            text-decoration: none;
+            font-weight: 500;
+            margin-bottom: 2rem;
+            transition: color 0.2s;
+        }
+
+        .back-btn:hover {
+            color: #1c1917;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="handbook-container">
+        <a href="index.html" class="back-btn">
+            <iconify-icon icon="solar:alt-arrow-left-broken" class="text-xl"></iconify-icon>
+            Back to App
+        </a>
+
+        <article class="prose">
+            <h1>📖 Tester's Guide to Book Club Companion</h1>
+            <p>Welcome to our new Book Club app! This guide will help you find your way around so you can help us test
+                all the features.</p>
+
+            <div class="toc">
+                <h3 class="mt-0">📋 Table of Contents</h3>
+                <ul>
+                    <li><a href="#getting-started">Getting Started</a></li>
+                    <li><a href="#dashboard">1. The Dashboard</a></li>
+                    <li><a href="#finding-books">2. Finding & Saving Books</a></li>
+                    <li><a href="#library">3. Our Library</a></li>
+                    <li><a href="#scheduling">4. How to Schedule a Meeting</a></li>
+                    <li><a href="#ratings-tags">5. Updating Ratings and Tags</a></li>
+                    <li><a href="#discussion-guides">6. Managing Discussion Guides</a></li>
+                    <li><a href="#settings">7. Settings & Accessibility</a></li>
+                    <li><a href="#recent-changes">8. Recent Changes</a></li>
+                    <li><a href="#support">Signing Out & Support</a></li>
+                </ul>
+            </div>
+
+            <section id="getting-started">
+                <h2>🔒 Getting Started (One-Time Setup)</h2>
+                <p>To use the app for the first time, you'll need to create an account.</p>
+                <ol>
+                    <li><strong>Go to the website.</strong></li>
+                    <li>Click the <strong>"Sign Up"</strong> tab at the top.</li>
+                    <li>Enter your <strong>Email Address</strong>.</li>
+                    <li>Choose a <strong>Password</strong> you'll remember.</li>
+                    <li>Enter our special <strong>Invite Code</strong> (ask the organizer for this!).</li>
+                    <li>Click <strong>"Create Account"</strong>.</li>
+                </ol>
+                <div class="image-container">
+                    <img src="images/handbook/signup.png" alt="Sign Up Screen">
+                </div>
+            </section>
+
+            <section id="dashboard">
+                <h2>🏠 1. The Dashboard (Your Home Base)</h2>
+                <p>The Dashboard is the first page you see after logging in.</p>
+                <div class="image-container">
+                    <img src="images/handbook/dashboard.png" alt="Dashboard View">
+                </div>
+                <h3>What to do here:</h3>
+                <ul>
+                    <li><strong>The Main Book:</strong> At the top, you'll see the book we are reading next. It has a
+                        large cover image and shows the <strong>Host, Date, and Time</strong>.</li>
+                    <li><strong>📅 Add to Calendar:</strong> Click this button to save the meeting to your own personal
+                        calendar (like Google or Apple Calendar).</li>
+                    <li><strong>📖 Discussion Guide:</strong> Click the "Guide" button to see questions about the book.
+                        You can even download it as a Word document to print out!</li>
+                    <li><strong>Scroll & Explore:</strong> Use your mouse or finger to scroll down. You'll see a list of
+                        other books we have scheduled for the coming months.</li>
+                </ul>
+                <div class="tip-box">
+                    <strong>Mission 1:</strong> Find the "Main Book" and try clicking <strong>"Add to
+                        Calendar"</strong>. See if you can find the option for the calendar you use at home.
+                </div>
+            </section>
+
+            <section id="finding-books">
+                <h2>🔍 2. Finding & Saving Books</h2>
+                <p>The journey usually starts with finding something new to read. Click on <strong>"Find Books"</strong>
+                    in the top menu.</p>
+                <div class="image-container">
+                    <img src="images/handbook/search.png" alt="Search View">
+                </div>
+                <h3>What to do here:</h3>
+                <ul>
+                    <li><strong>Search:</strong> Type the name of a book or an author into the search box and click the
+                        <strong>Search</strong> button.
+                    </li>
+                    <li><strong>Save a Book:</strong> If you find a book you'd like the club to consider, click the
+                        <strong>"Save to Library"</strong> button. This adds it to our club's personal bookshelf!
+                    </li>
+                </ul>
+                <div class="tip-box">
+                    <strong>Mission 2:</strong> Search for your favorite book of all time. If you find it, click "Save
+                    to Library".
+                </div>
+            </section>
+
+            <section id="library">
+                <h2>📚 3. Our Library</h2>
+                <p>Click <strong>"Library"</strong> in the top menu. This is where all the books we’ve discussed or
+                    saved are kept.</p>
+                <div class="image-container">
+                    <img src="images/handbook/library.png" alt="Library View">
+                </div>
+                <h3>What to do here:</h3>
+                <ul>
+                    <li><strong>Filter & Sort:</strong> Use the buttons at the top to see only "Historical Fiction" or
+                        to sort the list by "Date Added".</li>
+                    <li><strong>View Details & Edit:</strong> Click on any book (or the "View Details" button) to see
+                        more information.</li>
+                    <li><strong>📝 Add Your Notes:</strong> When viewing a book's details, scroll down to the "Notes"
+                        section. You can type your own thoughts or discussion points here!</li>
+                    <li><strong>🏠 Volunteer to Host:</strong> Notice the "Host" field? You can type your name there if
+                        you'd like to host that month's meeting. Don't forget to click <strong>"Update Details"</strong>
+                        at the bottom to save!</li>
+                </ul>
+                <div class="tip-box">
+                    <strong>Mission 3:</strong> Open a book in the Library. Try adding a short note like "I've heard
+                    great things about this one!" and then click <strong>"Update Details"</strong>.
+                </div>
+            </section>
+
+            <section id="scheduling">
+                <h2>📅 4. How to Schedule a Meeting</h2>
+                <p>Once you’ve found a book the club wants to read, you can schedule it so it shows up on everyone's
+                    Dashboard with the meeting details.</p>
+                <h3>Step 1: Find and Save the Book</h3>
+                <p>Use the <strong>"Find Books"</strong> section to search for the book (for example, "James" by
+                    Percival Everett) and click <strong>"Save to Library."</strong></p>
+                <h3>Step 2: Open the Book in the Library</h3>
+                <p>Go to your <strong>"Library"</strong> and click on the book to open its details.</p>
+                <h3>Step 3: Fill in the Meeting Details</h3>
+                <p>In the window that pops up, change the <strong>Status</strong> to <strong>"Scheduled."</strong> Then,
+                    type in the <strong>Host Name</strong>, pick a <strong>Target Date</strong>, and set the
+                    <strong>Meeting Time</strong>.
+                </p>
+                <div class="image-container">
+                    <img src="images/handbook/scheduling.png" alt="Scheduling Details">
+                </div>
+                <h3>Step 4: Save Your Changes</h3>
+                <p>Click the <strong>"Update Details"</strong> button at the bottom. The book will now move to the
+                    <strong>"Scheduled"</strong> section of our Library and appear on the <strong>Dashboard</strong> for
+                    everyone to see!
+                </p>
+                <div class="image-container">
+                    <img src="images/handbook/hero_scheduled.png" alt="Scheduled Book on Dashboard">
+                </div>
+                <div class="tip-box">
+                    <strong>Mission 4:</strong> Try scheduling a "Test Book" for a future date. Set yourself as the host
+                    and pick a time. Go back to the <strong>Dashboard</strong> to see if it appeared in the "Coming Up
+                    Later" list at the bottom!
+                </div>
+            </section>
+
+            <section id="ratings-tags">
+                <h2>⭐ 5. Updating Ratings and Tags</h2>
+                <p>You can keep each book's information fresh by fetching latest ratings and adding descriptive tags.
+                </p>
+                <h3>How to Fetch a Rating</h3>
+                <p>When you open a book modal, you may see an old rating or none at all. Click the <strong>"Refresh
+                        Rating"</strong> (or "Get Rating") button under the book cover. The app will search for the
+                    latest score and update it for you!</p>
+                <h3>How to Manage Tags</h3>
+                <p>Tags help us organize our books by genre or topic (like "Classic" or "Must Read").</p>
+                <ul>
+                    <li><strong>To Remove a Tag:</strong> Click the tiny "x" or info icon on a tag.</li>
+                    <li><strong>To Add a Tag:</strong> Type your own tag into the "Add tag..." box and press
+                        <strong>Enter</strong> on your keyboard.
+                    </li>
+                    <li><strong>To Get Suggestions:</strong> Click <strong>"Suggest Tags"</strong> and the app will
+                        automatically add relevant categories for that book!</li>
+                </ul>
+                <div class="image-container">
+                    <img src="images/handbook/tags_ratings.png" alt="Ratings and Tags">
+                </div>
+                <div class="tip-box">
+                    <strong>Mission 5:</strong> Open any book in the Library. Try clicking <strong>"Refresh
+                        Rating"</strong> to see it update. Then, add a new tag like <strong>"Highly
+                        Recommended"</strong> and save your changes!
+                </div>
+            </section>
+
+            <section id="discussion-guides">
+                <h2>🎨 6. Managing Discussion Guides</h2>
+                <p>Our app can help you prepare for book club by generating discussion questions using AI!</p>
+                <h3>How to Generate a Guide</h3>
+                <ol>
+                    <li>Open a book's details in the <strong>Library</strong>.</li>
+                    <li>Click the <strong>"Discussion Guide"</strong> button (or scroll down to the bottom).</li>
+                    <li>Click the purple <strong>"Generate Questions with AI"</strong> button.</li>
+                    <li>Wait a few seconds, and a list of questions will appear!</li>
+                </ol>
+                <div class="image-container">
+                    <img src="images/handbook/discussion_gen.png" alt="Generated Questions">
+                </div>
+                <h3>How to Edit Your Questions</h3>
+                <p>If you want to add your own questions or remove some, click <strong>"Edit Questions"</strong>. You
+                    can then type directly into the box. When you're done, click <strong>"Save Changes"</strong>.</p>
+                <div class="image-container">
+                    <img src="images/handbook/discussion_edit.png" alt="Editing Questions">
+                </div>
+                <h3>How to Print or Download</h3>
+                <ul>
+                    <li><strong>Export to Word:</strong> Click this button to download the questions as a Microsoft Word
+                        document.</li>
+                    <li><strong>Print:</strong> Click this to print the questions directly from your browser.</li>
+                </ul>
+                <div class="image-container">
+                    <img src="images/handbook/discussion_download.png" alt="Download and Print">
+                </div>
+                <div class="tip-box">
+                    <strong>Mission 6:</strong> Find a book you like, generate AI questions for it, and then try
+                    clicking <strong>"Export to Word"</strong>. See if the file opens correctly on your device!
+                </div>
+            </section>
+
+            <section id="settings">
+                <h2>⚙️ 7. Settings & Accessibility</h2>
+                <p>Next to the "Sign Out" button, you'll see a small <strong>Gear icon (⚙️)</strong>.</p>
+                <div class="image-container">
+                    <img src="images/handbook/settings.png" alt="Settings Menu">
+                </div>
+                <h3>What to do here:</h3>
+                <ul>
+                    <li><strong>Make Text Larger:</strong> If the writing is too small, click the <strong>"Text
+                            Size"</strong> box and choose a larger percentage (like 125%). Everything will get bigger
+                        and easier to read!</li>
+                </ul>
+            </section>
+
+            <section id="recent-changes">
+                <h2>🔔 8. Recent Changes</h2>
+                <p>Click the <strong>Bell icon (🔔)</strong> next to the gear.</p>
+                <div class="image-container">
+                    <img src="images/handbook/recent_changes.png" alt="Recent Changes">
+                </div>
+                <h3>What to do here:</h3>
+                <ul>
+                    <li><strong>Stay Updated:</strong> This shows you exactly what has changed recently in the club,
+                        such as when someone chooses a new host for a meeting or updates the time.</li>
+                    <li><strong>Clear Notifications:</strong> You can click the "X" to dismiss one alert, or click
+                        "Clear all" to tidy up the whole list!</li>
+                </ul>
+            </section>
+
+            <section id="support">
+                <h2>🚪 Signing Out & Support</h2>
+                <p>When you're finished, click <strong>"Sign Out"</strong> at the top right to safely close your
+                    session.</p>
+
+                <h3>❓ Frequently Asked Questions</h3>
+                <p><strong>What is the difference between "Find Books" and "Library"?</strong></p>
+                <ul>
+                    <li><strong>Find Books:</strong> This is like looking through a giant catalog for the whole world.
+                        Use this to suggest new books to the club.</li>
+                    <li><strong>Library:</strong> This is our club's personal bookshelf. It only shows books we've
+                        already discussed, scheduled, or saved as possibilities.</li>
+                </ul>
+
+                <h3>🙋 How to give feedback</h3>
+                <p>If you see something that looks "broken" or if a button doesn't work, please write down:</p>
+                <ol>
+                    <li>What you were trying to do.</li>
+                    <li>What happened instead.</li>
+                    <li>What device you are using (iPad, Phone, or Computer).</li>
+                </ol>
+            </section>
+
+            <p class="text-center mt-12 text-stone-400 italic">Happy reading!</p>
+        </article>
+    </div>
+
+    <footer class="bg-white border-t border-stone-200 mt-12 py-8 text-center text-stone-400 text-sm">
+        &copy; 2025 The Book Club Companion.
+    </footer>
+
+    <script>
+        // Smooth scrolling for TOC links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>

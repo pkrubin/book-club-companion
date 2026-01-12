@@ -1,6 +1,6 @@
 // --- Configuration ---
 const GOOGLE_API_KEY = ''; // Add your API key here if needed for public deployment, currently using implicit or restricted key
-const APP_VERSION = '1.9.5'; // Recent Changes notification dropdown
+const APP_VERSION = '1.9.6'; // Recent Changes notification dropdown
 // Note: In a real production app, use a proxy server to hide API keys.
 
 // --- Gemini AI Configuration ---
