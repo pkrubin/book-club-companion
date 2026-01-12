@@ -69,52 +69,49 @@ If one fails (fast busy signal), it instantly tries the next one. This logic is 
 
 ---
 
-## CRITICAL: Deployment Workflow
+---
 
-> [!CAUTION]
-> **NEVER push directly to `main` (Production) without testing first!**
+## Phase 4: Predictable Deployment Workflow (THE GOLDEN PATH)
 
-### Step-by-Step Deployment Process:
+### 🛑 STAGE 1: Local Development & Verification
+1.  **Work Locally:** Make code changes on your computer.
+2.  **Verify on Localhost:** Open `http://localhost:8080`.
+3.  **Validate All Changes:** Click every button, check every link, verify the layout at 100% zoom.
+4.  **STOP & ASK:** You **MUST** tell the user: *"Local changes complete. Please verify on localhost:8080. If it looks correct, let me know and I will prepare the deployment."*
 
-#### Step 1: Make Changes Locally
-```bash
-# Work on the main branch
-git checkout main
-# Make your code changes...
-```
-
-#### Step 2: Bump Version (REQUIRED)
-Update version in BOTH files:
-- `js/app.js`: Change `APP_VERSION = 'X.X.X'`
-- `package.json`: Change `"version": "X.X.X"`
-
-#### Step 3: Deploy to TEST First
-```bash
-git add .
-git commit -m "v1.X.X: Description of changes"
-git checkout test
-git merge main
-git push origin test
-```
-
-#### Step 4: Verify TEST Site
-- Go to: `https://book-club-companion-git-test-pkrubin.vercel.app`
-- Check the footer shows the new version number
-- Test all affected functionality
-- Confirm it works correctly
-
-#### Step 5: GET USER PERMISSION
 > [!IMPORTANT]
-> **STOP HERE AND ASK THE USER:**
-> "TEST deployment verified at v1.X.X. May I proceed to deploy to Production?"
-> 
-> **DO NOT proceed without explicit approval.**
+> **DO NOT proceed to Stage 2** until the user gives explicit approval of the localhost state.
 
-#### Step 6: Deploy to Production (Only After Approval)
-```bash
-git checkout main
-git push origin main
-```
+### 🚥 STAGE 2: Preparation & Test Deployment
+*Only proceed here after Stage 1 is verified.*
+
+5.  **Bump Version (REQUIRED):**
+    - `js/app.js`: Change `APP_VERSION = 'X.X.X'`
+    - `package.json`: Change `"version": "X.X.X"`
+6.  **Switch to Test:**
+    ```bash
+    git checkout test
+    ```
+7.  **Commit & Push to TEST:**
+    ```bash
+    git add .
+    git commit -m "v1.X.X: Description of changes"
+    git push origin test
+    ```
+8.  **STOP & ASK:** Tell the user: *"Deployed to TEST (v1.X.X). Please verify at https://book-club-companion-git-test-pkrubin.vercel.app. Is this ready for production?"*
+
+### 🚀 STAGE 3: Production Deployment
+*Only proceed here after explicit user approval of the TEST site.*
+
+9.  **Promote to Main:**
+    ```bash
+    git checkout main
+    git merge test
+    git push origin main
+    git checkout test   # Always return to test for the next piece of work
+    ```
+
+---
 
 ### Version Numbering:
 - **Always bump the version** before any deployment (in both `js/app.js` and `package.json`)
