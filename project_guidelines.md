@@ -475,4 +475,6 @@ Future AI Sessions
 3. **RESTART SERVER:** After backend changes, restart `local_server.js`
 4. **100% ZOOM:** Test layouts at 100% browser zoom, not 90%
 5. **LISTEN TO USER:** If user says "push to test", push to TEST - not production
-6. **SLOW DOWN:** When in doubt, ask. Don't assume.
+7. **ENGLISH ONLY:** Never use Chinese or non-English characters in internal task statuses, metadata, or logs. (Added Jan 12 after internal token leak).
+8. **SLOW DOWN:** When in doubt, ask. Don't assume.
+```
