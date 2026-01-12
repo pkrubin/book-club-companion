@@ -1,6 +1,9 @@
 # 🚨 AI SESSION QUICK START - READ THIS FIRST
 
-> ⛔ **STOP!** Before doing ANYTHING, read this entire file. It's short.
+> ⛔ **STOP!** Before doing ANYTHING, you MUST run the `/pre-flight` workflow.
+> 1. Type: `/pre-flight`
+> 2. Confirm your understanding of the rules.
+> 3. **DO NOT run any other tools** until pre-flight is complete.
 
 ## 📋 Session Handover (READ FIRST!)
 
