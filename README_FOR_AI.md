@@ -69,6 +69,9 @@
 - **AUDIT LOGS**: Maintain a session audit log for ALL data changes performed (as an artifact or in the walkthrough).
 - **EXPLICIT CLEANUP**: Every test plan must include specific instructions for cleaning up test data at the end.
 - **THE 10-SECOND STOP (MANDATORY)**: Never combine code edits and git commands (add, commit, push) in the same turn. You MUST pause after editing and ask the user to verify on localhost first.
+- **THE ACTIVE TAB PROTOCOL**: Always prioritize the tab currently focused by the user (marked `[ACTIVE]` in `browser_state`). Re-use this tab whenever possible to stay within the Human's authenticated session.
+- **CONTENT SIGNALING (MANDATORY)**: You MUST describe the visible UI of your selected tab (e.g., "I see the Dashboard with one book scheduled for April"). This ensures you and the user are looking at the same thing.
+- **HARD STOP: REDIRECT DETECTION**: If navigation redirects to any page other than our app UI (e.g., Vercel Login, SSO, GitHub, Supabase), **STOP IMMEDIATELY**. Report "ENVIRONMENT PROTECTED" and wait for user guidance. Do not attempt to "find the footer" or audit a protected page.
 - Test on localhost FIRST.
 - Only push to TEST when localhost works AND the user gives explicit "Localhost verified" approval.
 - User verifies TEST before production.
@@ -96,8 +99,8 @@
 1. Ensure `node local_server.js` is running (check terminal or ask user)
 2. Ask user: "Please open localhost:8080 and log in"
 3. Wait for: "I am logged in"
-4. Then YOU can: capture screenshots, click buttons, check console, navigate tabs
-5. NEVER give up just because you can't log in yourself
+4. Then YOU can: capture screenshots, click buttons, check console, navigate tabs.
+5. Reuse existing tabs: Always scan `browser_state` first. Prioritize the `[ACTIVE]` tab if it matches the target environment. Opening redundant tabs is prohibited.
 
 ---
 
@@ -193,9 +196,16 @@ Before any large refactor:
 ### Zero Fabrication Rule
 **NEVER make up:**
 - Variable names (READ the code first)
-- User IDs or passwords (ask human)
+- User IDs or passwords (ask human - DO NOT ATTEMPT TO LOG IN)
 - Column names (check schema.sql)
 - API endpoints (verify they exist)
+
+### Environment Visibility & The Redirect Stop
+- If a URL (like TEST or PROD) redirects to a platform login (Vercel, SSO, etc.):
+- **YOU ARE NOT ALLOWED TO PROCEED**.
+- Do NOT click "Login", "Sign In", or "Continue".
+- Do NOT attempt to "find the version in the footer" if the app itself isn't visible.
+- Report "Environment Protected" and wait for the user.
 
 ### Code Hygiene
 - View file AFTER editing to verify brackets match
