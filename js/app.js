@@ -35,13 +35,29 @@ async function fetchWithSession(url, options = {}) {
     });
 }
 
-async function callGeminiProxy({ prompt, temperature = 0.7, maxTokens = 4000, imageData = null, mimeType = null }) {
+async function callGeminiProxy({
+    prompt,
+    temperature = 0.7,
+    maxTokens = 4000,
+    imageData = null,
+    mimeType = null,
+    responseMimeType = null,
+    responseJsonSchema = null
+}) {
     const response = await fetchWithSession(GEMINI_PROXY_URL, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ prompt, temperature, maxTokens, imageData, mimeType })
+        body: JSON.stringify({
+            prompt,
+            temperature,
+            maxTokens,
+            imageData,
+            mimeType,
+            responseMimeType,
+            responseJsonSchema
+        })
     });
 
     const data = await response.json().catch(() => ({}));
@@ -5762,6 +5778,34 @@ function printDiscussionGuide() {
         }
     }
 
+    const VISION_BOOKS_SCHEMA = {
+        type: 'array',
+        items: {
+            type: 'object',
+            properties: {
+                title: { type: 'string' },
+                author: { type: 'string' }
+            },
+            required: ['title', 'author']
+        }
+    };
+
+    async function requestGeminiVisionBooks(base64Image, mimeType, maxTokens = 1200) {
+        return callGeminiProxy({
+            prompt: `
+                Analyze this image. Identify all books visible (covers or spines) or read the text if it's a list.
+                Return only the detected books as structured data.
+                If no books are found, return an empty array.
+            `,
+            temperature: 0.2,
+            maxTokens,
+            imageData: base64Image,
+            mimeType,
+            responseMimeType: 'application/json',
+            responseJsonSchema: VISION_BOOKS_SCHEMA
+        });
+    }
+
     async function callGeminiVision(base64Data) {
         const dataUrlMatch = base64Data.match(/^data:([^;]+);base64,(.+)$/);
         if (!dataUrlMatch) {
@@ -5771,22 +5815,19 @@ function printDiscussionGuide() {
         const mimeType = dataUrlMatch[1];
         const base64Image = dataUrlMatch[2];
 
-        const prompt = `
-            Analyze this image. Identify all books visible (covers or spines) or read the text if it's a list.
-            Return ONLY a valid JSON array of objects with "title" and "author" keys.
-            Do not include markdown, explanations, or any text before or after the JSON.
-            Example: [{"title":"The Great Gatsby","author":"F. Scott Fitzgerald"}]
-            If no books are found, return [].
-        `;
+        let data = await requestGeminiVisionBooks(base64Image, mimeType, 1200);
+        let responseText = data.text || data.candidates?.[0]?.content?.parts?.[0]?.text || '';
 
-        const data = await callGeminiProxy({
-            prompt,
-            maxTokens: 1200,
-            imageData: base64Image,
-            mimeType
-        });
-        const responseText = data.text || data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-        return parseGeminiVisionResponse(responseText);
+        try {
+            return parseGeminiVisionResponse(responseText);
+        } catch (error) {
+            const shouldRetry = data.finishReason === 'MAX_TOKENS' || /incomplete result/i.test(error.message);
+            if (!shouldRetry) throw error;
+
+            data = await requestGeminiVisionBooks(base64Image, mimeType, 2200);
+            responseText = data.text || data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            return parseGeminiVisionResponse(responseText);
+        }
     }
 })();
 

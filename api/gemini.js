@@ -6,6 +6,7 @@ import { parseJsonBody, requireAuthenticatedUser } from './_auth.js';
 const MAX_PROMPT_CHARS = 12000;
 const MAX_OUTPUT_TOKENS = 4000;
 const MAX_IMAGE_BASE64_CHARS = 7_000_000;
+const MAX_RESPONSE_SCHEMA_CHARS = 8_000;
 
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
@@ -28,6 +29,10 @@ export default async function handler(req, res) {
     const prompt = typeof body.prompt === 'string' ? body.prompt.trim() : '';
     const imageData = typeof body.imageData === 'string' ? body.imageData.trim() : '';
     const mimeType = typeof body.mimeType === 'string' ? body.mimeType.trim() : '';
+    const responseMimeType = typeof body.responseMimeType === 'string' ? body.responseMimeType.trim() : '';
+    const responseJsonSchema = body.responseJsonSchema && typeof body.responseJsonSchema === 'object'
+        ? body.responseJsonSchema
+        : null;
     const temperature = Number.isFinite(Number(body.temperature))
         ? Math.max(0, Math.min(1, Number(body.temperature)))
         : 0.7;
@@ -50,6 +55,17 @@ export default async function handler(req, res) {
 
         if (imageData.length > MAX_IMAGE_BASE64_CHARS) {
             return res.status(413).json({ error: 'Image is too large. Please use a smaller image and try again.' });
+        }
+    }
+
+    if (responseMimeType && !['application/json', 'text/plain'].includes(responseMimeType)) {
+        return res.status(400).json({ error: 'Unsupported response MIME type.' });
+    }
+
+    if (responseJsonSchema) {
+        const serializedSchema = JSON.stringify(responseJsonSchema);
+        if (serializedSchema.length > MAX_RESPONSE_SCHEMA_CHARS) {
+            return res.status(400).json({ error: 'Response schema is too large.' });
         }
     }
 
@@ -88,7 +104,12 @@ export default async function handler(req, res) {
                         },
                         body: JSON.stringify({
                             contents: [{ parts }],
-                            generationConfig: { temperature, maxOutputTokens: maxTokens }
+                            generationConfig: {
+                                temperature,
+                                maxOutputTokens: maxTokens,
+                                ...(responseMimeType ? { responseMimeType } : {}),
+                                ...(responseJsonSchema ? { responseJsonSchema } : {})
+                            }
                         })
                     }
                 );
