@@ -183,6 +183,10 @@ const fontSizes = ['90%', '100%', '110%', '125%'];
 let currentFontSizeIndex = 1; // Default to 100%
 let currentUserRole = null; // 'admin' or null (member)
 
+function isAdminUser() {
+    return currentUserRole === 'admin';
+}
+
 // --- DOM Elements ---
 const authSection = document.getElementById('auth-section');
 const appSection = document.getElementById('app-section');
@@ -2284,6 +2288,11 @@ async function updateBook(id, googleBook) {
 }
 
 async function deleteBook(id) {
+    if (!isAdminUser()) {
+        showError('Only admins can delete books.');
+        return;
+    }
+
     // Use a custom non-blocking confirmation or just proceed for now to fix the "wonky" behavior
     // Ideally we'd use a custom modal for confirmation too, but for now let's trust the user clicked delete.
     // if (!confirm('Are you sure you want to delete this book from your list?')) return;
@@ -4896,6 +4905,8 @@ async function fetchOpenLibraryRating(isbn, title = null, author = null, savedDa
 }
 
 async function syncBookStatuses(books) {
+    if (!isAdminUser()) return;
+
     try {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -5107,6 +5118,10 @@ function getDiscussionQuestions(book) {
 
 async function generateDiscussionQuestionsAI() {
     if (!currentDiscussionBook) return;
+    if (!isAdminUser()) {
+        showError('Only admins can generate or replace the shared discussion guide.');
+        return;
+    }
 
     // Safety Guard: If content already exists, ask for confirmation
     if (currentDiscussionBook.discussion_questions && currentDiscussionBook.discussion_questions.trim() !== '') {
@@ -5246,6 +5261,11 @@ function closeDiscussionModal() {
 }
 
 function toggleEditQuestions() {
+    if (!isAdminUser()) {
+        showError('Only admins can edit the shared discussion guide.');
+        return;
+    }
+
     const viewEl = document.getElementById('discussion-content-view');
     const editEl = document.getElementById('discussion-content-edit');
     const editBtn = document.getElementById('btn-edit-questions');
@@ -5271,6 +5291,10 @@ function toggleEditQuestions() {
 
 async function saveDiscussionQuestions() {
     if (!currentDiscussionBook) return;
+    if (!isAdminUser()) {
+        showError('Only admins can save discussion guide changes.');
+        return;
+    }
 
     const editEl = document.getElementById('discussion-content-edit');
     const saveBtn = document.getElementById('btn-save-questions');
@@ -5318,6 +5342,7 @@ function renderDiscussionGuideUI(book) {
     // btnCopy removed
     const inputEl = editEl;
     const subtitleEl = document.getElementById('discussion-modal-subtitle');
+    const adminCanEditGuide = isAdminUser();
 
     if (!viewEl) return;
 
@@ -5333,19 +5358,39 @@ function renderDiscussionGuideUI(book) {
 
     if (questions && questions.length > 0) {
         viewEl.innerHTML = renderDiscussionQuestionsHtml(questions);
-        if (btnGenerate) {
+        if (btnGenerate && adminCanEditGuide) {
             btnGenerate.innerHTML = '<iconify-icon icon="solar:restart-bold-duotone" class="text-lg"></iconify-icon> Regenerate with AI';
             btnGenerate.classList.remove('hidden');
+        } else if (btnGenerate) {
+            btnGenerate.classList.add('hidden');
         }
-        if (btnEdit) btnEdit.classList.remove('hidden');
+        if (btnEdit && adminCanEditGuide) {
+            btnEdit.classList.remove('hidden');
+        } else if (btnEdit) {
+            btnEdit.classList.add('hidden');
+        }
     } else {
         // Empty State
-        viewEl.innerHTML = renderDiscussionQuestionsHtml('');
-        if (btnGenerate) {
+        if (adminCanEditGuide) {
+            viewEl.innerHTML = renderDiscussionQuestionsHtml('');
+        } else {
+            viewEl.innerHTML = '<div class="text-center text-stone-400 py-6 italic"><p>No discussion guide available yet.</p><p class="text-xs mt-1">An admin can add one for the club.</p></div>';
+        }
+        if (btnGenerate && adminCanEditGuide) {
             btnGenerate.innerHTML = '<iconify-icon icon="solar:magic-stick-3-bold-duotone" class="text-lg"></iconify-icon> Generate Questions with AI';
             btnGenerate.classList.remove('hidden');
+        } else if (btnGenerate) {
+            btnGenerate.classList.add('hidden');
         }
-        if (btnEdit) btnEdit.classList.remove('hidden');
+        if (btnEdit && adminCanEditGuide) {
+            btnEdit.classList.remove('hidden');
+        } else if (btnEdit) {
+            btnEdit.classList.add('hidden');
+        }
+    }
+
+    if (subtitleEl && !adminCanEditGuide) {
+        subtitleEl.textContent = 'Admins manage the shared discussion guide';
     }
 
     if (inputEl) inputEl.value = questions || '';
