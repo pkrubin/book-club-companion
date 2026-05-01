@@ -1,6 +1,8 @@
 // Vercel Serverless Function - Goodreads rating proxy
 // Fetches Goodreads search HTML server-side and extracts rating metadata.
 
+import { requireAuthenticatedUser } from './_auth.js';
+
 function extractGoodreadsRating(html) {
     if (!html || html.length < 1000) return null;
 
@@ -50,14 +52,21 @@ export default async function handler(req, res) {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
+    const authUser = await requireAuthenticatedUser(req, res);
+    if (!authUser?.id) return;
+
     const query = String(req.query?.q || '').trim();
     if (!query) {
         return res.status(400).json({ error: 'Missing required query parameter: q' });
+    }
+    if (query.length > 200) {
+        return res.status(400).json({ error: 'Search query is too long' });
     }
 
     const goodreadsUrl = `https://www.goodreads.com/search?q=${encodeURIComponent(query)}`;
 
     try {
+        console.log(`Goodreads Proxy: ${authUser.id} searched for "${query.slice(0, 80)}"`);
         const response = await fetch(goodreadsUrl, {
             headers: {
                 Accept: 'text/html,application/xhtml+xml',
