@@ -1825,7 +1825,7 @@ function openModal(book, savedData = null) {
             modalSaveSection.classList.add('hidden');
             modalEditSection.classList.remove('hidden');
 
-            editStatus.value = savedData.status || '';
+            editStatus.value = savedData.status || 'Saved';
             editRating.value = savedData.rating ? String(savedData.rating) : ''; // Ensure it's a string for input value
             currentModalTags = savedData.tags && savedData.tags.length > 0 ? [...savedData.tags] : generateTags(book).split(', ').filter(t => t);
             renderModalTags();
@@ -2204,7 +2204,7 @@ async function updateBook(id, googleBook) {
             .single();
 
         const updates = {
-            status: editStatus.value || null,
+            status: editStatus.value || 'Saved',
             rating: editRating.value ? parseFloat(editRating.value) : null,
             tags: currentModalTags,
             target_date: editDate.value || null,
@@ -3782,7 +3782,7 @@ function applyFilters() {
     const statusVal = currentStatusFilter;
     if (statusVal !== 'all') {
         if (statusVal === 'Saved') {
-            // Match null, empty, or explicit 'Saved' (though we use null for default)
+            // Transitional tolerance while older rows are backfilled from NULL to Saved.
             filtered = filtered.filter(b => !b.status || b.status === 'Saved');
         } else {
             filtered = filtered.filter(b => b.status === statusVal);
@@ -4739,7 +4739,7 @@ async function saveBook(button, bookData) {
                     rating: bestRating ? parseFloat(bestRating.rating) : null,
                     rating_source: bestRating?.source || null,
                     rating_count: bestRating?.count || null,
-                    status: currentUserRole === 'admin' ? null : 'Proposed', // Members auto-set to Proposed
+                    status: currentUserRole === 'admin' ? 'Saved' : 'Proposed', // Members propose; admins save to backlog
                     proposed_by_user_id: user?.id || null // Track who proposed this book
                 }
             ]);

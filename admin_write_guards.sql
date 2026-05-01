@@ -1,5 +1,16 @@
 begin;
 
+update public.book_club_list
+set status = 'Saved'
+where status is null;
+
+alter table public.book_club_list
+    drop constraint if exists book_club_list_status_check;
+
+alter table public.book_club_list
+    add constraint book_club_list_status_check
+    check (status in ('Saved', 'Priority', 'Possible', 'Later', 'Deprioritize', 'Read', 'Proposed', 'Scheduled'));
+
 create or replace function public.is_book_club_admin()
 returns boolean
 language sql
@@ -47,6 +58,10 @@ declare
         'last_modified_at'
     ];
 begin
+    if tg_op <> 'DELETE' and new.status is null then
+        new.status := 'Saved';
+    end if;
+
     if public.is_book_club_admin() then
         return case when tg_op = 'DELETE' then old else new end;
     end if;
@@ -56,7 +71,7 @@ begin
     end if;
 
     if tg_op = 'INSERT' then
-        if new.status is not null and new.status <> 'Proposed' then
+        if new.status <> 'Proposed' then
             raise exception 'Only admins can set a non-proposed book status during save.';
         end if;
 
