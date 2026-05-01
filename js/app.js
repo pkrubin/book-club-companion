@@ -1,11 +1,12 @@
 // --- Configuration ---
-const APP_VERSION = '1.9.8'; // Recent Changes notification dropdown
+const APP_VERSION = '1.9.9'; // Recent Changes notification dropdown
 
 // --- Gemini AI Configuration ---
 // Uses /api/gemini serverless function for secure API calls
 // API key is stored in Vercel environment variables, never exposed to browser
 const GEMINI_PROXY_URL = '/api/gemini';
 const BOOKS_PROXY_URL = '/api/books';
+const GOODREADS_PROXY_URL = '/api/goodreads';
 
 // --- Supabase Client ---
 const supabaseUrl = 'https://rqbtntzqqkekdzvfilos.supabase.co';
@@ -4643,106 +4644,20 @@ async function saveBook(button, bookData) {
 
 async function getGoodreadsRating(isbn, title, author) {
     try {
-        // Construct search query - prefer ISBN, fallback to title+author
         const searchQuery = isbn || `${title} ${author || ''}`.trim();
-        const goodreadsUrl = `https://www.goodreads.com/search?q=${encodeURIComponent(searchQuery)}`;
-
-        // Proxy Strategy: Try AllOrigins first, then fallback to CorsProxy
-        let htmlContent = null;
-
-        const fetchWithTimeout = async (url, isJson = false) => {
-            const controller = new AbortController();
-            const id = setTimeout(() => controller.abort(), 5000); // 5s timeout
-            try {
-                const res = await fetch(url, { signal: controller.signal });
-                clearTimeout(id);
-                if (!res.ok) throw new Error('Request failed');
-                return isJson ? (await res.json()).contents : await res.text();
-            } catch (e) {
-                clearTimeout(id);
-                return null;
-            }
-        };
-
-        // Attempt 1: AllOrigins
-        htmlContent = await fetchWithTimeout(`https://api.allorigins.win/get?url=${encodeURIComponent(goodreadsUrl)}`, true);
-
-        // Attempt 2: CorsProxy (Fallback)
-        if (!htmlContent) {
-            console.warn('Goodreads: AllOrigins failed/timed out, trying fallback...');
-            htmlContent = await fetchWithTimeout(`https://corsproxy.io/?${encodeURIComponent(goodreadsUrl)}`, false);
-        }
-
-        if (!htmlContent) {
-            console.error('Goodreads: All proxies failed.');
+        const response = await fetch(`${GOODREADS_PROXY_URL}?q=${encodeURIComponent(searchQuery)}`);
+        const data = await response.json();
+        if (!response.ok) {
+            console.warn('Goodreads proxy request failed:', data);
             return null;
         }
 
-        const html = htmlContent;
-
-        if (!html || html.length < 1000) {
-            console.log('No valid HTML from Goodreads proxy');
-            return null;
+        if (data?.rating) {
+            console.log(`Goodreads parsed: rating=${data.rating}, count=${data.count}`);
+            return data;
         }
 
-        // Extract rating using regex patterns
-        // Goodreads search results show ratings like "3.92 avg rating — 1,234,567 ratings"
-        // or in structured data as "ratingValue": "3.92"
-
-        let rating = null;
-        let count = null;
-
-        // Pattern 1: Look for "X.XX avg rating — Y ratings" format (handling literal dashes and &mdash;)
-        const avgRatingMatch = html.match(/(\d\.\d{1,2})\s*avg\s*rating\s*(?:[—–-]|&mdash;|&#8212;)\s*([\d,]+(?:\.\d+)?)\s*(K|M)?\s*ratings/i);
-        if (avgRatingMatch) {
-            rating = parseFloat(avgRatingMatch[1]);
-            let countStr = avgRatingMatch[2].replace(/,/g, '');
-            count = parseFloat(countStr);
-            if (avgRatingMatch[3] === 'K') count *= 1000;
-            if (avgRatingMatch[3] === 'M') count *= 1000000;
-            count = Math.round(count);
-        }
-
-        // Pattern 2: Look for structured data (JSON-LD) - usually safe from entities
-        if (!rating) {
-            const ratingValueMatch = html.match(/"ratingValue"\s*:\s*"?(\d\.\d{1,2})"?/);
-            const ratingCountMatch = html.match(/"ratingCount"\s*:\s*"?(\d+)"?/);
-
-            if (ratingValueMatch) {
-                rating = parseFloat(ratingValueMatch[1]);
-            }
-            if (ratingCountMatch) {
-                count = parseInt(ratingCountMatch[1]);
-            }
-        }
-
-        // Pattern 3: Look for minirating format with entity support
-        if (!rating) {
-            const miniRatingMatch = html.match(/class="[^"]*minirating[^"]*"[^>]*>[^<]*(\d\.\d{1,2})\s*(?:[—–-]|&mdash;|&#8212;)\s*([\d,]+)\s*ratings/i);
-            if (miniRatingMatch) {
-                rating = parseFloat(miniRatingMatch[1]);
-                count = parseInt(miniRatingMatch[2].replace(/,/g, ''));
-            }
-        }
-
-        // Pattern 4: Look for rating in aria-label or title attributes
-        if (!rating) {
-            const ariaMatch = html.match(/(?:aria-label|title)="[^"]*(\d\.\d{1,2})\s*(?:out of 5|stars|rating)[^"]*"/i);
-            if (ariaMatch) {
-                rating = parseFloat(ariaMatch[1]);
-            }
-        }
-
-        if (rating && rating > 0 && rating <= 5) {
-            console.log(`Goodreads parsed: rating=${rating}, count=${count}`);
-            return {
-                rating: rating.toFixed(2),
-                count: count || 0,
-                source: 'goodreads'
-            };
-        }
-
-        console.log('Could not extract rating from Goodreads HTML');
+        console.log('Could not extract rating from Goodreads response');
         return null;
 
     } catch (err) {
