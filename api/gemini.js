@@ -12,13 +12,13 @@ export default async function handler(req, res) {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
+    const authUser = await requireAuthenticatedUser(req, res);
+    if (!authUser?.id) return;
+
     const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
     if (!GEMINI_API_KEY) {
         return res.status(500).json({ error: 'Gemini API key not configured' });
     }
-
-    const authUser = await requireAuthenticatedUser(req, res);
-    if (!authUser?.id) return;
 
     const body = parseJsonBody(req.body);
     if (body === null) {
