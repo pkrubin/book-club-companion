@@ -1,12 +1,11 @@
 // --- Configuration ---
-const GOOGLE_API_KEY = ''; // Add your API key here if needed for public deployment, currently using implicit or restricted key
-const APP_VERSION = '1.9.6'; // Recent Changes notification dropdown
-// Note: In a real production app, use a proxy server to hide API keys.
+const APP_VERSION = '1.9.7'; // Recent Changes notification dropdown
 
 // --- Gemini AI Configuration ---
 // Uses /api/gemini serverless function for secure API calls
 // API key is stored in Vercel environment variables, never exposed to browser
 const GEMINI_PROXY_URL = '/api/gemini';
+const BOOKS_PROXY_URL = '/api/books';
 
 // --- Supabase Client ---
 const supabaseUrl = 'https://rqbtntzqqkekdzvfilos.supabase.co';
@@ -595,8 +594,8 @@ async function refreshBookMetadata(book) {
         // 1. Ensure we have Google Data (needed for ISBN lookup for rating)
         let gData = book.google_data;
         if (!gData) {
-            const results = await smartBookSearch(`${book.title} ${book.author} `);
-            if (results && results.length > 0) gData = results[0];
+            const results = await smartBookSearch(book.title, book.author);
+            if (results?.items?.length > 0) gData = results.items[0];
         }
 
         // 2. Fetch Goodreads Rating
@@ -941,6 +940,29 @@ function isJunkBook(item) {
     return false;
 }
 
+async function fetchBooksFromProxy({ q, langRestrict = 'en', maxResults = 12, startIndex = 0 }) {
+    const params = new URLSearchParams({
+        q,
+        maxResults: String(maxResults),
+        startIndex: String(startIndex)
+    });
+
+    if (langRestrict) params.set('langRestrict', langRestrict);
+
+    const response = await fetch(`${BOOKS_PROXY_URL}?${params.toString()}`);
+    const data = await response.json();
+
+    if (!response.ok) {
+        const message = data?.error?.message || data?.error || `Books API error (${response.status})`;
+        const err = new Error(message);
+        err.status = response.status;
+        err.payload = data;
+        throw err;
+    }
+
+    return data;
+}
+
 async function performSearch() {
     const query = searchInput.value.trim();
     if (!query) return;
@@ -951,8 +973,7 @@ async function performSearch() {
     resultsGrid.innerHTML = '<p class="text-center col-span-full text-stone-500">Searching Google Books...</p>';
 
     try {
-        const response = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&langRestrict=en&maxResults=12&key=${GOOGLE_API_KEY}`);
-        const data = await response.json();
+        const data = await fetchBooksFromProxy({ q: query, langRestrict: 'en', maxResults: 12 });
 
         resultsGrid.innerHTML = '';
 
@@ -971,7 +992,11 @@ async function performSearch() {
 
     } catch (error) {
         console.error('Search error:', error);
-        resultsGrid.innerHTML = '<p class="text-center col-span-full text-red-500">Error searching books. Please try again.</p>';
+        if (error.status === 429) {
+            resultsGrid.innerHTML = '<p class="text-center col-span-full text-red-500">Search is temporarily rate-limited. Please try again in a few minutes.</p>';
+        } else {
+            resultsGrid.innerHTML = '<p class="text-center col-span-full text-red-500">Error searching books. Please try again.</p>';
+        }
     }
 
     searchBtn.textContent = 'Search';
@@ -2288,7 +2313,7 @@ function isResultRelevant(resultTitle, queryTitle) {
 }
 
 // Helper: Smart search with fallback strategies
-async function smartBookSearch(title, author, apiKey) {
+async function smartBookSearch(title, author) {
     const searches = [];
 
     // Strategy 1: Title + Author (if provided)
@@ -2296,14 +2321,14 @@ async function smartBookSearch(title, author, apiKey) {
         const firstAuthor = author.split(/\s+and\s+/i)[0].trim();
         searches.push({
             label: 'title+author',
-            url: `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(title + ' inauthor:' + firstAuthor)}&langRestrict=en&maxResults=10&key=${apiKey}`
+            query: `${title} inauthor:${firstAuthor}`
         });
     }
 
     // Strategy 2: Title only (in case author is causing issues)
     searches.push({
         label: 'title-only',
-        url: `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(title)}&langRestrict=en&maxResults=10&key=${apiKey}`
+        query: title
     });
 
     // Strategy 3: Fuzzy title (remove apostrophes, common endings)
@@ -2311,7 +2336,7 @@ async function smartBookSearch(title, author, apiKey) {
     if (fuzzyTitle !== title) {
         searches.push({
             label: 'fuzzy-title',
-            url: `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(fuzzyTitle)}&langRestrict=en&maxResults=10&key=${apiKey}`
+            query: fuzzyTitle
         });
     }
 
@@ -2319,8 +2344,7 @@ async function smartBookSearch(title, author, apiKey) {
     for (const search of searches) {
         try {
             await new Promise(r => setTimeout(r, 200)); // Rate limit
-            const res = await fetch(search.url);
-            const data = await res.json();
+            const data = await fetchBooksFromProxy({ q: search.query, langRestrict: 'en', maxResults: 10 });
 
             if (data.items && data.items.length > 0) {
                 // Filter to only relevant results
@@ -2333,6 +2357,7 @@ async function smartBookSearch(title, author, apiKey) {
                 }
             }
         } catch (e) {
+            if (e.status === 429 || e.status === 401 || e.status === 403) throw e;
             console.warn(`Search strategy ${search.label} failed:`, e);
         }
     }
@@ -2376,7 +2401,6 @@ async function searchAndQueueBooks(queries) {
 
         try {
             // Check for title/author separators
-            let searchUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=10&key=${GOOGLE_API_KEY}`;
             let title = query;
             let author = '';
 
@@ -2404,7 +2428,7 @@ async function searchAndQueueBooks(queries) {
             }
 
             // Use smart search with fallback strategies and relevance filtering
-            const searchResult = await smartBookSearch(title, author, GOOGLE_API_KEY);
+            const searchResult = await smartBookSearch(title, author);
 
             if (searchResult.items && searchResult.items.length > 0) {
                 // Use filtered relevant results
@@ -2566,10 +2590,12 @@ async function fetchMoreResults(queryIndex, currentCount) {
 
     try {
         // Fetch 5 more results, offset by current count
-        const searchUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(candidate.query)}&startIndex=${currentCount}&maxResults=5&key=${GOOGLE_API_KEY}`;
-
-        const res = await fetch(searchUrl);
-        const data = await res.json();
+        const data = await fetchBooksFromProxy({
+            q: candidate.query,
+            startIndex: currentCount,
+            maxResults: 5,
+            langRestrict: 'en'
+        });
 
         if (data.items && data.items.length > 0) {
             // Append new results, avoiding duplicates
@@ -2950,7 +2976,7 @@ async function researchRow(type, index, newQuery) {
         }
 
         // Use smart search with fallback strategies
-        const result = await smartBookSearch(title, author, GOOGLE_API_KEY);
+        const result = await smartBookSearch(title, author);
 
         if (result.items && result.items.length > 0) {
             let targetIndex = index;
@@ -3114,7 +3140,7 @@ function showOptionsModal(results, candidateIndex) {
             }
 
             // Use smart search with fallback strategies
-            const result = await smartBookSearch(title, author, GOOGLE_API_KEY);
+            const result = await smartBookSearch(title, author);
 
             if (result.items && result.items.length > 0) {
                 // Update the candidate with new results - DO NOT AUTO-SELECT
