@@ -5689,6 +5689,79 @@ function printDiscussionGuide() {
         }
     }
 
+    function normalizeVisionBooks(rawBooks) {
+        if (!Array.isArray(rawBooks)) return [];
+
+        return rawBooks
+            .map((entry) => {
+                if (!entry || typeof entry !== 'object') return null;
+
+                const title = String(entry.title || '').trim();
+                const author = String(entry.author || '').trim();
+
+                if (!title) return null;
+
+                return { title, author };
+            })
+            .filter(Boolean);
+    }
+
+    function parseGeminiVisionResponse(rawText) {
+        const cleanedText = String(rawText || '')
+            .replace(/```json\s*/gi, '')
+            .replace(/```\s*/g, '')
+            .trim();
+
+        if (!cleanedText) return [];
+
+        const parseCandidate = (candidate) => {
+            const parsed = JSON.parse(candidate);
+            const normalized = normalizeVisionBooks(parsed);
+            if (normalized.length > 0 || candidate.trim() === '[]') {
+                return normalized;
+            }
+            throw new Error('No books were found in the AI response.');
+        };
+
+        try {
+            return parseCandidate(cleanedText);
+        } catch (directParseError) {
+            const arrayStart = cleanedText.indexOf('[');
+            const arrayEnd = cleanedText.lastIndexOf(']');
+
+            if (arrayStart !== -1 && arrayEnd > arrayStart) {
+                try {
+                    return parseCandidate(cleanedText.slice(arrayStart, arrayEnd + 1));
+                } catch {
+                    // Fall through to line-based recovery and friendly error below.
+                }
+            }
+
+            const recoveredBooks = cleanedText
+                .split(/\r?\n+/)
+                .map(line => line.trim().replace(/^[-*]\s*/, ''))
+                .map((line) => {
+                    const match = line.match(/^(.+?)\s+(?:by|-)\s+(.+)$/i);
+                    if (!match) return null;
+                    return {
+                        title: match[1].trim().replace(/^["']|["']$/g, ''),
+                        author: match[2].trim().replace(/^["']|["']$/g, '')
+                    };
+                })
+                .filter(entry => entry?.title);
+
+            if (recoveredBooks.length > 0) {
+                return recoveredBooks;
+            }
+
+            if (cleanedText.includes('[') && !cleanedText.includes(']')) {
+                throw new Error('The AI returned an incomplete result. Please try the image again.');
+            }
+
+            throw new Error('The AI returned an unexpected format. Please try the image again.');
+        }
+    }
+
     async function callGeminiVision(base64Data) {
         const dataUrlMatch = base64Data.match(/^data:([^;]+);base64,(.+)$/);
         if (!dataUrlMatch) {
@@ -5700,9 +5773,10 @@ function printDiscussionGuide() {
 
         const prompt = `
             Analyze this image. Identify all books visible (covers or spines) or read the text if it's a list.
-            Return strictly a JSON array of objects with "title" and "author" keys.
-            Example: [{"title": "The Great Gatsby", "author": "F. Scott Fitzgerald"}]
-            If no books found, return [].
+            Return ONLY a valid JSON array of objects with "title" and "author" keys.
+            Do not include markdown, explanations, or any text before or after the JSON.
+            Example: [{"title":"The Great Gatsby","author":"F. Scott Fitzgerald"}]
+            If no books are found, return [].
         `;
 
         const data = await callGeminiProxy({
@@ -5711,15 +5785,8 @@ function printDiscussionGuide() {
             imageData: base64Image,
             mimeType
         });
-        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-        const responseText = data.text;
-
-        if (!responseText && !text) return [];
-
-        // Clean Markdown code blocks if present
-        const jsonStr = (responseText || text).replace(/```json/g, '').replace(/```/g, '').trim();
-        return JSON.parse(jsonStr);
+        const responseText = data.text || data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        return parseGeminiVisionResponse(responseText);
     }
 })();
 
