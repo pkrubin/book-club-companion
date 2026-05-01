@@ -1,15 +1,11 @@
 begin;
 
-update public.book_club_list
-set status = 'Saved'
-where status is null;
-
 alter table public.book_club_list
     drop constraint if exists book_club_list_status_check;
 
 alter table public.book_club_list
     add constraint book_club_list_status_check
-    check (status in ('Saved', 'Priority', 'Possible', 'Later', 'Deprioritize', 'Read', 'Proposed', 'Scheduled'));
+    check (status in ('Saved', 'Priority', 'Possible', 'Later', 'Deprioritize', 'Read', 'Proposed', 'Scheduled', 'Test'));
 
 create or replace function public.is_book_club_admin()
 returns boolean
