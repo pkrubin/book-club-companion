@@ -1,6 +1,8 @@
 // Vercel Serverless Function - Google Books API Proxy
 // Keeps Google Books API key server-side (Vercel env/local .env.local)
 
+import { requireAuthenticatedUser } from './_auth.js';
+
 function clampInt(value, min, max, fallback) {
     const parsed = Number.parseInt(value, 10);
     if (Number.isNaN(parsed)) return fallback;
@@ -12,9 +14,15 @@ export default async function handler(req, res) {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
+    const authUser = await requireAuthenticatedUser(req, res);
+    if (!authUser?.id) return;
+
     const q = String(req.query?.q || '').trim();
     if (!q) {
         return res.status(400).json({ error: 'Missing required query parameter: q' });
+    }
+    if (q.length > 200) {
+        return res.status(400).json({ error: 'Search query is too long' });
     }
 
     // Google Books public search can work without authentication.
@@ -40,6 +48,7 @@ export default async function handler(req, res) {
     const url = `https://www.googleapis.com/books/v1/volumes?${params.toString()}`;
 
     try {
+        console.log(`Books Proxy: ${authUser.id} searched for "${q.slice(0, 80)}"`);
         const upstreamResponse = await fetch(url, {
             headers: { Accept: 'application/json' }
         });

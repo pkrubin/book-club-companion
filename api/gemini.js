@@ -1,54 +1,11 @@
 // Vercel Serverless Function - Secure Gemini API Proxy
 // This runs server-side, so the API key is never exposed to the browser.
 
+import { parseJsonBody, requireAuthenticatedUser } from './_auth.js';
+
 const MAX_PROMPT_CHARS = 12000;
 const MAX_OUTPUT_TOKENS = 4000;
 const MAX_IMAGE_BASE64_CHARS = 7_000_000;
-const SUPABASE_URL = process.env.PUBLIC_SUPABASE_URL || 'https://rqbtntzqqkekdzvfilos.supabase.co';
-const SUPABASE_ANON_KEY =
-    process.env.PUBLIC_SUPABASE_ANON_KEY ||
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFyZSIsInJlZiI6InJxYnRudHpxcWtla2R6dmZpbG9zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ1MDEwMjUsImV4cCI6MjA4MDA3NzAyNX0.iKeTABH2Q_s9BjpMmigroSa0fqeyW8DDcmXRwDO0jjM';
-
-function getBearerToken(req) {
-    const authHeader = req.headers?.authorization || '';
-    const match = authHeader.match(/^Bearer\s+(.+)$/i);
-    return match ? match[1].trim() : null;
-}
-
-function parseJsonBody(body) {
-    if (!body) return {};
-    if (typeof body === 'string') {
-        try {
-            return JSON.parse(body);
-        } catch {
-            return null;
-        }
-    }
-    return body;
-}
-
-async function verifySupabaseSession(accessToken) {
-    if (!accessToken || !SUPABASE_URL || !SUPABASE_ANON_KEY) return null;
-
-    try {
-        const response = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
-            method: 'GET',
-            headers: {
-                apikey: SUPABASE_ANON_KEY,
-                Authorization: `Bearer ${accessToken}`
-            }
-        });
-
-        if (!response.ok) {
-            return null;
-        }
-
-        return await response.json();
-    } catch (error) {
-        console.error('Gemini Proxy: Failed to verify Supabase session:', error);
-        return null;
-    }
-}
 
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
@@ -60,15 +17,8 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: 'Gemini API key not configured' });
     }
 
-    const accessToken = getBearerToken(req);
-    if (!accessToken) {
-        return res.status(401).json({ error: 'You must be signed in to use AI features.' });
-    }
-
-    const authUser = await verifySupabaseSession(accessToken);
-    if (!authUser?.id) {
-        return res.status(401).json({ error: 'Your session is no longer valid. Please sign in again.' });
-    }
+    const authUser = await requireAuthenticatedUser(req, res);
+    if (!authUser?.id) return;
 
     const body = parseJsonBody(req.body);
     if (body === null) {
