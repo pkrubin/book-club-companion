@@ -3,6 +3,7 @@
 
 const MAX_PROMPT_CHARS = 12000;
 const MAX_OUTPUT_TOKENS = 4000;
+const MAX_IMAGE_BASE64_CHARS = 7_000_000;
 const SUPABASE_URL = process.env.PUBLIC_SUPABASE_URL || 'https://rqbtntzqqkekdzvfilos.supabase.co';
 const SUPABASE_ANON_KEY =
     process.env.PUBLIC_SUPABASE_ANON_KEY ||
@@ -75,6 +76,8 @@ export default async function handler(req, res) {
     }
 
     const prompt = typeof body.prompt === 'string' ? body.prompt.trim() : '';
+    const imageData = typeof body.imageData === 'string' ? body.imageData.trim() : '';
+    const mimeType = typeof body.mimeType === 'string' ? body.mimeType.trim() : '';
     const temperature = Number.isFinite(Number(body.temperature))
         ? Math.max(0, Math.min(1, Number(body.temperature)))
         : 0.7;
@@ -88,6 +91,16 @@ export default async function handler(req, res) {
 
     if (prompt.length > MAX_PROMPT_CHARS) {
         return res.status(413).json({ error: 'Prompt is too long. Please shorten it and try again.' });
+    }
+
+    if (imageData) {
+        if (!mimeType.startsWith('image/')) {
+            return res.status(400).json({ error: 'Unsupported image type.' });
+        }
+
+        if (imageData.length > MAX_IMAGE_BASE64_CHARS) {
+            return res.status(413).json({ error: 'Image is too large. Please use a smaller image and try again.' });
+        }
     }
 
     console.log(`Gemini Proxy: Processing request for user ${authUser.id}`);
@@ -105,6 +118,16 @@ export default async function handler(req, res) {
         for (const model of MODELS) {
             console.log(`Gemini Proxy: Attempting model ${model} for user ${authUser.id}`);
             try {
+                const parts = [{ text: prompt }];
+                if (imageData) {
+                    parts.push({
+                        inline_data: {
+                            mime_type: mimeType,
+                            data: imageData
+                        }
+                    });
+                }
+
                 const response = await fetch(
                     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
                     {
@@ -114,7 +137,7 @@ export default async function handler(req, res) {
                             'x-goog-api-key': GEMINI_API_KEY
                         },
                         body: JSON.stringify({
-                            contents: [{ parts: [{ text: prompt }] }],
+                            contents: [{ parts }],
                             generationConfig: { temperature, maxOutputTokens: maxTokens }
                         })
                     }
