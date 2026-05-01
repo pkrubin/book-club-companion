@@ -13,6 +13,32 @@ const supabaseUrl = 'https://rqbtntzqqkekdzvfilos.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxYnRudHpxcWtla2R6dmZpbG9zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ1MDEwMjUsImV4cCI6MjA4MDA3NzAyNX0.iKeTABH2Q_s9BjpMmigroSa0fqeyW8DDcmXRwDO0jjM';
 const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
+async function callGeminiProxy({ prompt, temperature = 0.7, maxTokens = 4000 }) {
+    const { data: { session } } = await supabase.auth.getSession();
+    const accessToken = session?.access_token;
+
+    if (!accessToken) {
+        throw new Error('You must be signed in to use AI features. Please log in again.');
+    }
+
+    const response = await fetch(GEMINI_PROXY_URL, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`
+        },
+        body: JSON.stringify({ prompt, temperature, maxTokens })
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+        throw new Error(data.error || `API error: ${response.status}`);
+    }
+
+    return data;
+}
+
 // --- State ---
 let user = null;
 let savedBookIds = new Set();
@@ -1154,22 +1180,11 @@ Rules: 7-9 tags total. Prefer country over region (Australia not "New South Wale
     console.log('AI Tag Request:', { title, author });
 
     try {
-        const response = await fetch(GEMINI_PROXY_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                prompt,
-                temperature: 0.3,
-                maxTokens: 1000
-            })
+        const data = await callGeminiProxy({
+            prompt,
+            temperature: 0.3,
+            maxTokens: 1000
         });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || `API error: ${response.status}`);
-        }
-
-        const data = await response.json();
         const tagText = data.text || '';
 
         // Debug: log raw AI response
@@ -1295,22 +1310,11 @@ RULES:
 SUMMARY:`;
 
     try {
-        const response = await fetch(GEMINI_PROXY_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                prompt,
-                temperature: 0.7,
-                maxTokens: 300
-            })
+        const data = await callGeminiProxy({
+            prompt,
+            temperature: 0.7,
+            maxTokens: 300
         });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || `API error: ${response.status}`);
-        }
-
-        const data = await response.json();
         return data.text?.trim() || null;
     } catch (e) {
         console.error('AI Summary Generation Error:', e);
@@ -4988,22 +4992,10 @@ Rules:
 3. Return ONLY the list of 15 questions, numbered 1-15.
 4. Do not include intro or outro text.`;
 
-        const response = await fetch(GEMINI_PROXY_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                prompt,
-                maxTokens: 4000 // Ensure enough length for 15 questions
-
-            })
+        const data = await callGeminiProxy({
+            prompt,
+            maxTokens: 4000
         });
-
-        if (!response.ok) {
-            const errData = await response.json().catch(() => ({}));
-            throw new Error(errData.error || `Server Error ${response.status}`);
-        }
-
-        const data = await response.json();
         let questions = data.text.trim();
 
         if (data.finishReason) {
