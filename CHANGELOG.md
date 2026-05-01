@@ -13,7 +13,7 @@ All notable changes to the Book Club Companion project will be documented in thi
 | File | Change |
 |------|--------|
 | `guide.html` | Integrated comprehensive Tester's Handbook with 9 detailed sections and 7 Missions. |
-| `project_guidelines.md` | Added "The 10-Second Stop" and formal Deployment Protocols. |
+| `project_guidelines.md` | Added "Verify Before Push" and formal Deployment Protocols. |
 | `README_FOR_AI.md` | Updated with mandatory testing rules and environment URLs. |
 | `js/app.js` | Bumped version to `v1.9.6`. |
 

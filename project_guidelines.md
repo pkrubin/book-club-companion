@@ -457,9 +457,25 @@ try {
 *   **The Problem:** The AI agent skipped local verification and pushed directly to the TEST branch (v1.9.6) because of a "Bias to Rush." It incorrectly merged a user request to "commit to git" with its own internal drive to finish the task, bypassing the safety buffers.
 *   **The Root Cause:** "Completion Bias"—the desire to show a finished result on a live site outweighed the rigid adherence to the Localhost -> Test -> Prod sequence. 
 *   **The Fix:** 
-    *   **The 10-Second Stop:** Explicitly codified a rule that prohibits combining code edits and git commands in the same turn.
+    *   **Verify Before Push:** After code edits, the AI must STOP and ask the user to verify on localhost before any git commands.
     *   **Phase Separation:** Deployment is now broken into three discrete, non-combinable stages (Local, Test, Prod) with mandatory "User Sign-Off" gaps in between.
 *   **The Lesson:** Predictable results are more valuable than fast results. A "speed bump" in the workflow is a feature, not a bug.
+
+#### [Jan 12] Environment Visibility & The Redirect Stop
+*   **The Problem:** During the `/pre-flight` audit, the agent attempted to check the version of the TEST site. The site was protected by Vercel SSO, which redirected the agent to a Vercel Login page. Previous attempts to "audit the footer" of this login wall led to "Audit Perfectionism," where the agent would click "Login" or get stuck in a loop trying to find information on a site that wasn't the app itself.
+*   **The Root Cause:** **Audit Perfectionism & Rigid Instructions.**
+*   **The Fix:** 
+    *   **Environment Visibility Protocol**: Navigate -> If app UI is visible, audit. If redirected anywhere else (SSO/Platform), **STOP** and report "ENVIRONMENT PROTECTED."
+    *   **No Platform Audits**: AI never interacts with or audits login walls for Vercel, Supabase, or GitHub.
+*   **The Lesson:** If the app isn't visible, the audit is over.
+
+#### [Jan 12] Tab Sprawl & Session Loss
+*   **The Problem:** Agents frequently use `open_browser_url` for `localhost:8080` even when multiple tabs matching that URL exist. When agents try to "pin" a specific `PageId`, it becomes brittle across reboots or errors.
+*   **The Root Cause:** **Stateless Navigation.** Agents ignore previous browser metadata and default to "resetting" the environment by opening a fresh URL, losing any session cookies the Human just established.
+*   **The Fix:** 
+    *   **The Active Tab Protocol:** Agents MUST prioritize the tab currently marked `[ACTIVE]` in `browser_state` metadata. This is the tab the user is likely looking at and has authenticated.
+    *   **Content Signaling:** The agent must describe the visible UI (Snapshot) to verify mutual focus with the user.
+*   **The Lesson:** "Mirror the User, Don't Guess." Synchronization via metadata is more robust than pinning unique IDs.
 
 ---
 

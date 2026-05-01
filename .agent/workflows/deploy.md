@@ -1,5 +1,5 @@
 ---
-description: Strict 10-Second Stop deployment workflow
+description: Verify Before Push deployment workflow
 ---
 # Deployment Workflow
 
