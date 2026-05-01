@@ -28,8 +28,8 @@ Instead of rigid rules, we use adaptive, resilient protocols:
 
 ## Current State
 - **Version:** 1.9.6
-- **Branch:** test (always work on test, never main directly)
-- **Last deployment:** TEST (v1.9.6) on 2026-01-11
+- **Branch:** main
+- **Last deployment:** PROD on 2026-01-12
 
 ---
 
@@ -65,7 +65,7 @@ Instead of rigid rules, we use adaptive, resilient protocols:
 **Ended:** 2026-01-12
 
 **Deployments:**
-- v1.9.6 (Deployed to TEST - interrupted by reboot)
+- v1.9.6 (Deployed to PROD)
 
 **Work Completed:**
 - **Autopsy & Restoration:** Successfully recovered work interrupted by system reboot (Jan 11-12).
@@ -105,6 +105,31 @@ Instead of rigid rules, we use adaptive, resilient protocols:
 
 ---
 
+### Session: Jan 10-11, 2026
+**Started:** 2026-01-10  
+**Ended:** 2026-01-11
+
+**Deployments:**
+- v1.9.4 → v1.9.5 (deployed to PROD)
+
+**Work Completed:**
+- v1.9.5: Recent Changes notification dropdown
+  - Bell icon with unread badge in header
+  - Per-user dismiss tracking (new `user_dismissed_notifications` table)
+  - "Mark all read" and "Clear all" bulk actions
+  - Natural language descriptions ("Sarah is now hosting", "Moved to Feb 10")
+  - Shows who made each change and when ("by pamrubin • 5m ago")
+  - Clear visual distinction (left border + tint for unread items)
+  - Logged changes for host, date, time on Scheduled books
+
+**Database Changes:**
+- Created `schedule_changes` table for logging host/date/time changes
+- Created `user_dismissed_notifications` table for per-user dismiss tracking
+- Added `last_seen_at` column to `user_profiles` for tracking new vs read
+- Ran one-time migration to set default 7:15 PM meeting time for books with null times
+
+---
+
 ### Session: Jan 4-5, 2026
 **Started:** 2026-01-04  
 **Ended:** 2026-01-05
@@ -140,7 +165,7 @@ Instead of rigid rules, we use adaptive, resilient protocols:
 - [ ] Tag deletion UI may have issues with garbage tags from earlier versions
 - [ ] Multi-book-club support (Phase 3 - future)
 - [ ] Consider VIEW approach for user_profiles when email/phone added later
-- [ ] **Host Alerts**: Build notifications when a host claims a month or changes a meeting time
+- [x] ~~**Host Alerts**: Build notifications when a host claims a month or changes a meeting time~~ (Completed v1.9.5 - "Recent Changes" dropdown)
 
 ---
 
