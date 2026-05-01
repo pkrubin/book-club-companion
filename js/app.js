@@ -13,7 +13,7 @@ const supabaseUrl = 'https://rqbtntzqqkekdzvfilos.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxYnRudHpxcWtla2R6dmZpbG9zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ1MDEwMjUsImV4cCI6MjA4MDA3NzAyNX0.iKeTABH2Q_s9BjpMmigroSa0fqeyW8DDcmXRwDO0jjM';
 const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-async function callGeminiProxy({ prompt, temperature = 0.7, maxTokens = 4000 }) {
+async function callGeminiProxy({ prompt, temperature = 0.7, maxTokens = 4000, imageData = null, mimeType = null }) {
     const { data: { session } } = await supabase.auth.getSession();
     const accessToken = session?.access_token;
 
@@ -27,7 +27,7 @@ async function callGeminiProxy({ prompt, temperature = 0.7, maxTokens = 4000 }) 
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${accessToken}`
         },
-        body: JSON.stringify({ prompt, temperature, maxTokens })
+        body: JSON.stringify({ prompt, temperature, maxTokens, imageData, mimeType })
     });
 
     const data = await response.json().catch(() => ({}));
@@ -4643,27 +4643,59 @@ async function saveBook(button, bookData) {
     }
 }
 
-// --- Goodreads Rating via CORS Proxy + Regex parsing ---
-// Uses CORS proxy to fetch Goodreads page, then extracts rating using regex
+// --- Goodreads Rating via server-side proxy ---
+// Retries with title-based fallbacks because Goodreads often misses edition-specific ISBNs.
+
+function buildGoodreadsQueryVariants(isbn, title, author) {
+    const variants = [];
+    const seen = new Set();
+    const trimmedTitle = (title || '').trim();
+    const trimmedAuthor = (author || '').trim();
+    const simplifiedTitle = trimmedTitle
+        .replace(/\s*[:\-]\s+.*$/, '')
+        .replace(/\s*\([^)]*\)\s*$/, '')
+        .trim();
+
+    function addVariant(value) {
+        const normalized = String(value || '').trim().replace(/\s+/g, ' ');
+        if (!normalized || seen.has(normalized.toLowerCase())) return;
+        seen.add(normalized.toLowerCase());
+        variants.push(normalized);
+    }
+
+    addVariant(isbn);
+    addVariant(`${trimmedTitle} ${trimmedAuthor}`);
+    addVariant(trimmedTitle);
+
+    if (simplifiedTitle && simplifiedTitle !== trimmedTitle) {
+        addVariant(`${simplifiedTitle} ${trimmedAuthor}`);
+        addVariant(simplifiedTitle);
+    }
+
+    return variants;
+}
 
 async function getGoodreadsRating(isbn, title, author) {
-    try {
-        const searchQuery = isbn || `${title} ${author || ''}`.trim();
-        const response = await fetch(`${GOODREADS_PROXY_URL}?q=${encodeURIComponent(searchQuery)}`);
-        const data = await response.json();
-        if (!response.ok) {
-            console.warn('Goodreads proxy request failed:', data);
-            return null;
-        }
+    const searchQueries = buildGoodreadsQueryVariants(isbn, title, author);
 
-        if (data?.rating) {
-            console.log(`Goodreads parsed: rating=${data.rating}, count=${data.count}`);
-            return data;
+    try {
+        for (const searchQuery of searchQueries) {
+            const response = await fetch(`${GOODREADS_PROXY_URL}?q=${encodeURIComponent(searchQuery)}`);
+            const data = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+                console.warn(`Goodreads proxy request failed for "${searchQuery}":`, data);
+                continue;
+            }
+
+            if (data?.rating) {
+                console.log(`Goodreads parsed from "${searchQuery}": rating=${data.rating}, count=${data.count}`);
+                return data;
+            }
         }
 
         console.log('Could not extract rating from Goodreads response');
         return null;
-
     } catch (err) {
         console.error('Error fetching Goodreads rating:', err);
         return null;
@@ -5472,39 +5504,12 @@ function printDiscussionGuide() {
 (function initVisualImport() {
     const toggleApiKeyBtn = document.getElementById('toggle-api-key');
     const apiKeyContainer = document.getElementById('api-key-container');
-    const geminiApiKeyInput = document.getElementById('gemini-api-key');
     const imageUploadInput = document.getElementById('image-upload');
     const imagePreviewContainer = document.getElementById('image-preview-container');
 
-    // Check for Config Key (Environment Variable Simulation)
-    let configKey = null;
-    if (typeof CONFIG !== 'undefined' && CONFIG.GOOGLE_GEMINI_API_KEY) {
-        configKey = CONFIG.GOOGLE_GEMINI_API_KEY;
-    }
-
-    // 0. Init State based on Config
-    if (configKey) {
-        // If key is configured in code, hide the setup UI to keep it clean for the user
-        if (toggleApiKeyBtn) toggleApiKeyBtn.classList.add('hidden');
-        if (apiKeyContainer) apiKeyContainer.classList.add('hidden');
-    } else {
-        // 1. Toggle Key Input (Only if manual setup needed)
-        if (toggleApiKeyBtn) {
-            toggleApiKeyBtn.addEventListener('click', () => {
-                apiKeyContainer.classList.toggle('hidden');
-                // Load saved key
-                const savedKey = localStorage.getItem('gemini_api_key');
-                if (savedKey) geminiApiKeyInput.value = savedKey;
-            });
-        }
-
-        // 2. Save Key on Input
-        if (geminiApiKeyInput) {
-            geminiApiKeyInput.addEventListener('input', (e) => {
-                localStorage.setItem('gemini_api_key', e.target.value.trim());
-            });
-        }
-    }
+    // Vision import now uses the authenticated server-side Gemini proxy.
+    if (toggleApiKeyBtn) toggleApiKeyBtn.classList.add('hidden');
+    if (apiKeyContainer) apiKeyContainer.classList.add('hidden');
 
     // 3. Handle Image Upload
     if (imageUploadInput) {
@@ -5542,18 +5547,6 @@ function printDiscussionGuide() {
                 return;
             }
 
-            // Validation: Use Config Key OR Local Storage
-            const apiKey = configKey || localStorage.getItem('gemini_api_key');
-
-            if (!apiKey) {
-                alert('Please setup your Google Gemini API Key first.');
-                if (apiKeyContainer) {
-                    apiKeyContainer.classList.remove('hidden');
-                    if (geminiApiKeyInput) geminiApiKeyInput.focus();
-                }
-                return;
-            }
-
             // Show Preview & Loop Logic
             const reader = new FileReader();
             reader.onload = async (e) => {
@@ -5574,7 +5567,7 @@ function printDiscussionGuide() {
                 }
 
                 try {
-                    const results = await callGeminiVision(base64Data, apiKey);
+                    const results = await callGeminiVision(base64Data);
 
                     if (results && results.length > 0) {
                         const queries = results.map(b => `${b.title} - ${b.author}`);
@@ -5598,7 +5591,7 @@ function printDiscussionGuide() {
                     if (imagePreviewContainer) {
                         imagePreviewContainer.innerHTML = `
                             <div class="bg-red-50 text-red-600 text-xs p-3 rounded">
-                                Error: ${err.message}. Check your API Key.
+                                Error: ${err.message}
                             </div>
                         `;
                     }
@@ -5643,8 +5636,14 @@ function printDiscussionGuide() {
         }
     }
 
-    async function callGeminiVision(base64Data, apiKey) {
-        const base64Image = base64Data.split(',')[1]; // Remove header
+    async function callGeminiVision(base64Data) {
+        const dataUrlMatch = base64Data.match(/^data:([^;]+);base64,(.+)$/);
+        if (!dataUrlMatch) {
+            throw new Error('Unsupported image format.');
+        }
+
+        const mimeType = dataUrlMatch[1];
+        const base64Image = dataUrlMatch[2];
 
         const prompt = `
             Analyze this image. Identify all books visible (covers or spines) or read the text if it's a list.
@@ -5653,36 +5652,20 @@ function printDiscussionGuide() {
             If no books found, return [].
         `;
 
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`;
-
-        const payload = {
-            contents: [{
-                parts: [
-                    { text: prompt },
-                    { inline_data: { mime_type: "image/jpeg", data: base64Image } }
-                ]
-            }]
-        };
-
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+        const data = await callGeminiProxy({
+            prompt,
+            maxTokens: 1200,
+            imageData: base64Image,
+            mimeType
         });
-
-        if (!response.ok) {
-            const errorBody = await response.text();
-            console.error('Gemini API Error details:', errorBody);
-            throw new Error(`API Error (${response.status}): ${response.statusText}`);
-        }
-
-        const data = await response.json();
         const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
-        if (!text) return [];
+        const responseText = data.text;
+
+        if (!responseText && !text) return [];
 
         // Clean Markdown code blocks if present
-        const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
+        const jsonStr = (responseText || text).replace(/```json/g, '').replace(/```/g, '').trim();
         return JSON.parse(jsonStr);
     }
 })();
