@@ -1,5 +1,5 @@
 // --- Configuration ---
-const APP_VERSION = '1.9.7'; // Recent Changes notification dropdown
+const APP_VERSION = '1.9.8'; // Recent Changes notification dropdown
 
 // --- Gemini AI Configuration ---
 // Uses /api/gemini serverless function for secure API calls
@@ -557,17 +557,15 @@ function renderRatingBadges(book, elementId) {
         const count = book.rating_count;
 
         // Format count
-        let countDisplay = '';
-        if (count) {
-            if (count >= 1000000) countDisplay = `(${Math.round(count / 100000) / 10}M)`;
-            else if (count >= 1000) countDisplay = `(${Math.round(count / 1000)}K)`;
-            else countDisplay = `(${count})`;
-        }
+        const countDisplay = formatRatingCount(count);
 
         // Styles
         let badgeClass = 'bg-stone-100 text-stone-600 border-stone-200';
         let icon = '';
-        if (source === 'goodreads') {
+        if (source === 'googlebooks') {
+            badgeClass = 'bg-stone-100 text-stone-600 border-stone-200';
+            icon = '<iconify-icon icon="logos:google-icon" class="mr-1 text-xs"></iconify-icon>';
+        } else if (source === 'goodreads') {
             badgeClass = 'bg-[#f4f1ea] text-[#382110] border-[#ece9df]';
             icon = '<iconify-icon icon="fa6-brands:goodreads" class="mr-1"></iconify-icon>';
         } else if (source === 'openlibrary') {
@@ -580,6 +578,54 @@ function renderRatingBadges(book, elementId) {
         </span>`;
         el.classList.remove('hidden');
     }
+}
+
+function formatRatingCount(count) {
+    if (!count) return '';
+    if (count >= 1000000) return `(${Math.round(count / 100000) / 10}M)`;
+    if (count >= 1000) return `(${Math.round(count / 1000)}K)`;
+    return `(${count})`;
+}
+
+function getPrimaryIsbn(volumeInfo) {
+    return volumeInfo?.industryIdentifiers?.find(
+        id => id.type === 'ISBN_13' || id.type === 'ISBN_10'
+    )?.identifier || null;
+}
+
+function getGoogleBooksRating(volumeInfo, minCount = 100) {
+    if (!volumeInfo?.averageRating || !volumeInfo?.ratingsCount) return null;
+    if (volumeInfo.ratingsCount < minCount) return null;
+
+    return {
+        rating: Number(volumeInfo.averageRating).toFixed(2),
+        count: volumeInfo.ratingsCount,
+        source: 'googlebooks'
+    };
+}
+
+async function getBestAvailableRating({ googleData, title, author, minCount = 100 }) {
+    const volumeInfo = googleData?.volumeInfo || null;
+    const isbn = getPrimaryIsbn(volumeInfo);
+    const goodreadsRating = await getGoodreadsRating(isbn, title, author);
+    if (goodreadsRating) return goodreadsRating;
+
+    const googleRating = getGoogleBooksRating(volumeInfo, minCount);
+    if (googleRating) return googleRating;
+
+    const olData = await Promise.race([
+        getOpenLibraryRating(isbn, title, author),
+        new Promise(resolve => setTimeout(() => resolve(null), 5000))
+    ]);
+    if (olData && olData.count >= minCount) {
+        return {
+            rating: Number(olData.average).toFixed(2),
+            count: olData.count,
+            source: 'openlibrary'
+        };
+    }
+
+    return null;
 }
 
 // --- Metadata Refresh ---
@@ -598,20 +644,20 @@ async function refreshBookMetadata(book) {
             if (results?.items?.length > 0) gData = results.items[0];
         }
 
-        // 2. Fetch Goodreads Rating
-        const isbn = gData?.volumeInfo?.industryIdentifiers?.find(
-            id => id.type === 'ISBN_13' || id.type === 'ISBN_10'
-        )?.identifier;
-
-        const gr = await getGoodreadsRating(isbn, book.title, book.author);
+        // 2. Fetch the best available rating source
+        const bestRating = await getBestAvailableRating({
+            googleData: gData,
+            title: book.title,
+            author: book.author
+        });
 
         // 3. Update DB
         const updates = {};
 
-        if (gr) {
-            updates.rating = parseFloat(gr.rating);
-            updates.rating_source = 'goodreads';
-            updates.rating_count = gr.count;
+        if (bestRating) {
+            updates.rating = parseFloat(bestRating.rating);
+            updates.rating_source = bestRating.source;
+            updates.rating_count = bestRating.count || null;
         }
 
         if (Object.keys(updates).length > 0) {
@@ -3387,7 +3433,7 @@ saveImportBtn.addEventListener('click', async () => {
         return;
     }
 
-    // --- Fetch Goodreads Ratings ---
+    // --- Fetch ratings from the best available source ---
     // Only fetch for books that don't already have a rating
     for (let i = 0; i < booksToSave.length; i++) {
         const book = booksToSave[i];
@@ -3399,25 +3445,16 @@ saveImportBtn.addEventListener('click', async () => {
             continue;
         }
 
-        // Try to get Goodreads rating
-        const isbn = book.google_data?.volumeInfo?.industryIdentifiers?.find(
-            id => id.type === 'ISBN_13' || id.type === 'ISBN_10'
-        )?.identifier;
+        const bestRating = await getBestAvailableRating({
+            googleData: book.google_data,
+            title: book.title,
+            author: book.author
+        });
 
-        const grRating = await getGoodreadsRating(isbn, book.title, book.author);
-
-        if (grRating) {
-            book.rating = parseFloat(grRating.rating);
-            book.rating_source = 'goodreads';
-            book.rating_count = grRating.count;
-        } else {
-            // Fallback to OpenLibrary if Goodreads fails
-            const olRating = await getOpenLibraryRating(isbn, book.title, book.author);
-            if (olRating && olRating.count > 50) {
-                book.rating = parseFloat(olRating.average);
-                book.rating_source = 'openlibrary';
-                book.rating_count = olRating.count;
-            }
+        if (bestRating) {
+            book.rating = parseFloat(bestRating.rating);
+            book.rating_source = bestRating.source;
+            book.rating_count = bestRating.count || null;
         }
 
         // Small delay to avoid rate limiting
@@ -4074,7 +4111,10 @@ function renderDashboard() {
                 }
                 let badgeClass = 'bg-stone-100 text-stone-600 border-stone-200';
                 let icon = '';
-                if (source === 'goodreads') {
+                if (source === 'googlebooks') {
+                    badgeClass = 'bg-stone-100 text-stone-600 border-stone-200';
+                    icon = '<iconify-icon icon="logos:google-icon" class="mr-1 text-xs"></iconify-icon>';
+                } else if (source === 'goodreads') {
                     badgeClass = 'bg-[#f4f1ea] text-[#382110] border-[#ece9df]';
                     icon = '<iconify-icon icon="fa6-brands:goodreads" class="mr-1"></iconify-icon>';
                 } else if (source === 'openlibrary') {
@@ -4421,7 +4461,10 @@ function renderSavedBooks(books) {
             }
             let badgeClass = 'bg-stone-100 text-stone-600 border-stone-200';
             let icon = '';
-            if (source === 'goodreads') {
+            if (source === 'googlebooks') {
+                badgeClass = 'bg-stone-100 text-stone-600 border-stone-200';
+                icon = '<iconify-icon icon="logos:google-icon" class="mr-1 text-xs"></iconify-icon>';
+            } else if (source === 'goodreads') {
                 badgeClass = 'bg-[#f4f1ea] text-[#382110] border-[#ece9df]';
                 icon = '<iconify-icon icon="fa6-brands:goodreads" class="mr-1"></iconify-icon>';
             } else if (source === 'openlibrary') {
@@ -4553,30 +4596,11 @@ async function saveBook(button, bookData) {
     button.disabled = true;
 
     try {
-        // Phase 2: Enrich with Open Library Data immediately
-        // We define a timeout to prevent hanging if OL is slow
-        const olPromise = getOpenLibraryRating(
-            info.industryIdentifiers ? info.industryIdentifiers.find(i => i.type === 'ISBN_13')?.identifier : null,
-            info.title,
-            info.authors ? info.authors[0] : null
-        );
-
-        // Wait max 5 seconds for extra data (OL chain can be slow: ISBN -> Work -> Rating)
-        const olData = await Promise.race([
-            olPromise,
-            new Promise(resolve => setTimeout(() => resolve(null), 5000))
-        ]);
-
-        // Logic: Prefer Google Rating if > 100 votes. 
-        // Else, check Open Library if > 100 votes.
-        // Else, leave null.
-        let finalRating = null;
-
-        if (info.averageRating && info.ratingsCount > 100) {
-            finalRating = info.averageRating;
-        } else if (olData && olData.count > 100) {
-            finalRating = olData.average;
-        }
+        const bestRating = await getBestAvailableRating({
+            googleData: bookData,
+            title: info.title,
+            author: info.authors ? info.authors[0] : null
+        });
 
         const { error } = await supabase
             .from('book_club_list')
@@ -4586,7 +4610,9 @@ async function saveBook(button, bookData) {
                     author: info.authors ? info.authors.join(', ') : 'Unknown',
                     google_data: bookData,
                     tags: generateTags(bookData).split(', ').filter(t => t),
-                    rating: finalRating,
+                    rating: bestRating ? parseFloat(bestRating.rating) : null,
+                    rating_source: bestRating?.source || null,
+                    rating_count: bestRating?.count || null,
                     status: currentUserRole === 'admin' ? null : 'Proposed', // Members auto-set to Proposed
                     proposed_by_user_id: user?.id || null // Track who proposed this book
                 }
@@ -4773,8 +4799,8 @@ async function getOpenLibraryRating(isbn, title = null, author = null) {
 }
 
 async function fetchOpenLibraryRating(isbn, title = null, author = null, savedData = null) {
-    // Skip if book already has a Goodreads rating (OpenLib is just a backup)
-    if (savedData && savedData.rating_source === 'goodreads') {
+    // Skip if the book already has any saved rating (Open Library is just a backup)
+    if (savedData && savedData.rating) {
         return;
     }
 
