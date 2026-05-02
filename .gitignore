@@ -8,3 +8,7 @@ old/
 .env
 .env.local
 .env*.local
+
+# Debug/development files (contain API keys)
+debug_auth.html
+js/check_db.js

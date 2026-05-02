@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS book_club_list (
     title text NOT NULL,
     author text,
     google_data jsonb,
-    status text CHECK (status IN ('Priority', 'Possible', 'Later', 'Deprioritize', 'Read', 'Proposed', 'Scheduled')),
+    status text CHECK (status IN ('Saved', 'Priority', 'Possible', 'Later', 'Deprioritize', 'Read', 'Proposed', 'Scheduled', 'Test')),
     rating numeric(3, 1) CHECK (rating >= 0 AND rating <= 5),
     tags text[],
     target_date date,
