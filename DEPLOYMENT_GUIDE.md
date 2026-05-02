@@ -7,6 +7,11 @@ This guide is optimized for AI agents to maintain and deploy the Book Club Compa
 - **GitHub Repository**: [https://github.com/pkrubin/book-club-companion](https://github.com/pkrubin/book-club-companion)
 - **Local Dev Root**: `/Users/pamrubin/Desktop/book-club/`
 
+### Required Environment Variables
+- `GEMINI_API_KEY`: Used by `api/gemini.js` for AI tagging/discussion features.
+- `GOOGLE_BOOKS_API_KEY`: Used by `api/books.js` for Find Books and import search.
+  - Backward-compatible fallbacks exist (`GOOGLE_API_KEY`, `BOOKS_API_KEY`, `GEMINI_API_KEY`) but `GOOGLE_BOOKS_API_KEY` is the preferred name.
+
 ## 🕹️ Phase 2: Local Server Management
 
 The AI must ensure the local server is running before attempting any verification.

@@ -15,6 +15,7 @@ const __dirname = path.dirname(__filename);
 const HOST = process.env.HOST || '127.0.0.1';
 const portFromEnv = Number.parseInt(process.env.PORT || '', 10);
 const PORT = Number.isInteger(portFromEnv) && portFromEnv > 0 ? portFromEnv : 8080;
+const MAX_REQUEST_BODY_BYTES = 10 * 1024 * 1024;
 
 function loadEnvFile(envPath) {
     if (!fs.existsSync(envPath)) return;
@@ -105,8 +106,15 @@ function serveStaticFile(res, pathname) {
 function collectRequestBody(req) {
     return new Promise((resolve, reject) => {
         let body = '';
+        let bodyBytes = 0;
 
         req.on('data', chunk => {
+            bodyBytes += chunk.length;
+            if (bodyBytes > MAX_REQUEST_BODY_BYTES) {
+                reject(new Error('Request body too large'));
+                req.destroy();
+                return;
+            }
             body += chunk;
         });
 
