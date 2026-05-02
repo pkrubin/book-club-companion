@@ -68,6 +68,12 @@ For DB-backed or deployment work:
 - start from fresh `origin/test`
 - prefer a fresh worktree/branch over an old local checkout
 
+### 7. Move finished worktrees to cleanup instead of deleting immediately
+- active worktrees may stay in normal working locations
+- when a branch/worktree is no longer active, move its worktree into the cleanup holding area instead of deleting it immediately
+- use the cleanup area to separate active work from historical scaffolding
+- only delete branches or worktrees after an explicit cleanup decision
+
 ## Environment Map
 
 - `localhost`: local dev server, usually `http://localhost:8080`
