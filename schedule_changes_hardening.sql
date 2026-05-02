@@ -104,6 +104,6 @@ create trigger trg_log_schedule_change_from_book_update
 drop policy if exists "Allow insert for authenticated" on public.schedule_changes;
 drop policy if exists "Authenticated users can insert schedule changes" on public.schedule_changes;
 
-revoke insert, update, delete on table public.schedule_changes from authenticated;
+revoke insert on table public.schedule_changes from authenticated;
 
 commit;

@@ -2262,58 +2262,11 @@ async function updateBook(id, googleBook) {
             .eq('id', id);
 
         if (error) throw error;
-
-        // Log changes for Scheduled books
-        const isScheduled = updates.status === 'Scheduled' || currentBook?.status === 'Scheduled';
-        if (isScheduled && currentBook) {
-            const changes = [];
-            const userName = user?.email?.split('@')[0] || 'Unknown';
-
-            // Check host change
-            if ((currentBook.host_name || '') !== (updates.host_name || '')) {
-                changes.push({
-                    book_id: id,
-                    book_title: currentBook.title,
-                    change_type: 'host',
-                    old_value: currentBook.host_name || '(none)',
-                    new_value: updates.host_name || '(none)',
-                    changed_by_name: userName
-                });
-            }
-
-            // Check date change
-            if ((currentBook.target_date || '') !== (updates.target_date || '')) {
-                changes.push({
-                    book_id: id,
-                    book_title: currentBook.title,
-                    change_type: 'date',
-                    old_value: currentBook.target_date || '(none)',
-                    new_value: updates.target_date || '(none)',
-                    changed_by_name: userName
-                });
-            }
-
-            // Check time change
-            if ((currentBook.meeting_time || '') !== (updates.meeting_time || '')) {
-                changes.push({
-                    book_id: id,
-                    book_title: currentBook.title,
-                    change_type: 'time',
-                    old_value: currentBook.meeting_time || '(none)',
-                    new_value: updates.meeting_time || '(none)',
-                    changed_by_name: userName
-                });
-            }
-
-            // Insert changes
-            if (changes.length > 0) {
-                const { error: logError } = await supabase
-                    .from('schedule_changes')
-                    .insert(changes);
-                if (logError) console.error('Error logging changes:', logError);
-                else console.log('Logged schedule changes:', changes.length);
-            }
-        }
+        await ensureScheduleChangesExist({
+            bookId: id,
+            currentBook,
+            updates
+        });
 
         // Refresh list and close
         await fetchSavedBooks();
@@ -2325,6 +2278,81 @@ async function updateBook(id, googleBook) {
     } finally {
         modalUpdateBtn.textContent = 'Update Details';
         modalUpdateBtn.disabled = false;
+    }
+}
+
+async function ensureScheduleChangesExist({ bookId, currentBook, updates }) {
+    const isScheduled = updates.status === 'Scheduled' || currentBook?.status === 'Scheduled';
+    if (!isScheduled || !currentBook) return;
+
+    const actorName = user?.email?.split('@')[0] || 'Unknown';
+    const desiredChanges = [];
+
+    if ((currentBook.host_name || '') !== (updates.host_name || '')) {
+        desiredChanges.push({
+            book_id: bookId,
+            book_title: currentBook.title,
+            change_type: 'host',
+            old_value: currentBook.host_name || '(none)',
+            new_value: updates.host_name || '(none)',
+            changed_by_name: actorName
+        });
+    }
+
+    if ((currentBook.target_date || '') !== (updates.target_date || '')) {
+        desiredChanges.push({
+            book_id: bookId,
+            book_title: currentBook.title,
+            change_type: 'date',
+            old_value: currentBook.target_date || '(none)',
+            new_value: updates.target_date || '(none)',
+            changed_by_name: actorName
+        });
+    }
+
+    if ((currentBook.meeting_time || '') !== (updates.meeting_time || '')) {
+        desiredChanges.push({
+            book_id: bookId,
+            book_title: currentBook.title,
+            change_type: 'time',
+            old_value: currentBook.meeting_time || '(none)',
+            new_value: updates.meeting_time || '(none)',
+            changed_by_name: actorName
+        });
+    }
+
+    if (desiredChanges.length === 0) return;
+
+    const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+    const { data: recentChanges, error: recentError } = await supabase
+        .from('schedule_changes')
+        .select('book_id, change_type, old_value, new_value, created_at')
+        .eq('book_id', Number(bookId))
+        .gte('created_at', twoMinutesAgo);
+
+    if (recentError) {
+        console.warn('Could not check recent schedule changes; falling back to direct insert.', recentError);
+    }
+
+    const recentMatches = new Set(
+        (recentChanges || []).map(change =>
+            [change.book_id, change.change_type, change.old_value || '', change.new_value || ''].join('|')
+        )
+    );
+
+    const missingChanges = desiredChanges.filter(change => {
+        const key = [change.book_id, change.change_type, change.old_value || '', change.new_value || ''].join('|');
+        return !recentMatches.has(key);
+    });
+
+    if (missingChanges.length === 0) return;
+
+    const { error: insertError } = await supabase
+        .from('schedule_changes')
+        .insert(missingChanges);
+
+    if (insertError) {
+        console.error('Error logging schedule changes:', insertError);
     }
 }
 
