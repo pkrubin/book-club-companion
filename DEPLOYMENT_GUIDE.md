@@ -6,6 +6,7 @@ This guide is optimized for AI agents to maintain and deploy the Book Club Compa
 
 - **GitHub Repository**: [https://github.com/pkrubin/book-club-companion](https://github.com/pkrubin/book-club-companion)
 - **Local Dev Root**: `/Users/pamrubin/Desktop/book-club/`
+- **Operative Repo Instructions**: There is no `AGENTS.md` file in this repository. Use `README_FOR_AI.md` and this `DEPLOYMENT_GUIDE.md` as the repo-side agent/deployment instructions.
 
 ### Required Environment Variables
 - `GEMINI_API_KEY`: Used by `api/gemini.js` for AI tagging/discussion features.
@@ -29,6 +30,17 @@ Always use these exact URLs directly. **NEVER** navigate via the Vercel Dashboar
 4. **Backend Restart Rule**: If you modify ANY file in `api/` or `local_server.js`, you MUST kill (`Ctrl+C`) and restart (`node local_server.js`) the server to apply changes.
 
 ## 🚥 Phase 3: The Golden Path (Deployment Workflow)
+
+### Release Audit Trail (REQUIRED)
+
+Every meaningful `test` and `prod` rollout must be recorded in `RELEASE_LOG.md`, including:
+
+- version
+- commit
+- environment
+- DB SQL applied
+- validation steps
+- rollback reference
 
 ### 🛑 STAGE 1: Local Development & Verification
 1.  **Work Locally**: Make small, incremental code changes.
@@ -55,7 +67,10 @@ Always use these exact URLs directly. **NEVER** navigate via the Vercel Dashboar
     git commit -m "v1.X.X: [Description]"
     git push origin test
     ```
-8.  **Stage 2.8: Environment Visibility Audit**
+8.  **Update `RELEASE_LOG.md` (REQUIRED)**:
+    - Add one release entry with the version, test commit SHA, user-facing changes, env/config changes, and manual SQL notes.
+    - If the version did not change, say that explicitly.
+9.  **Stage 2.8: Environment Visibility Audit**
     - **Direct Navigation**: Navigate directly to the Test URL.
     - **Redirect? STOP**: If the resulting page is **ANYTHING** other than our app UI (e.g., Vercel Login, SSO page):
         - **DO NOT** attempt to log in.
@@ -69,13 +84,27 @@ Always use these exact URLs directly. **NEVER** navigate via the Vercel Dashboar
 ### 🚀 STAGE 3: Production Deployment
 *Only proceed here after explicit user approval of the TEST site.*
 
-9.  **Promote to Main**:
+10.  **Promote to Main**:
     ```bash
     git checkout main
     git merge test
     git push origin main
     git checkout test   # Return to test for next task
     ```
+11. **Update `RELEASE_LOG.md` for PROD**:
+    - Fill in the production commit SHA.
+    - Record whether the release included manual Supabase SQL, environment-variable changes, or rollback notes.
+
+### Shared DB Rollout Discipline
+
+For any DB-backed change:
+
+1. Start from fresh `origin/test` in a new worktree.
+2. Push backward-compatible app code to `test` first.
+3. Verify `test`.
+4. Apply the shared Supabase SQL with a matching rollback script or rollback note.
+5. Re-test immediately.
+6. Promote `test` to `main` right away so both environments stay aligned.
 
 ## 🛡️ AI Site Resilience & Safety
 

@@ -14,6 +14,10 @@
 - Database state and design decisions
 - What NOT to change without asking
 
+**Repo instruction note:** There is no `AGENTS.md` file in this repository. The operative AI/deployment instructions live in:
+- `README_FOR_AI.md`
+- `DEPLOYMENT_GUIDE.md`
+
 > **At END of every session:** Update SESSION_HANDOVER.md with what was accomplished in the session.
 
 ---
@@ -67,6 +71,7 @@
 **Human logs in, AI tests afterward. Localhost first, then promote.**
 - **DATA SAFETY**: If a test involves changing data (Update, Delete, Create), use ONLY books with the status **'Test'**. Never modify production data (e.g., 'Scheduled', 'Saved' books) for testing.
 - **AUDIT LOGS**: Maintain a session audit log for ALL data changes performed (as an artifact or in the walkthrough).
+- **RELEASE LOG (MANDATORY)**: For every meaningful `test` deployment, add an entry to `RELEASE_LOG.md` capturing version, commit, user-facing changes, env/config changes, manual SQL steps, validation notes, and rollback info. Update the same entry again when the change reaches `prod`.
 - **EXPLICIT CLEANUP**: Every test plan must include specific instructions for cleaning up test data at the end.
 - **THE 10-SECOND STOP (MANDATORY)**: Never combine code edits and git commands (add, commit, push) in the same turn. You MUST pause after editing and ask the user to verify on localhost first.
 - **THE ACTIVE TAB PROTOCOL**: Always prioritize the tab currently focused by the user (marked `[ACTIVE]` in `browser_state`). Re-use this tab whenever possible to stay within the Human's authenticated session.
@@ -150,20 +155,30 @@ git checkout test   # If not already on test
    ```bash
    git push origin test
    ```
+6. Update `RELEASE_LOG.md`:
+   - Add a release entry with the test commit SHA, version, user-facing changes, env/config notes, and any manual SQL requirements.
 
-**Step 6: STOP AND WAIT**
+**Step 7: STOP AND WAIT**
 - Tell user: "Deployed to TEST (v1.X.X). Please verify at [TEST URL]."
 - User checks footer version matches
 - Wait for user confirmation
 - DO NOT proceed without explicit approval
 
-**Step 7: Deploy to PROD (only after approval)**
+**Step 8: Deploy to PROD (only after approval)**
 ```bash
 git checkout main
 git merge test
 git push origin main
 git checkout test   # Return to test for next work
 ```
+**Step 9: Update `RELEASE_LOG.md` for PROD**
+- Fill in the production commit SHA.
+- Record any manual Supabase SQL or env-var changes that were applied between `test` and `prod`.
+
+### Shared DB Rollout Discipline
+- Always start DB-backed work from a fresh `origin/test` worktree, not a stale local `test` checkout.
+- Apply backward-compatible code before tightening shared Supabase SQL.
+- Promote `test` to `main` immediately after a shared database change so both environments stay aligned.
 
 > ⚠️ **If footer shows old version**, deployment failed. Debug before proceeding.
 
