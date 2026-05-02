@@ -1,5 +1,7 @@
 # 🚨 AI SESSION QUICK START - READ THIS FIRST
 
+> **Canonical repo instructions now live in `AGENTS.md`. Read that first, then use this file as supporting detail.**
+
 > ⛔ **STOP!** Before doing ANYTHING, you MUST run the `/pre-flight` workflow.
 > 1. Type: `/pre-flight`
 > 2. Confirm your understanding of the rules.
