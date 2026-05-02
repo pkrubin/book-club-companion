@@ -4447,14 +4447,18 @@ async function renderNotifications() {
                 }
             }
 
+            const safeBookTitle = escapeHtml(change.book_title || 'Untitled');
+            const safeChangeDescription = escapeHtml(changeDescription || 'Schedule updated');
+            const safeChangedBy = escapeHtml(change.changed_by_name || 'Unknown');
+
             return `
                 <div class="notification-item px-4 py-3 border-b border-stone-100 hover:bg-stone-50 transition ${isNew ? 'bg-indigo-50/50 border-l-4 border-l-indigo-400' : ''}" data-id="${change.id}">
                     <div class="flex items-start gap-3">
                         <iconify-icon icon="${icon}" class="text-lg ${isNew ? 'text-indigo-500' : 'text-stone-400'} flex-shrink-0 mt-0.5"></iconify-icon>
                         <div class="flex-grow min-w-0">
-                            <p class="text-sm ${isNew ? 'font-semibold text-stone-800' : 'font-normal text-stone-600'}">${change.book_title}</p>
-                            <p class="text-xs ${isNew ? 'text-stone-600' : 'text-stone-500'} mt-0.5">${changeDescription}</p>
-                            <p class="text-[10px] text-stone-400 mt-1">by ${change.changed_by_name || 'Unknown'} • ${timeAgo}</p>
+                            <p class="text-sm ${isNew ? 'font-semibold text-stone-800' : 'font-normal text-stone-600'}">${safeBookTitle}</p>
+                            <p class="text-xs ${isNew ? 'text-stone-600' : 'text-stone-500'} mt-0.5">${safeChangeDescription}</p>
+                            <p class="text-[10px] text-stone-400 mt-1">by ${safeChangedBy} • ${timeAgo}</p>
                         </div>
                         <button class="dismiss-notification-btn flex-shrink-0 text-stone-400 hover:text-rose-500 transition p-1" title="Dismiss" data-id="${change.id}">
                             <iconify-icon icon="solar:close-circle-bold" class="text-lg"></iconify-icon>
