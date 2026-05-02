@@ -13,6 +13,53 @@ const supabaseUrl = 'https://rqbtntzqqkekdzvfilos.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxYnRudHpxcWtla2R6dmZpbG9zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ1MDEwMjUsImV4cCI6MjA4MDA3NzAyNX0.iKeTABH2Q_s9BjpMmigroSa0fqeyW8DDcmXRwDO0jjM';
 const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
+function shouldFallbackToLegacyLastSeenWrite(error) {
+    if (!error) return false;
+
+    const combined = [
+        error.code,
+        error.message,
+        error.details,
+        error.hint
+    ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+
+    return error.code === 'PGRST202'
+        || combined.includes('touch_user_last_seen')
+        || combined.includes('could not find the function')
+        || combined.includes('schema cache');
+}
+
+async function touchUserLastSeen() {
+    if (!user?.id) return null;
+
+    const touchedAt = new Date().toISOString();
+    const { error: rpcError } = await supabase.rpc('touch_user_last_seen');
+
+    if (!rpcError) {
+        return touchedAt;
+    }
+
+    if (!shouldFallbackToLegacyLastSeenWrite(rpcError)) {
+        throw rpcError;
+    }
+
+    console.warn('touch_user_last_seen RPC unavailable, falling back to direct update for compatibility.', rpcError);
+
+    const { error: updateError } = await supabase
+        .from('user_profiles')
+        .update({ last_seen_at: touchedAt })
+        .eq('id', user.id);
+
+    if (updateError) {
+        throw updateError;
+    }
+
+    return touchedAt;
+}
+
 async function getAccessToken() {
     const { data: { session } } = await supabase.auth.getSession();
     const accessToken = session?.access_token;
@@ -921,13 +968,8 @@ if (notificationsBtn && notificationsMenu) {
     if (markAllReadBtn) {
         markAllReadBtn.addEventListener('click', async () => {
             try {
-                // Update last_seen_at to now
-                await supabase
-                    .from('user_profiles')
-                    .update({ last_seen_at: new Date().toISOString() })
-                    .eq('id', user.id);
-
-                userLastSeenAt = new Date().toISOString();
+                const touchedAt = await touchUserLastSeen();
+                userLastSeenAt = touchedAt || new Date().toISOString();
 
                 // Re-render to update styling
                 renderNotifications();
@@ -1088,11 +1130,10 @@ async function fetchUserRole() {
             userLastSeenAt = data.last_seen_at; // Store for "new changes" comparison
         }
 
-        // Update last_seen_at to now (so next login shows new changes)
-        await supabase
-            .from('user_profiles')
-            .update({ last_seen_at: new Date().toISOString() })
-            .eq('id', user.id);
+        const touchedAt = await touchUserLastSeen();
+        if (touchedAt) {
+            userLastSeenAt = touchedAt;
+        }
 
     } catch (e) {
         console.error('Error fetching user role:', e);
