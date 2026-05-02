@@ -2263,58 +2263,6 @@ async function updateBook(id, googleBook) {
 
         if (error) throw error;
 
-        // Log changes for Scheduled books
-        const isScheduled = updates.status === 'Scheduled' || currentBook?.status === 'Scheduled';
-        if (isScheduled && currentBook) {
-            const changes = [];
-            const userName = user?.email?.split('@')[0] || 'Unknown';
-
-            // Check host change
-            if ((currentBook.host_name || '') !== (updates.host_name || '')) {
-                changes.push({
-                    book_id: id,
-                    book_title: currentBook.title,
-                    change_type: 'host',
-                    old_value: currentBook.host_name || '(none)',
-                    new_value: updates.host_name || '(none)',
-                    changed_by_name: userName
-                });
-            }
-
-            // Check date change
-            if ((currentBook.target_date || '') !== (updates.target_date || '')) {
-                changes.push({
-                    book_id: id,
-                    book_title: currentBook.title,
-                    change_type: 'date',
-                    old_value: currentBook.target_date || '(none)',
-                    new_value: updates.target_date || '(none)',
-                    changed_by_name: userName
-                });
-            }
-
-            // Check time change
-            if ((currentBook.meeting_time || '') !== (updates.meeting_time || '')) {
-                changes.push({
-                    book_id: id,
-                    book_title: currentBook.title,
-                    change_type: 'time',
-                    old_value: currentBook.meeting_time || '(none)',
-                    new_value: updates.meeting_time || '(none)',
-                    changed_by_name: userName
-                });
-            }
-
-            // Insert changes
-            if (changes.length > 0) {
-                const { error: logError } = await supabase
-                    .from('schedule_changes')
-                    .insert(changes);
-                if (logError) console.error('Error logging changes:', logError);
-                else console.log('Logged schedule changes:', changes.length);
-            }
-        }
-
         // Refresh list and close
         await fetchSavedBooks();
         closeModal();
