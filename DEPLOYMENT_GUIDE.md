@@ -1,5 +1,7 @@
 # 🚀 AI Site Maintenance & Deployment Guide
 
+> **Canonical repo instructions now live in `AGENTS.md`. Use this guide as deployment-specific detail.**
+
 This guide is optimized for AI agents to maintain and deploy the Book Club Companion application.
 
 ## 🏁 Phase 1: Core Logistics
