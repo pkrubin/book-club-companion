@@ -74,6 +74,64 @@ For DB-backed or deployment work:
 - use the cleanup area to separate active work from historical scaffolding
 - only delete branches or worktrees after an explicit cleanup decision
 
+## Standard Change Workflow
+
+Use this as the default delivery loop for any meaningful code, deployment, or DB-backed change.
+
+### 1. Define first
+Before implementation, write a short change brief that covers:
+- goal
+- affected files
+- DB changes: yes or no
+- rollout order
+- validation plan
+- rollback plan
+
+Do not start implementation until the change shape is clear.
+
+### 2. Branch once from fresh `origin/test`
+- create one fresh worktree/branch from current `origin/test`
+- prefer one task = one branch = one worktree
+- avoid helper or transplant branches unless there is a specific operational reason
+
+### 3. Keep code and ops together
+When a change is real enough to ship, the same branch should include:
+- code changes
+- forward SQL and rollback SQL if needed
+- version bump in `js/app.js`
+- version bump in `package.json`
+- `RELEASE_LOG.md` update
+- doc updates if the workflow or architecture changed
+
+The branch should tell the whole story.
+
+### 4. Push to `test` only when release-ready
+Before pushing to `test`, confirm:
+- localhost work is validated
+- version decision is made and recorded
+- `RELEASE_LOG.md` is updated
+- SQL files exist if DB changes are involved
+
+Do not push partially prepared rollout branches to `test`.
+
+### 5. Use the shared DB sequence for DB-backed changes
+For shared-database changes:
+1. ship backward-compatible app code to `test`
+2. verify `test`
+3. apply shared Supabase SQL
+4. verify again immediately
+5. promote `test` to `main` right away
+
+This is the default pattern unless there is a clear reason to do otherwise.
+
+### 6. Close the loop immediately
+After promotion:
+- update `RELEASE_LOG.md` with the production commit and any final notes
+- move the finished worktree to the cleanup area if it is no longer active
+- make an explicit keep/delete-later decision for the branch
+
+Do not leave deployment bookkeeping half-finished.
+
 ## Environment Map
 
 - `localhost`: local dev server, usually `http://localhost:8080`
