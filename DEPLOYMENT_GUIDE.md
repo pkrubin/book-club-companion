@@ -1,11 +1,14 @@
 # 🚀 AI Site Maintenance & Deployment Guide
 
+> **Canonical repo instructions now live in `AGENTS.md`. Use this guide as deployment-specific detail.**
+
 This guide is optimized for AI agents to maintain and deploy the Book Club Companion application.
 
 ## 🏁 Phase 1: Core Logistics
 
 - **GitHub Repository**: [https://github.com/pkrubin/book-club-companion](https://github.com/pkrubin/book-club-companion)
 - **Local Dev Root**: `/Users/pamrubin/Desktop/book-club/`
+- **Operative Repo Instructions**: The canonical repo instruction file is `AGENTS.md`. Use `README_FOR_AI.md` and this `DEPLOYMENT_GUIDE.md` as supporting detail.
 
 ### Required Environment Variables
 - `GEMINI_API_KEY`: Used by `api/gemini.js` for AI tagging/discussion features.
@@ -29,6 +32,17 @@ Always use these exact URLs directly. **NEVER** navigate via the Vercel Dashboar
 4. **Backend Restart Rule**: If you modify ANY file in `api/` or `local_server.js`, you MUST kill (`Ctrl+C`) and restart (`node local_server.js`) the server to apply changes.
 
 ## 🚥 Phase 3: The Golden Path (Deployment Workflow)
+
+### Release Audit Trail (REQUIRED)
+
+Every meaningful `test` and `prod` rollout must be recorded in `RELEASE_LOG.md`, including:
+
+- version
+- commit
+- environment
+- DB SQL applied
+- validation steps
+- rollback reference
 
 ### 🛑 STAGE 1: Local Development & Verification
 1.  **Work Locally**: Make small, incremental code changes.
@@ -82,6 +96,17 @@ Always use these exact URLs directly. **NEVER** navigate via the Vercel Dashboar
 11. **Update `RELEASE_LOG.md` for PROD**:
     - Fill in the production commit SHA.
     - Record whether the release included manual Supabase SQL, environment-variable changes, or rollback notes.
+
+### Shared DB Rollout Discipline
+
+For any DB-backed change:
+
+1. Start from fresh `origin/test` in a new worktree.
+2. Push backward-compatible app code to `test` first.
+3. Verify `test`.
+4. Apply the shared Supabase SQL with a matching rollback script or rollback note.
+5. Re-test immediately.
+6. Promote `test` to `main` right away so both environments stay aligned.
 
 ## 🛡️ AI Site Resilience & Safety
 

@@ -1,5 +1,7 @@
 # Session Handover
 
+> **Start with `AGENTS.md` first.** This handover is supporting context, not the canonical repo instruction file.
+
 ## 🚨 Operational Protocol for New Agents (READ FIRST)
 This protocol ensures a smooth handoff and prevents protocol breaches.
 
