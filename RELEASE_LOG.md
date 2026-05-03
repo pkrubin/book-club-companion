@@ -126,3 +126,34 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
 - Rollback:
   - Code: revert before `92b4938` on `test` and before `ddd444d` on `prod`
   - Database: use `schedule_changes_hardening_rollback.sql`
+
+## 2026-05-03 - Multi-Club Foundation Database Rollout
+- Version: `v1.9.10` (unchanged)
+- Test commit: `4979472`
+- Prod commit: `8fcbaff`
+- Environments: `test`, `prod`
+- User-facing changes:
+  - No intended visible app change.
+  - Existing books, notifications, and members were assigned to one seeded club foundation without changing current single-club behavior.
+- Operational changes:
+  - Database / SQL:
+    - Manual Supabase step applied: created `clubs`, `club_settings`, `club_memberships`, `platform_roles`, `club_invites`, `club_invite_consumptions`, and `user_preferences`
+    - Manual Supabase step applied: added `club_id` to `book_club_list` and `schedule_changes`
+    - Manual Supabase step applied: added indexes, updated-at helper triggers, and the single-standard-club guard
+    - Manual Supabase step applied: seeded the first live club and backfilled memberships/preferences
+    - Manual Supabase step applied: temporarily disabled `trg_enforce_book_club_list_member_writes` only for the `book_club_list.club_id` backfill, then re-enabled it immediately
+    - Manual Supabase step applied: backfilled `schedule_changes.club_id` and created compatibility triggers for future inserts
+    - Forward SQL file: `multi_club_foundation.sql`
+    - Rollback SQL file: `multi_club_foundation_rollback.sql`
+  - Branch / deployment notes:
+    - This was a shared-database rollout with no app-version change.
+    - The original monolithic backfill order conflicted with the existing admin-write trigger on `book_club_list`; the successful live order is now recorded in `multi_club_foundation.sql`.
+    - RLS for the new multi-club tables is intentionally deferred until the app starts reading and writing them in a club-aware way.
+- Validation:
+  - Verified foundation counts: `1` club, `1` club_settings row, `5` memberships, `5` user_preferences rows
+  - Verified all existing rows were backfilled: `107` books and `27` schedule_changes rows now have `club_id`
+  - Verified seeded club state: slug `book-club`, type `standard`, source `seeded`
+  - Production smoke test looked normal after the rollout
+- Rollback:
+  - Code: not applicable for this DB-only rollout
+  - Database: use `multi_club_foundation_rollback.sql`, but re-check live trigger state and current data before running because the successful rollout required staged manual sequencing
