@@ -55,7 +55,10 @@ Always use these exact URLs directly. **NEVER** navigate via the Vercel Dashboar
     git commit -m "v1.X.X: [Description]"
     git push origin test
     ```
-8.  **Stage 2.8: Environment Visibility Audit**
+8.  **Update `RELEASE_LOG.md` (REQUIRED)**:
+    - Add one release entry with the version, test commit SHA, user-facing changes, env/config changes, and manual SQL notes.
+    - If the version did not change, say so explicitly.
+9.  **Stage 2.8: Environment Visibility Audit**
     - **Direct Navigation**: Navigate directly to the Test URL.
     - **Redirect? STOP**: If the resulting page is **ANYTHING** other than our app UI (e.g., Vercel Login, SSO page):
         - **DO NOT** attempt to log in.
@@ -69,13 +72,16 @@ Always use these exact URLs directly. **NEVER** navigate via the Vercel Dashboar
 ### 🚀 STAGE 3: Production Deployment
 *Only proceed here after explicit user approval of the TEST site.*
 
-9.  **Promote to Main**:
+10.  **Promote to Main**:
     ```bash
     git checkout main
     git merge test
     git push origin main
     git checkout test   # Return to test for next task
     ```
+11. **Update `RELEASE_LOG.md` for PROD**:
+    - Fill in the production commit SHA.
+    - Record whether the release included manual Supabase SQL, environment-variable changes, or rollback notes.
 
 ## 🛡️ AI Site Resilience & Safety
 
