@@ -22,6 +22,20 @@
 -- - RLS and privilege policy for the new multi-club tables
 -- - trusted app/database write paths for active club switching
 -- - club-scoped read/write policy once the app starts using these tables
+--
+-- Proven live rollout order:
+-- 1. create new tables
+-- 2. add `club_id` columns to `book_club_list` and `schedule_changes`
+-- 3. add indexes, updated_at helper triggers, and the single-standard-club guard
+-- 4. seed the first live club plus `club_settings`, `club_memberships`, and `user_preferences`
+-- 5. temporarily disable `trg_enforce_book_club_list_member_writes`
+--    only for the `book_club_list.club_id` backfill, then re-enable it immediately
+-- 6. backfill `schedule_changes.club_id`
+-- 7. add compatibility triggers for future inserts
+--
+-- The temporary trigger bypass in step 5 was required because the existing
+-- production admin-write guard treats the `club_id` backfill as a protected
+-- update on `book_club_list`.
 
 begin;
 
@@ -246,54 +260,6 @@ as $$
     limit 1
 $$;
 
-create or replace function public.set_default_book_club_list_club_id()
-returns trigger
-language plpgsql
-set search_path = public
-as $$
-begin
-    if new.club_id is null then
-        new.club_id := public.get_default_single_club_id();
-    end if;
-    return new;
-end;
-$$;
-
-drop trigger if exists trg_set_default_book_club_list_club_id on public.book_club_list;
-
-create trigger trg_set_default_book_club_list_club_id
-    before insert on public.book_club_list
-    for each row
-    execute function public.set_default_book_club_list_club_id();
-
-create or replace function public.set_default_schedule_changes_club_id()
-returns trigger
-language plpgsql
-set search_path = public
-as $$
-begin
-    if new.club_id is null and new.book_id is not null then
-        select b.club_id
-        into new.club_id
-        from public.book_club_list b
-        where b.id = new.book_id;
-    end if;
-
-    if new.club_id is null then
-        new.club_id := public.get_default_single_club_id();
-    end if;
-
-    return new;
-end;
-$$;
-
-drop trigger if exists trg_set_default_schedule_changes_club_id on public.schedule_changes;
-
-create trigger trg_set_default_schedule_changes_club_id
-    before insert on public.schedule_changes
-    for each row
-    execute function public.set_default_schedule_changes_club_id();
-
 with seeded_club as (
     insert into public.clubs (
         name,
@@ -343,28 +309,6 @@ with resolved_club as (
     where slug = 'book-club'
     limit 1
 )
-update public.book_club_list
-set club_id = resolved_club.id
-from resolved_club
-where public.book_club_list.club_id is null;
-
-with resolved_club as (
-    select id
-    from public.clubs
-    where slug = 'book-club'
-    limit 1
-)
-update public.schedule_changes
-set club_id = resolved_club.id
-from resolved_club
-where public.schedule_changes.club_id is null;
-
-with resolved_club as (
-    select id
-    from public.clubs
-    where slug = 'book-club'
-    limit 1
-)
 insert into public.club_memberships (
     club_id,
     user_id,
@@ -406,5 +350,81 @@ cross join resolved_club
 on conflict (user_id) do update
     set active_club_id = coalesce(public.user_preferences.active_club_id, excluded.active_club_id),
         updated_at = timezone('utc'::text, now());
+
+alter table public.book_club_list
+    disable trigger trg_enforce_book_club_list_member_writes;
+
+with resolved_club as (
+    select id
+    from public.clubs
+    where slug = 'book-club'
+    limit 1
+)
+update public.book_club_list
+set club_id = resolved_club.id
+from resolved_club
+where public.book_club_list.club_id is null;
+
+alter table public.book_club_list
+    enable trigger trg_enforce_book_club_list_member_writes;
+
+with resolved_club as (
+    select id
+    from public.clubs
+    where slug = 'book-club'
+    limit 1
+)
+update public.schedule_changes
+set club_id = resolved_club.id
+from resolved_club
+where public.schedule_changes.club_id is null;
+
+create or replace function public.set_default_book_club_list_club_id()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+begin
+    if new.club_id is null then
+        new.club_id := public.get_default_single_club_id();
+    end if;
+    return new;
+end;
+$$;
+
+drop trigger if exists trg_set_default_book_club_list_club_id on public.book_club_list;
+
+create trigger trg_set_default_book_club_list_club_id
+    before insert on public.book_club_list
+    for each row
+    execute function public.set_default_book_club_list_club_id();
+
+create or replace function public.set_default_schedule_changes_club_id()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+begin
+    if new.club_id is null and new.book_id is not null then
+        select b.club_id
+        into new.club_id
+        from public.book_club_list b
+        where b.id = new.book_id;
+    end if;
+
+    if new.club_id is null then
+        new.club_id := public.get_default_single_club_id();
+    end if;
+
+    return new;
+end;
+$$;
+
+drop trigger if exists trg_set_default_schedule_changes_club_id on public.schedule_changes;
+
+create trigger trg_set_default_schedule_changes_club_id
+    before insert on public.schedule_changes
+    for each row
+    execute function public.set_default_schedule_changes_club_id();
 
 commit;
