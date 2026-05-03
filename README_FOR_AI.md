@@ -1,5 +1,7 @@
 # 🚨 AI SESSION QUICK START - READ THIS FIRST
 
+> **Canonical repo instructions now live in `AGENTS.md`. Read that first, then use this file as supporting detail.**
+
 > ⛔ **STOP!** Before doing ANYTHING, you MUST run the `/pre-flight` workflow.
 > 1. Type: `/pre-flight`
 > 2. Confirm your understanding of the rules.
@@ -13,6 +15,8 @@
 - Known issues and in-progress items
 - Database state and design decisions
 - What NOT to change without asking
+
+**Repo instruction note:** The canonical repo instruction file is `AGENTS.md`. Use this file and `DEPLOYMENT_GUIDE.md` as supporting detail.
 
 > **At END of every session:** Update SESSION_HANDOVER.md with what was accomplished in the session.
 
@@ -167,10 +171,14 @@ git merge test
 git push origin main
 git checkout test   # Return to test for next work
 ```
-
 **Step 9: Update `RELEASE_LOG.md` for PROD**
 - Fill in the production commit SHA.
 - Record any manual Supabase SQL or env-var changes that were applied between `test` and `prod`.
+
+### Shared DB Rollout Discipline
+- Always start DB-backed work from a fresh `origin/test` worktree, not a stale local `test` checkout.
+- Apply backward-compatible code before tightening shared Supabase SQL.
+- Promote `test` to `main` immediately after a shared database change so both environments stay aligned.
 
 > ⚠️ **If footer shows old version**, deployment failed. Debug before proceeding.
 
