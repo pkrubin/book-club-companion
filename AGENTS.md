@@ -195,6 +195,89 @@ If testing changes real data:
 - `user_profiles.role` is legacy and should not remain the long-term auth source
 - the app is moving toward club-scoped data and a sandbox-club model
 
+## Database Reference
+
+Use the exact table and column names below. Do not guess new names from memory.
+
+If a task depends on a table or column not listed here:
+1. inspect the repo code and SQL first
+2. if it affects the live database, verify the live schema before changing anything
+
+### Current live/shared-database tables
+Confirmed current table names used by the app and seen in the live project:
+- `public.book_club_list`
+- `public.invite_codes`
+- `public.schedule_changes`
+- `public.user_dismissed_notifications`
+- `public.user_profiles`
+
+### Confirmed current columns
+Only rely on these names without re-checking:
+
+#### `public.book_club_list`
+Confirmed in repo schema and app code:
+- `id`
+- `created_at`
+- `title`
+- `author`
+- `google_data`
+- `status`
+- `rating`
+- `tags`
+- `target_date`
+- `user_notes`
+- `host_name`
+- `meeting_time`
+- `discussion_questions`
+
+#### `public.invite_codes`
+Confirmed in app code:
+- `id`
+- `code`
+- `valid_from`
+- `valid_until`
+- `max_uses`
+- `current_uses`
+
+#### `public.schedule_changes`
+Confirmed in app code and rollout SQL:
+- `id`
+- `book_id`
+- `book_title`
+- `change_type`
+- `old_value`
+- `new_value`
+- `changed_by_name`
+- `created_at`
+
+#### `public.user_dismissed_notifications`
+Confirmed in app code:
+- `user_id`
+- `change_id`
+
+#### `public.user_profiles`
+Confirmed in app code and rollout SQL:
+- `id`
+- `display_name`
+- `role`
+- `created_at`
+- `last_seen_at`
+
+### Planned multi-club tables
+These are part of the planned foundation design and should not be treated as live until the migration is merged and applied:
+- `public.clubs`
+- `public.club_settings`
+- `public.club_memberships`
+- `public.platform_roles`
+- `public.club_invites`
+- `public.club_invite_consumptions`
+- `public.user_preferences`
+
+### Planned multi-club columns on existing tables
+These are planned, not live by default:
+- `public.book_club_list.club_id`
+- `public.schedule_changes.club_id`
+
 ## When in Doubt
 
 If unsure:
