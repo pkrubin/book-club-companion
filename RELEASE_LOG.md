@@ -75,3 +75,27 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
 - Rollback:
   - Code: revert before `aba300c`
   - Database: reapply the prior policies/constraint state or use the saved SQL rollback notes from the session
+
+## 2026-05-03 - Trusted Schedule Change Logging
+- Version: `v1.9.10`
+- Test commit: `2fde0e7`
+- Prod commit: `not yet`
+- Environments: `test`
+- User-facing changes:
+  - Schedule edits for host, date, and time continue to generate notifications.
+  - Notification text is safely escaped before rendering.
+- Operational changes:
+  - Database / SQL:
+    - Manual Supabase step applied: created `public.log_schedule_change_from_book_update()`
+    - Manual Supabase step applied: attached trigger `trg_log_schedule_change_from_book_update` on `public.book_club_list`
+    - Manual Supabase step applied: removed direct authenticated `insert` permission on `public.schedule_changes`
+    - Forward SQL file: `schedule_changes_hardening.sql`
+    - Rollback SQL file: `schedule_changes_hardening_rollback.sql`
+  - Branch / deployment notes:
+    - App code includes a compatibility bridge so notifications still work before and after the DB trigger rollout.
+- Validation:
+  - Localhost verified on `http://127.0.0.1:8082`
+  - `test` verified with a real schedule edit and a single normal notification
+- Rollback:
+  - Code: revert before `2fde0e7`
+  - Database: use `schedule_changes_hardening_rollback.sql`

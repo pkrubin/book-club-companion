@@ -1,5 +1,5 @@
 // --- Configuration ---
-const APP_VERSION = '1.9.9'; // Recent Changes notification dropdown
+const APP_VERSION = '1.9.10'; // Trusted schedule notification logging rollout
 
 // --- Gemini AI Configuration ---
 // Uses /api/gemini serverless function for secure API calls
