@@ -79,8 +79,8 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
 ## 2026-05-03 - Trusted Schedule Change Logging
 - Version: `v1.9.10`
 - Test commit: `2fde0e7`
-- Prod commit: `not yet`
-- Environments: `test`
+- Prod commit: `855f277`
+- Environments: `test`, `prod`
 - User-facing changes:
   - Schedule edits for host, date, and time continue to generate notifications.
   - Notification text is safely escaped before rendering.
@@ -96,6 +96,7 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
 - Validation:
   - Localhost verified on `http://127.0.0.1:8082`
   - `test` verified with a real schedule edit and a single normal notification
+  - `prod` pending post-deploy smoke verification
 - Rollback:
   - Code: revert before `2fde0e7`
   - Database: use `schedule_changes_hardening_rollback.sql`
