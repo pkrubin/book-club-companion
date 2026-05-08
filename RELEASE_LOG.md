@@ -129,7 +129,7 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
 
 ## 2026-05-08 - Multi-Club App Awareness For Sandbox Testing
 - Version: `v1.9.11`
-- Test commit: `pending`
+- Test commit: `a1a389c`
 - Prod commit: `not yet`
 - Environments: `test`
 - User-facing changes:
