@@ -126,3 +126,27 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
 - Rollback:
   - Code: revert before `92b4938` on `test` and before `ddd444d` on `prod`
   - Database: use `schedule_changes_hardening_rollback.sql`
+
+## 2026-05-08 - Multi-Club App Awareness For Sandbox Testing
+- Version: `v1.9.11`
+- Test commit: `pending`
+- Prod commit: `not yet`
+- Environments: `test`
+- User-facing changes:
+  - Added app-side active-club awareness for the current seeded club and sandbox clubs.
+  - Added a current-club switcher in the header with sandbox badges and active navigation styling.
+  - Added sandbox club creation from the switcher for admins.
+  - Improved startup hydration with a loading state so the library does not appear blank during club-context resolution.
+  - Updated dashboard empty-state and navigation behavior so club switching returns to the club dashboard and dashboard CTAs use the same section navigation as the header.
+- Operational changes:
+  - Database / SQL:
+    - none in this rollout; relies on the previously applied multi-club foundation schema
+  - Branch / deployment notes:
+    - intended for lower-environment sandbox-club validation only
+    - platform owner and club-member management remain out of scope for this slice
+- Validation:
+  - local interactive testing covered club creation, club switching, startup hydration, and navigation behavior
+  - real API validation is deferred to `test`
+- Rollback:
+  - Code: revert before this release on `test`
+  - Database: not applicable

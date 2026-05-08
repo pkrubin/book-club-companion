@@ -33,6 +33,12 @@ Instead of rigid rules, we use adaptive, resilient protocols:
 - **Branch:** main
 - **Last deployment:** PROD on 2026-01-12
 
+## Current Canonical Multi-Club Work
+- **Canonical branch:** `codex/app-club-awareness-testready`
+- **Canonical worktree:** `/private/tmp/book-club-app-club-testready`
+- **Canonical preview URL:** `http://127.0.0.1:8080`
+- **Detached preview rule:** loose `/private/tmp/...` preview copies are disposable unless reconciled back into the canonical worktree the same session
+
 ---
 
 ## Session Log
