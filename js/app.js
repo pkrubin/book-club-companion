@@ -4391,7 +4391,9 @@ saveImportBtn.addEventListener('click', async () => {
 let currentView = 'grid'; // 'grid' or 'table'
 
 
-refreshSavedBtn.addEventListener('click', fetchSavedBooks);
+if (refreshSavedBtn) {
+    refreshSavedBtn.addEventListener('click', fetchSavedBooks);
+}
 
 viewGridBtn.addEventListener('click', () => switchView('grid'));
 viewTableBtn.addEventListener('click', () => switchView('table'));
@@ -4444,8 +4446,10 @@ function updateNavActiveState(sectionName) {
 async function fetchSavedBooks() {
     if (!user) return; // Guard: don't fetch if logged out
 
-    refreshSavedBtn.textContent = 'Loading...';
-    refreshSavedBtn.disabled = true;
+    if (refreshSavedBtn) {
+        refreshSavedBtn.textContent = 'Loading...';
+        refreshSavedBtn.disabled = true;
+    }
 
     if (currentActiveClubId == null) {
         allSavedBooks = [];
@@ -4454,8 +4458,10 @@ async function fetchSavedBooks() {
         updateTagFilterOptions();
         applyFilters();
         renderDashboard();
-        refreshSavedBtn.textContent = 'Refresh';
-        refreshSavedBtn.disabled = false;
+        if (refreshSavedBtn) {
+            refreshSavedBtn.textContent = 'Refresh';
+            refreshSavedBtn.disabled = false;
+        }
         return;
     }
 
@@ -4492,8 +4498,10 @@ async function fetchSavedBooks() {
         renderDashboard(); // Also update dashboard when books are fetched
     }
 
-    refreshSavedBtn.textContent = 'Refresh';
-    refreshSavedBtn.disabled = false;
+    if (refreshSavedBtn) {
+        refreshSavedBtn.textContent = 'Refresh';
+        refreshSavedBtn.disabled = false;
+    }
 }
 
 function updateYearFilterOptions() {
