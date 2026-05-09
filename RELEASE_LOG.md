@@ -31,6 +31,24 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
   - Database: `<rollback sql file or note>`
 ```
 
+## 2026-05-09 - Library Refresh Button Removal
+- Version: `v1.9.15`
+- Test commit: `eb28e2a`
+- Prod commit: `not yet`
+- Environments: `test`
+- User-facing changes:
+  - Removed the redundant `Refresh` button from the library toolbar.
+- Operational changes:
+  - Database / SQL:
+    - none
+  - Branch / deployment notes:
+    - Library loading continues through the existing startup, save, import, edit, delete, and club-switch flows.
+- Validation:
+  - Local served app on `8080` loaded the library normally without the button.
+- Rollback:
+  - Code: restore the removed toolbar button and direct reload wiring
+  - Database: not applicable
+
 ## 2026-05-01 - Search, Ratings, and Vision Import Hardening
 - Version: `v1.9.9`
 - Test commit: `daa487c`
@@ -126,3 +144,87 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
 - Rollback:
   - Code: revert before `92b4938` on `test` and before `ddd444d` on `prod`
   - Database: use `schedule_changes_hardening_rollback.sql`
+
+## 2026-05-08 - Multi-Club App Awareness For Sandbox Testing
+- Version: `v1.9.11`
+- Test commit: `b29d51a`
+- Prod commit: `not yet`
+- Environments: `test`
+- User-facing changes:
+  - Added app-side active-club awareness for the current seeded club and sandbox clubs.
+  - Added a current-club switcher in the header with sandbox badges and active navigation styling.
+  - Added sandbox club creation from the switcher for admins.
+  - Improved startup hydration with a loading state so the library does not appear blank during club-context resolution.
+  - Updated dashboard empty-state and navigation behavior so club switching returns to the club dashboard and dashboard CTAs use the same section navigation as the header.
+- Operational changes:
+  - Database / SQL:
+    - none in this rollout; relies on the previously applied multi-club foundation schema
+  - Branch / deployment notes:
+    - intended for lower-environment sandbox-club validation only
+    - platform owner and club-member management remain out of scope for this slice
+- Validation:
+  - local interactive testing covered club creation, club switching, startup hydration, and navigation behavior
+  - real API validation is deferred to `test`
+- Rollback:
+  - Code: revert before this release on `test`
+  - Database: not applicable
+
+## 2026-05-09 - Sandbox First-Search Reliability
+- Version: `v1.9.12`
+- Test commit: `c44b157`
+- Prod commit: `not yet`
+- Environments: `test`
+- User-facing changes:
+  - Search now waits for auth hydration before the first protected `/api/books` request.
+  - The first books search retries one `401` once before surfacing an error.
+  - Search now shows a session-specific message when auth/session readiness is the likely cause.
+- Operational changes:
+  - Database / SQL:
+    - none
+  - Branch / deployment notes:
+    - targeted reliability fix for the sandbox-club first-search failure after hard refresh
+- Validation:
+  - user reproduced the failure after hard refresh in sandbox on `test`
+  - fix validated with code review and targeted runtime guard changes before deployment
+- Rollback:
+  - Code: revert before this release on `test`
+  - Database: not applicable
+
+## 2026-05-09 - Sandbox Search Auth Refresh
+- Version: `v1.9.13`
+- Test commit: `db84901`
+- Prod commit: `not yet`
+- Environments: `test`
+- User-facing changes:
+  - Protected search requests now force a Supabase session refresh after a `401` before surfacing failure.
+  - Search now shows the underlying API error message instead of collapsing everything into a generic failure.
+- Operational changes:
+  - Database / SQL:
+    - none
+  - Branch / deployment notes:
+    - follow-up to the sandbox first-search investigation after `v1.9.12` did not resolve the test failure
+- Validation:
+  - user reproduced the sandbox search failure on `v1.9.12`
+  - fix prepared for immediate `test` validation
+- Rollback:
+  - Code: revert before this release on `test`
+  - Database: not applicable
+
+## 2026-05-09 - Google Books Transient Retry
+- Version: `v1.9.14`
+- Test commit: `872400c`
+- Prod commit: `not yet`
+- Environments: `test`
+- User-facing changes:
+  - Search now retries transient Google Books upstream failures (`502`, `503`, `504`) inside the server-side proxy before surfacing an error.
+- Operational changes:
+  - Database / SQL:
+    - none
+  - Branch / deployment notes:
+    - follow-up to the sandbox search investigation after the underlying error was identified as `Service temporarily unavailable.`
+- Validation:
+  - user reproduced the upstream service-unavailable error on `v1.9.13`
+  - retry/backoff added at the proxy layer so client behavior stays simple
+- Rollback:
+  - Code: revert before this release on `test`
+  - Database: not applicable

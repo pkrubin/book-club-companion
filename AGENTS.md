@@ -74,6 +74,18 @@ For DB-backed or deployment work:
 - use the cleanup area to separate active work from historical scaffolding
 - only delete branches or worktrees after an explicit cleanup decision
 
+### 8. Keep one Git-backed source of truth
+- all implementation intended for promotion must live in a Git-backed branch/worktree
+- detached preview folders may be used for short-lived experiments, but they must not remain the sole source of truth across sessions
+- if `git status` does not work in the folder you are editing, stop and move the work into a real Git-backed branch/worktree before continuing
+- before ending a session, either reconcile preview changes into the canonical branch/worktree or explicitly discard them
+
+### 9. Distinguish preview from promotion
+- `file://` may be used for quick visual inspection only
+- functional behavior, API flows, and navigation must be tested on a served app (`localhost`) or the approved remote environment
+- do not bump versions in detached preview copies
+- bump versions only in the canonical Git-backed branch when preparing for `test`
+
 ## Standard Change Workflow
 
 Use this as the default delivery loop for any meaningful code, deployment, or DB-backed change.
@@ -111,6 +123,7 @@ Before pushing to `test`, confirm:
 - version decision is made and recorded
 - `RELEASE_LOG.md` is updated
 - SQL files exist if DB changes are involved
+- the branch/worktree you are promoting is the clear canonical source of truth
 
 Do not push partially prepared rollout branches to `test`.
 

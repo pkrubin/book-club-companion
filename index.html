@@ -154,152 +154,199 @@
         <!-- Navigation -->
         <nav class="bg-white border-b border-stone-200 sticky top-0 z-40 shadow-sm">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between h-16">
-                    <div class="flex items-center">
-                        <img src="images/logo-icon.png" alt="Logo" class="w-16 h-16 mr-3 object-contain">
-                        <span class="text-editorial-headline text-2xl text-stone-900 tracking-tight">Book Club
-                            Companion</span>
-                    </div>
-                    <div id="nav-actions" class="flex items-center gap-4 hidden">
-                        <a href="#dashboard-section"
-                            class="text-stone-500 hover:text-rose-900 text-sm font-medium transition">Dashboard</a>
-                        <a href="#search-section"
-                            class="text-stone-500 hover:text-rose-900 text-sm font-medium transition">Find Books</a>
-                        <a href="#library-section"
-                            class="text-stone-500 hover:text-rose-900 text-sm font-medium transition">Library</a>
-                        <button id="nav-import-btn"
-                            class="text-stone-500 hover:text-rose-900 text-sm font-medium transition cursor-pointer">Import</button>
+                <div class="flex items-center gap-5 h-16">
+                    <div class="flex items-center gap-3 min-w-0 shrink-0">
+                        <div class="flex items-center min-w-0">
+                            <img src="images/logo-icon.png" alt="Logo" class="w-11 h-11 mr-2.5 object-contain">
+                            <div class="min-w-0">
+                                <span class="block text-editorial-headline text-[2.05rem] leading-none text-stone-900 tracking-tight truncate">Book Club
+                                    Companion</span>
+                            </div>
+                        </div>
 
-                        <div class="h-4 w-px bg-stone-300 mx-2"></div>
-
-                        <!-- Settings Dropdown -->
-                        <div class="relative">
-                            <button id="settings-btn"
-                                class="text-stone-500 hover:text-stone-900 text-sm font-medium transition flex items-center gap-1 focus:outline-none"
-                                title="Settings">
-                                <iconify-icon icon="solar:settings-linear" class="text-xl"></iconify-icon>
+                        <div class="relative shrink-0 pl-3 border-l border-stone-200">
+                            <button id="club-switcher-btn"
+                                class="group inline-flex max-w-[170px] items-center gap-2 rounded-lg px-2 py-1 transition hover:bg-stone-50 focus:outline-none focus:ring-2 focus:ring-stone-200">
+                                <iconify-icon icon="solar:users-group-rounded-broken" class="shrink-0 text-sm text-stone-400"></iconify-icon>
+                                <span id="club-switcher-label" class="truncate text-[15px] font-semibold leading-tight text-stone-900">Loading club...</span>
+                                <span id="club-switcher-role" class="hidden"></span>
+                                <span id="club-switcher-badge"
+                                    class="hidden rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-amber-800">Sandbox</span>
+                                <iconify-icon id="club-switcher-chevron" icon="solar:alt-arrow-down-linear"
+                                    class="shrink-0 text-sm text-stone-400 hidden"></iconify-icon>
                             </button>
 
-                            <!-- Dropdown Menu -->
-                            <div id="settings-menu"
-                                class="hidden absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-stone-100 py-2 z-50 divide-y divide-stone-100">
-
-                                <!-- Exports -->
-                                <div class="px-1 py-1">
-                                    <button id="nav-export-schedule-btn"
-                                        class="w-full text-left px-4 py-2 text-sm text-stone-700 hover:bg-stone-50 rounded flex items-center gap-2">
-                                        <iconify-icon icon="solar:calendar-add-broken"></iconify-icon>
-                                        Export Schedule
-                                    </button>
-                                    <!-- Export by Status (Admin only) -->
-                                    <div id="export-by-status-wrapper" class="px-4 py-2">
-                                        <label class="text-xs font-medium text-stone-500 mb-1 block">Export by
-                                            Status</label>
-                                        <div class="flex gap-1">
-                                            <select id="export-status-select"
-                                                class="flex-1 text-sm border border-stone-200 rounded px-2 py-1 bg-white">
-                                                <option value="">Select status...</option>
-                                                <option value="Scheduled">Scheduled</option>
-                                                <option value="Read">Read</option>
-                                                <option value="Proposed">Proposed</option>
-                                                <option value="Priority">Priority</option>
-                                                <option value="Possible">Possible</option>
-                                                <option value="Later">Later</option>
-                                                <option value="Deprioritize">Deprioritize</option>
-                                                <option value="Test">Test</option>
-                                            </select>
-                                            <button id="export-by-status-btn"
-                                                class="px-2 py-1 bg-stone-100 hover:bg-stone-200 rounded text-sm">
-                                                <iconify-icon icon="solar:download-minimalistic-broken"></iconify-icon>
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <button id="nav-export-btn"
-                                        class="w-full text-left px-4 py-2 text-sm text-stone-700 hover:bg-stone-50 rounded flex items-center gap-2">
-                                        <iconify-icon icon="solar:download-minimalistic-broken"></iconify-icon>
-                                        Backup Data
+                            <div id="club-switcher-menu"
+                                class="hidden absolute left-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-stone-100 z-50 overflow-hidden">
+                                <div class="px-4 py-3 border-b border-stone-100 bg-stone-50">
+                                    <p class="text-xs font-semibold uppercase tracking-[0.16em] text-stone-400 mb-1">Current Club</p>
+                                    <div id="club-switcher-current" class="text-sm text-stone-700"></div>
+                                </div>
+                                <div id="club-switcher-list" class="py-2 max-h-80 overflow-y-auto custom-scrollbar">
+                                    <!-- Club options injected via JS -->
+                                </div>
+                                <div id="club-switcher-empty" class="hidden px-4 py-5 text-sm text-stone-500 border-t border-stone-100">
+                                    You only belong to one club right now. When you join another, you’ll switch clubs here.
+                                </div>
+                                <div id="club-switcher-footer" class="hidden border-t border-stone-100 bg-stone-50 px-3 py-3">
+                                    <button id="open-create-club-btn"
+                                        class="w-full text-left rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm text-stone-700 hover:border-rose-200 hover:text-rose-700 transition flex items-center justify-between gap-3 font-medium">
+                                        <span class="flex items-center gap-2">
+                                            <iconify-icon icon="solar:add-square-broken"
+                                                class="text-lg text-rose-500"></iconify-icon>
+                                            Create Club
+                                        </span>
+                                        <iconify-icon icon="solar:arrow-right-linear" class="text-base text-stone-400"></iconify-icon>
                                     </button>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="nav-actions" class="hidden flex flex-1 items-center justify-between min-w-0">
+                        <div class="flex items-center gap-7 min-w-0">
+                            <a id="nav-link-dashboard" href="#dashboard-section"
+                                class="rounded-lg px-3 py-2 text-stone-500 hover:bg-stone-50 hover:text-stone-900 text-sm font-medium transition">Dashboard</a>
+                            <a id="nav-link-search" href="#search-section"
+                                class="rounded-lg px-3 py-2 text-stone-500 hover:bg-stone-50 hover:text-stone-900 text-sm font-medium transition">Find Books</a>
+                            <a id="nav-link-library" href="#library-section"
+                                class="rounded-lg px-3 py-2 text-stone-500 hover:bg-stone-50 hover:text-stone-900 text-sm font-medium transition">Library</a>
+                            <button id="nav-import-btn"
+                                class="rounded-lg px-3 py-2 text-stone-500 hover:bg-stone-50 hover:text-stone-900 text-sm font-medium transition cursor-pointer">Import</button>
+                        </div>
 
-                                <!-- Font Size -->
-                                <div class="px-4 py-2">
-                                    <p class="text-xs font-bold text-stone-400 uppercase tracking-wider mb-2">Text Size
-                                    </p>
-                                    <div class="grid grid-cols-4 gap-1">
-                                        <button data-size="90%"
-                                            class="text-size-option text-xs border border-stone-200 rounded p-1 hover:bg-stone-50 text-stone-600">S</button>
-                                        <button data-size="100%"
-                                            class="text-size-option text-xs border border-stone-200 rounded p-1 hover:bg-stone-50 text-stone-800 font-bold bg-stone-50">M</button>
-                                        <button data-size="110%"
-                                            class="text-size-option text-sm border border-stone-200 rounded p-1 hover:bg-stone-50 text-stone-800">L</button>
-                                        <button data-size="125%"
-                                            class="text-size-option text-base border border-stone-200 rounded p-1 hover:bg-stone-50 text-stone-800">XL</button>
-                                    </div>
-                                </div>
+                        <div class="flex items-center gap-5 shrink-0">
+                            <div class="h-4 w-px bg-stone-300"></div>
 
-                                <!-- Admin / Test Data -->
-                                <div class="px-4 py-2 border-t border-stone-100">
-                                    <a href="guide.html" target="_blank"
-                                        class="w-full text-left px-0 py-2 text-sm text-stone-700 hover:text-rose-600 transition flex items-center gap-2 font-medium">
-                                        <iconify-icon icon="solar:document-text-broken"
-                                            class="text-lg text-rose-500"></iconify-icon>
-                                        Tester's Handbook
-                                    </a>
-                                    <label class="flex items-center justify-between cursor-pointer group mt-1">
-                                        <span class="text-sm text-stone-700 font-medium group-hover:text-stone-900">Show
-                                            Test Data</span>
-                                        <div class="relative inline-flex items-center cursor-pointer">
-                                            <input type="checkbox" id="toggle-test-data" class="sr-only peer">
-                                            <div
-                                                class="w-9 h-5 bg-stone-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-rose-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-rose-500">
+                            <!-- Settings Dropdown -->
+                            <div class="relative">
+                                <button id="settings-btn"
+                                    class="text-stone-500 hover:text-stone-900 text-sm font-medium transition flex items-center gap-1 focus:outline-none"
+                                    title="Settings">
+                                    <iconify-icon icon="solar:settings-linear" class="text-xl"></iconify-icon>
+                                </button>
+
+                                <!-- Dropdown Menu -->
+                                <div id="settings-menu"
+                                    class="hidden absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-stone-100 py-2 z-50 divide-y divide-stone-100">
+
+                                    <!-- Exports -->
+                                    <div class="px-1 py-1">
+                                        <button id="nav-export-schedule-btn"
+                                            class="w-full text-left px-4 py-2 text-sm text-stone-700 hover:bg-stone-50 rounded flex items-center gap-2">
+                                            <iconify-icon icon="solar:calendar-add-broken"></iconify-icon>
+                                            Export Schedule
+                                        </button>
+                                        <!-- Export by Status (Admin only) -->
+                                        <div id="export-by-status-wrapper" class="px-4 py-2">
+                                            <label class="text-xs font-medium text-stone-500 mb-1 block">Export by
+                                                Status</label>
+                                            <div class="flex gap-1">
+                                                <select id="export-status-select"
+                                                    class="flex-1 text-sm border border-stone-200 rounded px-2 py-1 bg-white">
+                                                    <option value="">Select status...</option>
+                                                    <option value="Scheduled">Scheduled</option>
+                                                    <option value="Read">Read</option>
+                                                    <option value="Proposed">Proposed</option>
+                                                    <option value="Priority">Priority</option>
+                                                    <option value="Possible">Possible</option>
+                                                    <option value="Later">Later</option>
+                                                    <option value="Deprioritize">Deprioritize</option>
+                                                    <option value="Test">Test</option>
+                                                </select>
+                                                <button id="export-by-status-btn"
+                                                    class="px-2 py-1 bg-stone-100 hover:bg-stone-200 rounded text-sm">
+                                                    <iconify-icon icon="solar:download-minimalistic-broken"></iconify-icon>
+                                                </button>
                                             </div>
                                         </div>
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
+                                        <button id="nav-export-btn"
+                                            class="w-full text-left px-4 py-2 text-sm text-stone-700 hover:bg-stone-50 rounded flex items-center gap-2">
+                                            <iconify-icon icon="solar:download-minimalistic-broken"></iconify-icon>
+                                            Backup Data
+                                        </button>
+                                    </div>
 
-                        <!-- Notification Bell -->
-                        <div class="relative">
-                            <button id="notifications-btn"
-                                class="text-stone-500 hover:text-stone-900 text-sm font-medium transition flex items-center gap-1 focus:outline-none relative"
-                                title="Recent Changes">
-                                <iconify-icon icon="solar:bell-bold" class="text-xl"></iconify-icon>
-                                <span id="notifications-badge"
-                                    class="hidden absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold min-w-[18px] text-center">0</span>
-                            </button>
+                                    <!-- Font Size -->
+                                    <div class="px-4 py-2">
+                                        <p class="text-xs font-bold text-stone-400 uppercase tracking-wider mb-2">Text Size
+                                        </p>
+                                        <div class="grid grid-cols-4 gap-1">
+                                            <button data-size="90%"
+                                                class="text-size-option text-xs border border-stone-200 rounded p-1 hover:bg-stone-50 text-stone-600">S</button>
+                                            <button data-size="100%"
+                                                class="text-size-option text-xs border border-stone-200 rounded p-1 hover:bg-stone-50 text-stone-800 font-bold bg-stone-50">M</button>
+                                            <button data-size="110%"
+                                                class="text-size-option text-sm border border-stone-200 rounded p-1 hover:bg-stone-50 text-stone-800">L</button>
+                                            <button data-size="125%"
+                                                class="text-size-option text-base border border-stone-200 rounded p-1 hover:bg-stone-50 text-stone-800">XL</button>
+                                        </div>
+                                    </div>
 
-                            <!-- Notifications Dropdown -->
-                            <div id="notifications-menu"
-                                class="hidden absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-stone-100 z-50 overflow-hidden">
-                                <div
-                                    class="flex justify-between items-center px-4 py-3 border-b border-stone-100 bg-stone-50">
-                                    <span class="font-bold text-stone-800 text-sm">Recent Changes</span>
-                                    <div class="flex gap-3">
-                                        <button id="mark-all-read-btn"
-                                            class="text-xs text-indigo-600 hover:text-indigo-800 font-medium transition">Mark
-                                            all read</button>
-                                        <span class="text-stone-300">|</span>
-                                        <button id="clear-all-btn"
-                                            class="text-xs text-indigo-600 hover:text-indigo-800 font-medium transition">Clear
-                                            all</button>
+                                    <!-- Admin / Test Data -->
+                                    <div class="px-4 py-2 border-t border-stone-100">
+                                        <a href="guide.html" target="_blank"
+                                            class="w-full text-left px-0 py-2 text-sm text-stone-700 hover:text-rose-600 transition flex items-center gap-2 font-medium">
+                                            <iconify-icon icon="solar:document-text-broken"
+                                                class="text-lg text-rose-500"></iconify-icon>
+                                            Tester's Handbook
+                                        </a>
+                                        <label class="flex items-center justify-between cursor-pointer group mt-1">
+                                            <span class="text-sm text-stone-700 font-medium group-hover:text-stone-900">Show
+                                                Test Data</span>
+                                            <div class="relative inline-flex items-center cursor-pointer">
+                                                <input type="checkbox" id="toggle-test-data" class="sr-only peer">
+                                                <div
+                                                    class="w-9 h-5 bg-stone-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-rose-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-rose-500">
+                                                </div>
+                                            </div>
+                                        </label>
                                     </div>
                                 </div>
-                                <div id="notifications-list" class="max-h-80 overflow-y-auto custom-scrollbar">
-                                    <!-- Items injected via JS -->
-                                </div>
-                                <div id="notifications-empty"
-                                    class="hidden flex flex-col items-center justify-center py-8 text-stone-400 text-sm">
-                                    <iconify-icon icon="solar:check-circle-bold"
-                                        class="text-3xl mb-2 text-green-400"></iconify-icon>
-                                    <span>All caught up!</span>
+                            </div>
+                            </div>
+
+                            <!-- Notification Bell -->
+                            <div class="relative">
+                                <button id="notifications-btn"
+                                    class="text-stone-500 hover:text-stone-900 text-sm font-medium transition flex items-center gap-1 focus:outline-none relative"
+                                    title="Recent Changes">
+                                    <iconify-icon icon="solar:bell-bold" class="text-xl"></iconify-icon>
+                                    <span id="notifications-badge"
+                                        class="hidden absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold min-w-[18px] text-center">0</span>
+                                </button>
+
+                                <!-- Notifications Dropdown -->
+                                <div id="notifications-menu"
+                                    class="hidden absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-stone-100 z-50 overflow-hidden">
+                                    <div
+                                        class="flex justify-between items-center px-4 py-3 border-b border-stone-100 bg-stone-50">
+                                        <span class="font-bold text-stone-800 text-sm">Recent Changes</span>
+                                        <div class="flex gap-3">
+                                            <button id="mark-all-read-btn"
+                                                class="text-xs text-indigo-600 hover:text-indigo-800 font-medium transition">Mark
+                                                all read</button>
+                                            <span class="text-stone-300">|</span>
+                                            <button id="clear-all-btn"
+                                                class="text-xs text-indigo-600 hover:text-indigo-800 font-medium transition">Clear
+                                                all</button>
+                                        </div>
+                                    </div>
+                                    <div id="notifications-list" class="max-h-80 overflow-y-auto custom-scrollbar">
+                                        <!-- Items injected via JS -->
+                                    </div>
+                                    <div id="notifications-empty"
+                                        class="hidden flex flex-col items-center justify-center py-8 text-stone-400 text-sm">
+                                        <iconify-icon icon="solar:check-circle-bold"
+                                            class="text-3xl mb-2 text-green-400"></iconify-icon>
+                                        <span>All caught up!</span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div class="h-4 w-px bg-stone-300"></div>
-                        <button id="logout-btn"
-                            class="text-stone-500 hover:text-stone-800 text-sm font-medium transition">Sign Out</button>
+                            <div class="h-4 w-px bg-stone-300"></div>
+                            <button id="logout-btn"
+                                class="text-stone-500 hover:text-stone-800 text-sm font-medium transition">Sign Out</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -310,10 +357,8 @@
 
                 <!-- Dashboard Section -->
                 <section id="dashboard-section" class="max-w-5xl mx-auto w-full mb-12 hidden scroll-mt-24">
-                    <div class="text-center md:text-left mb-6 md:mb-0">
-                        <p class="text-editorial-eyebrow text-rose-600 mb-2">Welcome Back</p>
-                        <h1 class="text-editorial-headline text-3xl md:text-4xl text-stone-900 mb-2">My Dashboard</h1>
-                        <p class="text-stone-500 text-base">Track your reading journey.</p>
+                    <div class="text-center md:text-left mb-8">
+                        <h1 class="text-editorial-headline text-3xl md:text-4xl text-stone-900">My Dashboard</h1>
                     </div>
 
                     <!-- Hero Card (Next Book) -->
@@ -325,7 +370,7 @@
                     <!-- Upcoming List -->
                     <div id="dashboard-upcoming-container" class="hidden">
                         <h2 class="font-serif text-2xl font-bold text-stone-800 mb-6 flex items-center gap-2">
-                            <span>Coming Up Later</span>
+                            <span>Coming Up Next</span>
                             <div class="h-px bg-stone-200 flex-grow ml-4"></div>
                         </h2>
                         <div id="dashboard-upcoming-list"
@@ -359,7 +404,7 @@
                         <h3 class="text-xl font-bold text-stone-800 mb-2">No Upcoming Books</h3>
                         <p class="text-stone-500 mb-6">Your schedule is clear. Time to pick the next great read!</p>
                         <button
-                            onclick="document.getElementById('search-input').focus(); window.location.hash = 'search-section';"
+                            onclick="openSearchSectionAndFocus()"
                             class="btn-primary">Find
                             a Book</button>
                     </div>
@@ -497,14 +542,6 @@
                                     <iconify-icon icon="solar:list-bold" class="text-lg"></iconify-icon>
                                 </button>
                             </div>
-
-                            <!-- Actions -->
-                            <button id="refresh-saved-btn"
-                                class="btn-secondary h-[38px] !py-0 flex items-center gap-2 text-sm !px-4">
-                                <iconify-icon icon="solar:restart-broken" class="text-lg"></iconify-icon>
-                                <span class="hidden md:inline">Refresh</span>
-                                <!-- Hide text on med screens if tight -->
-                            </button>
 
                         </div>
                     </div>
@@ -954,6 +991,78 @@
                     class="hidden bg-green-600 text-white px-8 py-2 rounded-lg hover:bg-green-700 transition font-medium shadow-md hover:shadow-lg transform hover:-translate-y-0.5">Save
                     Selected</button>
             </div>
+        </div>
+    </div>
+
+    <div id="create-club-modal"
+        class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm hidden z-[55] flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] flex flex-col p-6">
+            <div class="flex justify-between items-start mb-5">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-[0.16em] text-rose-500 mb-1">Club Setup</p>
+                    <h3 class="font-serif text-2xl font-bold text-stone-800">Create a New Club</h3>
+                    <p class="text-sm text-stone-500 mt-1">Set up a new space without touching the current club’s books.</p>
+                </div>
+                <button id="close-create-club-btn" class="text-stone-400 hover:text-stone-800">
+                    <iconify-icon icon="solar:close-circle-broken" class="text-2xl"></iconify-icon>
+                </button>
+            </div>
+
+            <form id="create-club-form" class="space-y-4">
+                <div>
+                    <label for="create-club-name" class="block text-sm font-medium text-stone-700 mb-1">Club Name</label>
+                    <input id="create-club-name" type="text" required
+                        class="w-full rounded-lg border border-stone-300 px-4 py-2.5 bg-stone-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-200"
+                        placeholder="Downtown Readers">
+                </div>
+
+                <div>
+                    <label for="create-club-slug" class="block text-sm font-medium text-stone-700 mb-1">Club Slug</label>
+                    <input id="create-club-slug" type="text" required
+                        class="w-full rounded-lg border border-stone-300 px-4 py-2.5 bg-stone-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-200"
+                        placeholder="downtown-readers">
+                    <p class="mt-1 text-xs text-stone-400">Used internally for switchers and setup. Lowercase letters, numbers, and hyphens only.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="create-club-type" class="block text-sm font-medium text-stone-700 mb-1">Club Type</label>
+                        <select id="create-club-type"
+                            class="w-full rounded-lg border border-stone-300 px-4 py-2.5 bg-stone-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-200">
+                            <option value="sandbox">Sandbox</option>
+                            <option value="standard">Standard</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="create-club-timezone" class="block text-sm font-medium text-stone-700 mb-1">Default Timezone</label>
+                        <input id="create-club-timezone" type="text"
+                            class="w-full rounded-lg border border-stone-300 px-4 py-2.5 bg-stone-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-200"
+                            value="America/New_York">
+                    </div>
+                </div>
+
+                <div>
+                    <label for="create-club-description" class="block text-sm font-medium text-stone-700 mb-1">Description</label>
+                    <textarea id="create-club-description" rows="3"
+                        class="w-full rounded-lg border border-stone-300 px-4 py-2.5 bg-stone-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-200"
+                        placeholder="Neighborhood fiction group, meeting monthly."></textarea>
+                </div>
+
+                <div id="create-club-standard-note"
+                    class="hidden rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                    Standard clubs are still partially guarded during the rollout. If the database blocks creation, start with a sandbox club and we can promote later.
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-2">
+                    <button type="button" id="cancel-create-club-btn"
+                        class="rounded-lg px-4 py-2 text-sm font-medium text-stone-500 hover:text-stone-800 transition">
+                        Cancel
+                    </button>
+                    <button type="submit" id="submit-create-club-btn" class="btn-primary px-5 py-2.5">
+                        Create Club
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 

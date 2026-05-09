@@ -45,8 +45,9 @@ Every meaningful `test` and `prod` rollout must be recorded in `RELEASE_LOG.md`,
 - rollback reference
 
 ### 🛑 STAGE 1: Local Development & Verification
-1.  **Work Locally**: Make small, incremental code changes.
+1.  **Work Locally**: Make small, incremental code changes in a Git-backed branch/worktree.
 2.  **Verify on Localhost**: Open `http://localhost:8080`.
+    - `file://` previews are allowed for visual inspection only, never as the primary signal for app behavior or API flows.
 3.  **Validate All Changes**: Check links, buttons, and layout at **100% zoom**.
 4.  **STOP & ASK**: Tell the user: *"Local changes complete. Please verify on localhost:8080. If it looks correct, let me know and I will proceed to TEST."*
 

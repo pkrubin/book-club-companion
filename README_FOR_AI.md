@@ -57,12 +57,10 @@
 
 ### Golden Rule of Development
 **Safety first. Small incremental changes. One thing at a time.**
-- DEV = localhost:8080 (where you make and test changes)
-- Make ONE small change
-- Test it immediately on DEV
-- Only then proceed to the next change
-- Never make massive changes all at once
-- Log significant changes in `CHANGELOG.md`
+- This file is context. `AGENTS.md` is policy.
+- Make one small change at a time.
+- Test it in a served environment first.
+- Avoid massive bundled edits.
 
 **Detailed best practices** (silent failure avoidance, no hardcoding, logging, etc.):
 → See `project_guidelines.md` "Development Protocols & Lessons Learned" section
@@ -71,24 +69,18 @@
 **Human logs in, AI tests afterward. Localhost first, then promote.**
 - **DATA SAFETY**: If a test involves changing data (Update, Delete, Create), use ONLY books with the status **'Test'**. Never modify production data (e.g., 'Scheduled', 'Saved' books) for testing.
 - **AUDIT LOGS**: Maintain a session audit log for ALL data changes performed (as an artifact or in the walkthrough).
-- **RELEASE LOG (MANDATORY)**: For every meaningful `test` deployment, add an entry to `RELEASE_LOG.md` capturing version, commit, user-facing changes, env/config changes, manual SQL steps, validation notes, and rollback info. Update the same entry again when the change reaches `prod`.
 - **EXPLICIT CLEANUP**: Every test plan must include specific instructions for cleaning up test data at the end.
-- **THE 10-SECOND STOP (MANDATORY)**: Never combine code edits and git commands (add, commit, push) in the same turn. You MUST pause after editing and ask the user to verify on localhost first.
+- **VERIFY BEFORE PUSH**: After editing, pause for localhost verification before promotion work.
 - **THE ACTIVE TAB PROTOCOL**: Always prioritize the tab currently focused by the user (marked `[ACTIVE]` in `browser_state`). Re-use this tab whenever possible to stay within the Human's authenticated session.
 - **CONTENT SIGNALING (MANDATORY)**: You MUST describe the visible UI of your selected tab (e.g., "I see the Dashboard with one book scheduled for April"). This ensures you and the user are looking at the same thing.
 - **HARD STOP: REDIRECT DETECTION**: If navigation redirects to any page other than our app UI (e.g., Vercel Login, SSO, GitHub, Supabase), **STOP IMMEDIATELY**. Report "ENVIRONMENT PROTECTED" and wait for user guidance. Do not attempt to "find the footer" or audit a protected page.
-- Test on localhost FIRST.
-- Only push to TEST when localhost works AND the user gives explicit "Localhost verified" approval.
-- User verifies TEST before production.
-- Never skip verification steps.
+- Use localhost or another served preview before `test`.
+- User verifies `test` before production.
 
 ### Golden Rule of Deployment
 **DEV → TEST → PROD. Never skip a step. Always get approval.**
-- DEV = localhost:8080 (local development)
-- TEST = `test` branch pushed to GitHub (staging site)
-- PROD = `main` branch pushed to GitHub (live site)
-- Work on `test` branch, never `main`
-- Get explicit user approval before PROD
+- The exact deployment checklist lives in `DEPLOYMENT_GUIDE.md`.
+- The non-negotiable release rules live in `AGENTS.md`.
 
 ---
 
@@ -109,78 +101,11 @@
 
 ---
 
-## The 3 Environments (CRITICAL)
+## Environment & Deployment References
 
-When user says... | They mean... | URL
-------------------|--------------|----
-**"localhost"** | Local dev server | `http://localhost:8080`
-**"test"** | TEST branch/site | `book-club-companion-git-test-pam-rubins-projects.vercel.app`
-**"prod"** or **"production"** | MAIN branch/live | `book-club-companion.vercel.app`
-
-### The Flow: localhost → test → prod
-
-```
-[LOCALHOST]    →    [TEST]    →    [PROD]
-  Develop           Verify         Deploy
-  & test            on remote      to live
-  locally           site
-```
-
-### Git Branches (IMPORTANT)
-- **`main`** branch = PRODUCTION (live site) - **PROTECTED, never work here directly**
-- **`test`** branch = Development branch (pushes to TEST site for verification)
-- **ALWAYS work on `test` branch locally, NEVER on `main`**
-
-### Deployment Workflow (MANDATORY)
-
-**Step 0:** Run `git branch` to confirm you're on `test`
-```bash
-git checkout test   # If not already on test
-```
-
-**Step 1-2: Develop & Test LOCALLY First**
-1. Make code changes locally
-2. Test on localhost:8080 (ensure server is running!)
-   - Repeat until localhost works correctly
-
-**Step 3-5: When Localhost is Good → Push to TEST**
-3. **⚠️ BUMP VERSION** (REQUIRED before ANY deployment):
-   - Edit `js/app.js` line 3: `const APP_VERSION = 'X.X.X'`
-   - Edit `package.json`: `"version": "X.X.X"`
-4. Commit with version in message:
-   ```bash
-   git add . && git commit -m "v1.X.X: Description"
-   ```
-5. Push to TEST site:
-   ```bash
-   git push origin test
-   ```
-6. Update `RELEASE_LOG.md`:
-   - Add a release entry with the test commit SHA, version, user-facing changes, env/config notes, and any manual SQL requirements.
-
-**Step 7: STOP AND WAIT**
-- Tell user: "Deployed to TEST (v1.X.X). Please verify at [TEST URL]."
-- User checks footer version matches
-- Wait for user confirmation
-- DO NOT proceed without explicit approval
-
-**Step 8: Deploy to PROD (only after approval)**
-```bash
-git checkout main
-git merge test
-git push origin main
-git checkout test   # Return to test for next work
-```
-**Step 9: Update `RELEASE_LOG.md` for PROD**
-- Fill in the production commit SHA.
-- Record any manual Supabase SQL or env-var changes that were applied between `test` and `prod`.
-
-### Shared DB Rollout Discipline
-- Always start DB-backed work from a fresh `origin/test` worktree, not a stale local `test` checkout.
-- Apply backward-compatible code before tightening shared Supabase SQL.
-- Promote `test` to `main` immediately after a shared database change so both environments stay aligned.
-
-> ⚠️ **If footer shows old version**, deployment failed. Debug before proceeding.
+- Environment meanings and URLs: see `DEPLOYMENT_GUIDE.md`
+- Release/version requirements: see `AGENTS.md`
+- Current active branch/worktree for in-flight work: see `SESSION_HANDOVER.md`
 
 ---
 

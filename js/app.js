@@ -1,5 +1,5 @@
 // --- Configuration ---
-const APP_VERSION = '1.9.10'; // Trusted schedule notification logging rollout
+const APP_VERSION = '1.9.15'; // Remove redundant library refresh button
 
 // --- Gemini AI Configuration ---
 // Uses /api/gemini serverless function for secure API calls
@@ -12,6 +12,17 @@ const GOODREADS_PROXY_URL = '/api/goodreads';
 const supabaseUrl = 'https://rqbtntzqqkekdzvfilos.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxYnRudHpxcWtla2R6dmZpbG9zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ1MDEwMjUsImV4cCI6MjA4MDA3NzAyNX0.iKeTABH2Q_s9BjpMmigroSa0fqeyW8DDcmXRwDO0jjM';
 const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+function createTimeoutSignal(timeoutMs) {
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
+    return {
+        signal: controller.signal,
+        clear() {
+            window.clearTimeout(timeoutId);
+        }
+    };
+}
 
 function shouldFallbackToLegacyLastSeenWrite(error) {
     if (!error) return false;
@@ -60,8 +71,12 @@ async function touchUserLastSeen() {
     return touchedAt;
 }
 
-async function getAccessToken() {
-    const { data: { session } } = await supabase.auth.getSession();
+async function getAccessToken(forceRefresh = false) {
+    const sessionResult = forceRefresh
+        ? await supabase.auth.refreshSession()
+        : await supabase.auth.getSession();
+
+    const session = sessionResult?.data?.session;
     const accessToken = session?.access_token;
 
     if (!accessToken) {
@@ -72,14 +87,88 @@ async function getAccessToken() {
 }
 
 async function fetchWithSession(url, options = {}) {
-    const accessToken = await getAccessToken();
-    const headers = new Headers(options.headers || {});
-    headers.set('Authorization', `Bearer ${accessToken}`);
+    const makeRequest = async (accessToken) => {
+        const headers = new Headers(options.headers || {});
+        headers.set('Authorization', `Bearer ${accessToken}`);
 
-    return fetch(url, {
-        ...options,
-        headers
-    });
+        return fetch(url, {
+            ...options,
+            headers
+        });
+    };
+
+    let response = await makeRequest(await getAccessToken());
+
+    if (response.status === 401) {
+        response = await makeRequest(await getAccessToken(true));
+    }
+
+    return response;
+}
+
+async function runQueryWithTimeout(queryFactory, timeoutMs = 5000) {
+    const timeout = createTimeoutSignal(timeoutMs);
+
+    try {
+        return await Promise.race([
+            queryFactory(timeout.signal),
+            new Promise((_, reject) => {
+                window.setTimeout(() => {
+                    reject(new Error(`Query timed out after ${timeoutMs}ms`));
+                }, timeoutMs);
+            })
+        ]);
+    } finally {
+        timeout.clear();
+    }
+}
+
+function sleep(ms) {
+    return new Promise(resolve => window.setTimeout(resolve, ms));
+}
+
+async function waitForAuthHydration(timeoutMs = 2500) {
+    const start = Date.now();
+
+    while (isAuthHydrating) {
+        if (Date.now() - start >= timeoutMs) {
+            throw new Error('Your session is still loading. Please try again in a moment.');
+        }
+        await sleep(100);
+    }
+
+    if (!user?.id) {
+        throw new Error('You must be signed in to use this feature. Please log in again.');
+    }
+}
+
+function slugifyClubName(value) {
+    return (value || '')
+        .toLowerCase()
+        .trim()
+        .replace(/['’]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 60);
+}
+
+function formatClubRole(role) {
+    if (role === 'admin') return 'Admin';
+    if (role === 'member') return 'Member';
+    return 'Club Member';
+}
+
+function getClubTypeLabel(clubType) {
+    return clubType === 'sandbox' ? 'Sandbox' : 'Standard';
+}
+
+function getClubInitials(name) {
+    const words = (name || 'Book Club')
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2);
+
+    return words.map(word => word[0]?.toUpperCase() || '').join('') || 'BC';
 }
 
 async function callGeminiProxy({
@@ -229,9 +318,23 @@ let allSavedBooks = []; // Store full list for client-side filtering
 const fontSizes = ['90%', '100%', '110%', '125%'];
 let currentFontSizeIndex = 1; // Default to 100%
 let currentUserRole = null; // 'admin' or null (member)
+let currentLegacyRole = null;
+let currentMembershipRole = null;
+let currentActiveClubId = null;
+let currentClubMemberships = [];
+let isAuthHydrating = false;
+let authHydrationToken = 0;
+let pendingHydrationTimeoutId = null;
+let scheduledHydrationUserId = null;
+let hydratedSessionUserId = null;
 
 function isAdminUser() {
     return currentUserRole === 'admin';
+}
+
+function applyActiveClubFilter(query, column = 'club_id') {
+    if (currentActiveClubId == null) return query;
+    return query.eq(column, currentActiveClubId);
 }
 
 // --- DOM Elements ---
@@ -242,6 +345,19 @@ const emailInput = document.getElementById('email');
 const passwordInput = document.getElementById('password');
 const navActions = document.getElementById('nav-actions');
 const logoutBtn = document.getElementById('logout-btn');
+const clubSwitcherBtn = document.getElementById('club-switcher-btn');
+const clubSwitcherLabel = document.getElementById('club-switcher-label');
+const clubSwitcherBadge = document.getElementById('club-switcher-badge');
+const clubSwitcherRole = document.getElementById('club-switcher-role');
+const clubSwitcherChevron = document.getElementById('club-switcher-chevron');
+const clubSwitcherMenu = document.getElementById('club-switcher-menu');
+const clubSwitcherCurrent = document.getElementById('club-switcher-current');
+const clubSwitcherList = document.getElementById('club-switcher-list');
+const clubSwitcherEmpty = document.getElementById('club-switcher-empty');
+const clubSwitcherFooter = document.getElementById('club-switcher-footer');
+const navLinkDashboard = document.getElementById('nav-link-dashboard');
+const navLinkSearch = document.getElementById('nav-link-search');
+const navLinkLibrary = document.getElementById('nav-link-library');
 
 const searchInput = document.getElementById('search-input');
 const searchBtn = document.getElementById('search-btn');
@@ -257,6 +373,18 @@ const viewTableBtn = document.getElementById('view-table-btn');
 const importBtn = document.getElementById('nav-import-btn');
 const exportBtn = document.getElementById('nav-export-btn');
 const exportScheduleBtn = document.getElementById('nav-export-schedule-btn');
+const openCreateClubBtn = document.getElementById('open-create-club-btn');
+const createClubModal = document.getElementById('create-club-modal');
+const createClubForm = document.getElementById('create-club-form');
+const closeCreateClubBtn = document.getElementById('close-create-club-btn');
+const cancelCreateClubBtn = document.getElementById('cancel-create-club-btn');
+const submitCreateClubBtn = document.getElementById('submit-create-club-btn');
+const createClubNameInput = document.getElementById('create-club-name');
+const createClubSlugInput = document.getElementById('create-club-slug');
+const createClubTypeSelect = document.getElementById('create-club-type');
+const createClubTimezoneInput = document.getElementById('create-club-timezone');
+const createClubDescriptionInput = document.getElementById('create-club-description');
+const createClubStandardNote = document.getElementById('create-club-standard-note');
 
 // ... existing code ...
 
@@ -443,6 +571,7 @@ const dashboardHero = document.getElementById('dashboard-hero');
 const dashboardUpcomingContainer = document.getElementById('dashboard-upcoming-container');
 const dashboardUpcomingList = document.getElementById('dashboard-upcoming-list');
 const dashboardEmpty = document.getElementById('dashboard-empty');
+const defaultDashboardEmptyHtml = dashboardEmpty ? dashboardEmpty.innerHTML : '';
 
 // Smart Pair: Auto-populate time to 7:15 PM when date is selected
 if (editDate) {
@@ -479,12 +608,300 @@ async function handleAuth(e) {
 
 let isInitialLoad = true;
 
+function showStartupLoadingState() {
+    if (savedGrid) {
+        savedGrid.innerHTML = '<p class="text-center col-span-full text-stone-500 py-10">Loading your library...</p>';
+    }
+    if (savedTableBody) {
+        savedTableBody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-stone-500">Loading your library...</td></tr>';
+    }
+    if (dashboardHero) dashboardHero.classList.add('hidden');
+    if (dashboardUpcomingContainer) dashboardUpcomingContainer.classList.add('hidden');
+    if (dashboardEmpty) {
+        dashboardEmpty.innerHTML = `
+            <div class="mb-4">
+                <iconify-icon icon="line-md:loading-loop" class="text-stone-400 text-6xl mx-auto"></iconify-icon>
+            </div>
+            <h3 class="text-xl font-bold text-stone-800 mb-2">Welcome Back</h3>
+            <p class="text-stone-500">Gathering your club, role, and library...</p>
+        `;
+        dashboardEmpty.classList.remove('hidden');
+    }
+}
+
+function clearStartupLoadingState() {
+    if (dashboardEmpty && dashboardEmpty.innerHTML !== defaultDashboardEmptyHtml) {
+        dashboardEmpty.innerHTML = defaultDashboardEmptyHtml;
+    }
+}
+
+function getActiveClubMembership() {
+    return currentClubMemberships.find(membership => membership.club_id === currentActiveClubId) || null;
+}
+
+function syncCurrentUserRole() {
+    const activeMembership = getActiveClubMembership();
+    currentMembershipRole = activeMembership?.role ?? null;
+
+    if (currentMembershipRole === 'admin') {
+        currentUserRole = 'admin';
+    } else if (!currentMembershipRole && currentLegacyRole === 'admin') {
+        currentUserRole = 'admin';
+    } else {
+        currentUserRole = null;
+    }
+}
+
+function renderClubSwitcher() {
+    if (!clubSwitcherBtn || !clubSwitcherLabel || !clubSwitcherRole) return;
+
+    const memberships = currentClubMemberships || [];
+    const activeMembership = getActiveClubMembership();
+    const otherMemberships = memberships.filter(membership => membership.club_id !== currentActiveClubId);
+    const activeClubName = activeMembership?.club_name || 'Book Club';
+    const membershipCount = memberships.length;
+    const canSwitch = membershipCount > 1;
+    const canOpenMenu = canSwitch || isAdminUser();
+    const activeClubType = activeMembership?.club_type || 'standard';
+    const activeRoleLabel = formatClubRole(activeMembership?.role);
+
+    clubSwitcherLabel.textContent = activeClubName;
+    if (clubSwitcherBadge) {
+        clubSwitcherBadge.classList.toggle('hidden', activeClubType !== 'sandbox');
+    }
+    clubSwitcherChevron.classList.toggle('hidden', !canOpenMenu);
+    clubSwitcherBtn.disabled = !canOpenMenu;
+    clubSwitcherBtn.classList.toggle('cursor-default', !canOpenMenu);
+    clubSwitcherBtn.classList.toggle('hover:border-stone-300', canOpenMenu);
+    clubSwitcherBtn.classList.toggle('hover:shadow-md', canOpenMenu);
+
+    if (clubSwitcherCurrent) {
+        clubSwitcherCurrent.innerHTML = `
+            <div class="flex items-center justify-between gap-3">
+                <div class="flex items-center gap-3 min-w-0">
+                    <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-sm font-semibold text-rose-700 border border-rose-100">${escapeHtml(getClubInitials(activeClubName))}</span>
+                    <div class="min-w-0">
+                        <p class="font-semibold text-stone-800 truncate">${escapeHtml(activeClubName)}</p>
+                        <p class="text-xs text-stone-500 mt-1">${escapeHtml(activeRoleLabel)}</p>
+                    </div>
+                </div>
+                ${activeClubType === 'sandbox' ? '<span class="shrink-0 rounded-full bg-amber-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-800">Sandbox</span>' : ''}
+            </div>
+        `;
+    }
+
+    if (clubSwitcherList) {
+        if (otherMemberships.length > 0) {
+            clubSwitcherList.innerHTML = otherMemberships.map(membership => {
+                return `
+                    <button type="button"
+                        class="club-switch-option w-full px-4 py-3 text-left transition hover:bg-stone-50"
+                        data-club-id="${membership.club_id}">
+                        <div class="flex items-center justify-between gap-3">
+                            <div class="flex items-center gap-3 min-w-0">
+                                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-stone-100 text-xs font-semibold text-stone-700">${escapeHtml(getClubInitials(membership.club_name || 'Book Club'))}</span>
+                                <div class="min-w-0">
+                                    <p class="font-medium text-stone-800 truncate">${escapeHtml(membership.club_name || 'Book Club')}</p>
+                                    <p class="text-xs text-stone-500 mt-1">${escapeHtml(formatClubRole(membership.role))}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 shrink-0">
+                                ${membership.club_type === 'sandbox' ? '<span class="rounded-full bg-amber-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-800">Sandbox</span>' : ''}
+                            </div>
+                        </div>
+                    </button>
+                `;
+            }).join('');
+        } else {
+            clubSwitcherList.innerHTML = '';
+        }
+    }
+
+    if (clubSwitcherEmpty) {
+        clubSwitcherEmpty.classList.toggle('hidden', otherMemberships.length > 0);
+    }
+
+    if (clubSwitcherFooter) {
+        clubSwitcherFooter.classList.toggle('hidden', !isAdminUser());
+    }
+}
+
+function closeClubSwitcherMenu() {
+    if (clubSwitcherMenu) clubSwitcherMenu.classList.add('hidden');
+    if (clubSwitcherBtn) clubSwitcherBtn.setAttribute('aria-expanded', 'false');
+}
+
+function closeCreateClubModal() {
+    if (createClubModal) createClubModal.classList.add('hidden');
+    if (createClubForm) createClubForm.reset();
+    if (createClubTimezoneInput) createClubTimezoneInput.value = 'America/New_York';
+    if (createClubTypeSelect) createClubTypeSelect.value = 'sandbox';
+    if (createClubSlugInput) {
+        createClubSlugInput.dataset.userEdited = '';
+    }
+    if (createClubStandardNote) createClubStandardNote.classList.add('hidden');
+}
+
+function openCreateClubModal() {
+    if (!isAdminUser()) {
+        showError('Only club admins can create a new club right now.');
+        return;
+    }
+
+    if (createClubModal) createClubModal.classList.remove('hidden');
+    createClubStandardNote?.classList.toggle('hidden', createClubTypeSelect?.value !== 'standard');
+    if (createClubNameInput) createClubNameInput.focus();
+}
+
+async function persistActiveClubPreference(clubId) {
+    if (!user?.id) return;
+
+    const { error } = await supabase
+        .from('user_preferences')
+        .upsert({
+            user_id: user.id,
+            active_club_id: clubId
+        });
+
+    if (error) throw error;
+}
+
+async function switchActiveClub(clubId) {
+    if (!user || clubId == null || clubId === currentActiveClubId) {
+        closeClubSwitcherMenu();
+        return;
+    }
+
+    const nextMembership = currentClubMemberships.find(membership => membership.club_id === clubId);
+    if (!nextMembership) {
+        showError('You do not belong to that club.');
+        return;
+    }
+
+    clubSwitcherBtn?.setAttribute('disabled', 'disabled');
+
+    try {
+        await persistActiveClubPreference(clubId);
+        currentActiveClubId = clubId;
+        syncCurrentUserRole();
+        renderClubSwitcher();
+        updateUI();
+        showSection('dashboard');
+        closeClubSwitcherMenu();
+        renderNotifications();
+    } catch (error) {
+        console.error('Error switching clubs:', error);
+        showError(`Could not switch clubs. ${error.message || ''}`);
+    } finally {
+        if (currentClubMemberships.length > 1) {
+            clubSwitcherBtn?.removeAttribute('disabled');
+        }
+    }
+}
+
+async function handleCreateClub(e) {
+    e.preventDefault();
+
+    if (!user?.id) {
+        showError('You must be signed in to create a club.');
+        return;
+    }
+
+    const name = createClubNameInput?.value.trim() || '';
+    const slug = slugifyClubName(createClubSlugInput?.value || name);
+    const clubType = createClubTypeSelect?.value || 'sandbox';
+    const defaultTimezone = createClubTimezoneInput?.value.trim() || 'America/New_York';
+    const description = createClubDescriptionInput?.value.trim() || null;
+
+    if (!name) {
+        showError('Please give the club a name.');
+        return;
+    }
+
+    if (!slug) {
+        showError('Please provide a valid club slug.');
+        return;
+    }
+
+    submitCreateClubBtn.disabled = true;
+    submitCreateClubBtn.textContent = 'Creating...';
+
+    try {
+        const { data: clubRow, error: clubError } = await supabase
+            .from('clubs')
+            .insert({
+                name,
+                slug,
+                description,
+                club_type: clubType,
+                created_source: 'user',
+                created_by: user.id
+            })
+            .select('id, name, slug, club_type')
+            .single();
+
+        if (clubError) throw clubError;
+
+        const { error: settingsError } = await supabase
+            .from('club_settings')
+            .insert({
+                club_id: clubRow.id,
+                default_timezone: defaultTimezone,
+                updated_by: user.id
+            });
+
+        if (settingsError) throw settingsError;
+
+        const { error: membershipError } = await supabase
+            .from('club_memberships')
+            .insert({
+                club_id: clubRow.id,
+                user_id: user.id,
+                role: 'admin',
+                status: 'active',
+                membership_source: 'manual',
+                created_by: user.id
+            });
+
+        if (membershipError) throw membershipError;
+
+        await persistActiveClubPreference(clubRow.id);
+
+        currentClubMemberships = [
+            ...currentClubMemberships.filter(membership => membership.club_id !== clubRow.id),
+            {
+                club_id: clubRow.id,
+                role: 'admin',
+                status: 'active',
+                club_name: clubRow.name,
+                club_slug: clubRow.slug,
+                club_type: clubRow.club_type
+            }
+        ].sort((a, b) => (a.club_name || '').localeCompare(b.club_name || ''));
+
+        currentActiveClubId = clubRow.id;
+        syncCurrentUserRole();
+        renderClubSwitcher();
+        closeCreateClubModal();
+        updateUI();
+        renderNotifications();
+        showSimpleAlert(`${clubType === 'sandbox' ? 'Sandbox' : 'Club'} created. You are now viewing ${clubRow.name}.`);
+    } catch (error) {
+        console.error('Error creating club:', error);
+        showError(`Could not create club. ${error.message || ''}`);
+    } finally {
+        submitCreateClubBtn.disabled = false;
+        submitCreateClubBtn.textContent = 'Create Club';
+    }
+}
+
 function updateUI() {
     if (user) {
         document.body.classList.add('logged-in');
         authSection.classList.add('hidden');
         appSection.classList.remove('hidden');
         navActions.classList.remove('hidden');
+        renderClubSwitcher();
 
         // Init Font Size
         initFontSize();
@@ -499,6 +916,12 @@ function updateUI() {
             isInitialLoad = false;
         }
 
+        if (isAuthHydrating) {
+            showStartupLoadingState();
+            return;
+        }
+
+        clearStartupLoadingState();
         fetchSavedBooks(); // Load books then render dashboard
     } else {
         document.body.classList.remove('logged-in');
@@ -519,6 +942,13 @@ function updateUI() {
 
         // Reset role
         currentUserRole = null;
+        currentLegacyRole = null;
+        currentMembershipRole = null;
+        currentActiveClubId = null;
+        currentClubMemberships = [];
+        isAuthHydrating = false;
+        clearStartupLoadingState();
+        renderClubSwitcher();
     }
 }
 
@@ -557,6 +987,10 @@ function applyRoleBasedUI() {
     const exportByStatusWrapper = document.getElementById('export-by-status-wrapper');
     if (exportByStatusWrapper) {
         exportByStatusWrapper.style.display = isAdmin ? '' : 'none';
+    }
+
+    if (openCreateClubBtn) {
+        openCreateClubBtn.style.display = isAdmin ? '' : 'none';
     }
 
     console.log('Role-based UI applied:', isAdmin ? 'admin (full access)' : 'member (restricted)');
@@ -877,7 +1311,14 @@ async function refreshBookMetadata(book) {
             // Include google_data if we fetched it fresh
             if (!book.google_data && gData) updates.google_data = gData;
 
-            const { error } = await supabase.from('book_club_list').update(updates).eq('id', book.id);
+            let ratingUpdateQuery = supabase
+                .from('book_club_list')
+                .update(updates)
+                .eq('id', book.id);
+
+            ratingUpdateQuery = applyActiveClubFilter(ratingUpdateQuery);
+
+            const { error } = await ratingUpdateQuery;
             if (error) throw error;
 
             // 4. Update Local State & UI
@@ -919,10 +1360,36 @@ async function refreshBookMetadata(book) {
 
 // --- Event Listeners ---
 // --- Event Listeners ---
+if (clubSwitcherBtn && clubSwitcherMenu) {
+    clubSwitcherBtn.addEventListener('click', (e) => {
+        if (!(currentClubMemberships.length > 1 || isAdminUser())) return;
+        e.stopPropagation();
+        clubSwitcherMenu.classList.toggle('hidden');
+        clubSwitcherBtn.setAttribute('aria-expanded', clubSwitcherMenu.classList.contains('hidden') ? 'false' : 'true');
+        if (settingsMenu) settingsMenu.classList.add('hidden');
+        if (notificationsMenu) notificationsMenu.classList.add('hidden');
+    });
+
+    clubSwitcherList?.addEventListener('click', async (e) => {
+        const option = e.target.closest('.club-switch-option');
+        if (!option) return;
+        const clubId = Number(option.dataset.clubId);
+        if (!Number.isFinite(clubId)) return;
+        await switchActiveClub(clubId);
+    });
+
+    window.addEventListener('click', (e) => {
+        if (!clubSwitcherBtn.contains(e.target) && !clubSwitcherMenu.contains(e.target)) {
+            closeClubSwitcherMenu();
+        }
+    });
+}
+
 if (settingsBtn && settingsMenu) {
     settingsBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         settingsMenu.classList.toggle('hidden');
+        closeClubSwitcherMenu();
     });
 
     // Font Size Buttons
@@ -939,6 +1406,52 @@ if (settingsBtn && settingsMenu) {
             settingsMenu.classList.add('hidden');
         }
     });
+}
+
+if (openCreateClubBtn) {
+    openCreateClubBtn.addEventListener('click', () => {
+        if (settingsMenu) settingsMenu.classList.add('hidden');
+        openCreateClubModal();
+    });
+}
+
+if (closeCreateClubBtn) {
+    closeCreateClubBtn.addEventListener('click', closeCreateClubModal);
+}
+
+if (cancelCreateClubBtn) {
+    cancelCreateClubBtn.addEventListener('click', closeCreateClubModal);
+}
+
+if (createClubModal) {
+    createClubModal.addEventListener('click', (e) => {
+        if (e.target === createClubModal) {
+            closeCreateClubModal();
+        }
+    });
+}
+
+if (createClubNameInput && createClubSlugInput) {
+    createClubNameInput.addEventListener('input', () => {
+        if (!createClubSlugInput.dataset.userEdited) {
+            createClubSlugInput.value = slugifyClubName(createClubNameInput.value);
+        }
+    });
+
+    createClubSlugInput.addEventListener('input', () => {
+        createClubSlugInput.dataset.userEdited = createClubSlugInput.value ? 'true' : '';
+        createClubSlugInput.value = slugifyClubName(createClubSlugInput.value);
+    });
+}
+
+if (createClubTypeSelect && createClubStandardNote) {
+    createClubTypeSelect.addEventListener('change', () => {
+        createClubStandardNote.classList.toggle('hidden', createClubTypeSelect.value !== 'standard');
+    });
+}
+
+if (createClubForm) {
+    createClubForm.addEventListener('submit', handleCreateClub);
 }
 
 // --- Notification Bell Logic ---
@@ -1081,40 +1594,118 @@ if (filterYearBtn && filterYearMenu) {
 }
 
 // Ensure login persists
+async function startAuthenticatedHydration(sessionUser, sourceEvent) {
+    const token = ++authHydrationToken;
+    user = sessionUser;
+    isAuthHydrating = true;
+    updateUI();
+
+    try {
+        await fetchUserContext();
+    } finally {
+        if (token !== authHydrationToken) {
+            return;
+        }
+
+        isAuthHydrating = false;
+        hydratedSessionUserId = sessionUser?.id || null;
+        updateUI();
+        applyRoleBasedUI();
+    }
+}
+
+function scheduleAuthenticatedHydration(sessionUser, sourceEvent, delayMs = 0) {
+    const hasResolvedContext =
+        sessionUser?.id &&
+        hydratedSessionUserId === sessionUser.id &&
+        currentActiveClubId != null &&
+        currentClubMemberships.length > 0 &&
+        !isAuthHydrating;
+
+    if (hasResolvedContext) {
+        user = sessionUser;
+        return;
+    }
+
+    if (pendingHydrationTimeoutId && scheduledHydrationUserId === sessionUser?.id) {
+        user = sessionUser;
+        return;
+    }
+
+    if (isAuthHydrating && user?.id === sessionUser?.id) {
+        return;
+    }
+
+    if (pendingHydrationTimeoutId) {
+        window.clearTimeout(pendingHydrationTimeoutId);
+        pendingHydrationTimeoutId = null;
+        scheduledHydrationUserId = null;
+    }
+
+    user = sessionUser;
+    isAuthHydrating = true;
+    updateUI();
+
+    const runHydration = () => {
+        pendingHydrationTimeoutId = null;
+        scheduledHydrationUserId = null;
+        void startAuthenticatedHydration(sessionUser, sourceEvent);
+    };
+
+    if (delayMs > 0) {
+        scheduledHydrationUserId = sessionUser?.id || null;
+        pendingHydrationTimeoutId = window.setTimeout(runHydration, delayMs);
+    } else {
+        runHydration();
+    }
+}
+
 supabase.auth.onAuthStateChange(async (event, session) => {
     console.log('Auth State Change:', event, session ? 'Session active' : 'No session');
 
     // The session object is the source of truth
     if (session?.user) {
-        user = session.user;
-        updateUI(); // load UI immediately
-        fetchUserRole().then(() => {
-            applyRoleBasedUI(); // Refresh UI with specific role gating
-        });
+        scheduleAuthenticatedHydration(session.user, event, event === 'SIGNED_IN' ? 200 : 0);
     } else {
         // No session - treat as signed out
         console.log('No session detected, resetting to guest state');
+        if (pendingHydrationTimeoutId) {
+            window.clearTimeout(pendingHydrationTimeoutId);
+            pendingHydrationTimeoutId = null;
+        }
+        authHydrationToken += 1;
+        scheduledHydrationUserId = null;
+        hydratedSessionUserId = null;
         user = null;
         currentUserRole = null;
+        currentMembershipRole = null;
+        currentActiveClubId = null;
+        currentClubMemberships = [];
+        isAuthHydrating = false;
         updateUI(); // Ensure guest UI is shown and data is cleared
     }
 });
 
-// Fetch user role from user_profiles
+// Fetch user context from user_profiles + multi-club foundation tables
 let userLastSeenAt = null; // Track when user last viewed the app
 
-async function fetchUserRole() {
+async function fetchUserContext() {
     if (!user) return; // Guard: don't fetch if logged out
-    console.log('Fetching user profile/role for:', user.id);
+    console.log('Fetching user context for:', user.id);
 
     try {
-        const { data, error } = await supabase
-            .from('user_profiles')
-            .select('role, last_seen_at')
-            .eq('id', user.id)
-            .single();
+        const { data: profile, error: profileError } = await runQueryWithTimeout(
+            (signal) => supabase
+                .from('user_profiles')
+                .select('role, last_seen_at')
+                .eq('id', user.id)
+                .abortSignal(signal)
+                .single()
+        );
 
-        if (error && error.code === 'PGRST116') {
+        let legacyRole = null;
+
+        if (profileError && profileError.code === 'PGRST116') {
             // Profile doesn't exist, create it (member role)
             await supabase
                 .from('user_profiles')
@@ -1123,12 +1714,110 @@ async function fetchUserRole() {
                     display_name: user.email?.split('@')[0] || 'User',
                     role: 'member' // Explicit member role
                 });
-            currentUserRole = null;
             userLastSeenAt = null;
-        } else if (data) {
-            currentUserRole = data.role; // 'admin' or null
-            userLastSeenAt = data.last_seen_at; // Store for "new changes" comparison
+        } else if (profile) {
+            legacyRole = profile.role;
+            userLastSeenAt = profile.last_seen_at;
+        } else if (profileError) {
+            throw profileError;
         }
+        currentLegacyRole = legacyRole;
+
+        let memberships = [];
+        let preferredClubId = null;
+        let defaultClubId = null;
+
+        try {
+            const { data: membershipsData, error: membershipsError } = await runQueryWithTimeout(
+                (signal) => supabase
+                    .from('club_memberships')
+                    .select('club_id, role, status')
+                    .eq('user_id', user.id)
+                    .eq('status', 'active')
+                    .order('club_id', { ascending: true })
+                    .abortSignal(signal)
+            );
+
+            if (membershipsError) throw membershipsError;
+            memberships = membershipsData || [];
+
+            if (memberships.length > 0) {
+                const membershipClubIds = memberships.map(membership => membership.club_id);
+                const { data: clubsData, error: clubsError } = await runQueryWithTimeout(
+                    (signal) => supabase
+                        .from('clubs')
+                        .select('id, name, slug, club_type, is_archived')
+                        .in('id', membershipClubIds)
+                        .eq('is_archived', false)
+                        .abortSignal(signal)
+                );
+
+                if (clubsError) throw clubsError;
+
+                const clubMap = new Map((clubsData || []).map(club => [club.id, club]));
+                memberships = memberships
+                    .map(membership => {
+                        const club = clubMap.get(membership.club_id);
+                        if (!club) return null;
+                        return {
+                            ...membership,
+                            club_name: club.name,
+                            club_slug: club.slug,
+                            club_type: club.club_type
+                        };
+                    })
+                    .filter(Boolean);
+            }
+
+            const { data: preferencesData, error: preferencesError } = await runQueryWithTimeout(
+                (signal) => supabase
+                    .from('user_preferences')
+                    .select('active_club_id')
+                    .eq('user_id', user.id)
+                    .abortSignal(signal)
+                    .maybeSingle()
+            );
+
+            if (preferencesError) throw preferencesError;
+            preferredClubId = preferencesData?.active_club_id ?? null;
+
+            const { data: defaultClubData, error: defaultClubError } = await runQueryWithTimeout(
+                (signal) => supabase
+                    .from('clubs')
+                    .select('id, name, slug, club_type')
+                    .eq('club_type', 'standard')
+                    .eq('is_archived', false)
+                    .order('created_at', { ascending: true })
+                    .limit(1)
+                    .abortSignal(signal)
+            );
+
+            if (defaultClubError) throw defaultClubError;
+            defaultClubId = defaultClubData?.[0]?.id ?? null;
+
+            if (memberships.length === 0 && defaultClubData?.[0]) {
+                memberships = [{
+                    club_id: defaultClubData[0].id,
+                    role: legacyRole === 'admin' ? 'admin' : 'member',
+                    status: 'active',
+                    club_name: defaultClubData[0].name,
+                    club_slug: defaultClubData[0].slug,
+                    club_type: defaultClubData[0].club_type
+                }];
+            }
+        } catch (membershipError) {
+            console.warn('Could not load club-aware context; falling back to single-club behavior.', membershipError);
+        }
+
+        currentClubMemberships = [...memberships].sort((a, b) => (a.club_name || '').localeCompare(b.club_name || ''));
+
+        const activeMembership =
+            memberships.find(membership => membership.club_id === preferredClubId) ||
+            memberships[0] ||
+            null;
+
+        currentActiveClubId = activeMembership?.club_id ?? preferredClubId ?? defaultClubId;
+        syncCurrentUserRole();
 
         const touchedAt = await touchUserLastSeen();
         if (touchedAt) {
@@ -1136,17 +1825,20 @@ async function fetchUserRole() {
         }
 
     } catch (e) {
-        console.error('Error fetching user role:', e);
+        console.error('Error fetching user context:', e);
         currentUserRole = null;
+        currentLegacyRole = null;
+        currentMembershipRole = null;
+        currentActiveClubId = null;
+        currentClubMemberships = [];
     }
 }
 
 // Check initial session (fallback if onAuthStateChange doesn't fire)
-supabase.auth.getSession().then(({ data: { session } }) => {
+supabase.auth.getSession().then(async ({ data: { session } }) => {
     // Only initialize if not already done by onAuthStateChange
     if (!user && session?.user) {
-        user = session.user;
-        updateUI(); // updateUI calls fetchSavedBooks internally
+        scheduleAuthenticatedHydration(session.user, 'GET_SESSION');
     } else if (!user && !session) {
         // No session, show login
         updateUI();
@@ -1226,6 +1918,7 @@ async function performSearch() {
     resultsGrid.innerHTML = '<p class="text-center col-span-full text-stone-500">Searching Google Books...</p>';
 
     try {
+        await waitForAuthHydration();
         const data = await fetchBooksFromProxy({ q: query, langRestrict: 'en', maxResults: 12 });
 
         resultsGrid.innerHTML = '';
@@ -1247,8 +1940,10 @@ async function performSearch() {
         console.error('Search error:', error);
         if (error.status === 429) {
             resultsGrid.innerHTML = '<p class="text-center col-span-full text-red-500">Search is temporarily rate-limited. Please try again in a few minutes.</p>';
+        } else if (error.status === 401 || String(error.message || '').toLowerCase().includes('session')) {
+            resultsGrid.innerHTML = '<p class="text-center col-span-full text-red-500">Your session is still loading or expired. Please sign in again or try once more in a moment.</p>';
         } else {
-            resultsGrid.innerHTML = '<p class="text-center col-span-full text-red-500">Error searching books. Please try again.</p>';
+            resultsGrid.innerHTML = `<p class="text-center col-span-full text-red-500">${escapeHtml(error.message || 'Error searching books. Please try again.')}</p>`;
         }
     }
 
@@ -1928,16 +2623,10 @@ function openModal(book, savedData = null) {
             // Disable Status dropdown for members
             if (editStatus) {
                 editStatus.disabled = !isAdmin;
-                // Add visual indicator for members
                 const statusLabel = editStatus.previousElementSibling;
                 if (statusLabel && statusLabel.tagName === 'LABEL') {
                     const adminOnlyBadge = statusLabel.querySelector('.admin-only-badge');
-                    if (!isAdmin && !adminOnlyBadge) {
-                        const badge = document.createElement('span');
-                        badge.className = 'admin-only-badge text-xs text-stone-400 ml-2';
-                        badge.textContent = '(admin only)';
-                        statusLabel.appendChild(badge);
-                    } else if (isAdmin && adminOnlyBadge) {
+                    if (adminOnlyBadge) {
                         adminOnlyBadge.remove();
                     }
                 }
@@ -2242,7 +2931,7 @@ async function updateBook(id, googleBook) {
             .from('book_club_list')
             .select('title, host_name, target_date, meeting_time, status')
             .eq('id', id)
-            .single();
+            .maybeSingle();
 
         const updates = {
             status: editStatus.value || 'Saved',
@@ -2256,10 +2945,14 @@ async function updateBook(id, googleBook) {
             last_modified_at: new Date().toISOString()
         };
 
-        const { error } = await supabase
+        let updateQuery = supabase
             .from('book_club_list')
             .update(updates)
             .eq('id', id);
+
+        updateQuery = applyActiveClubFilter(updateQuery);
+
+        const { error } = await updateQuery;
 
         if (error) throw error;
         await ensureScheduleChangesExist({
@@ -2291,6 +2984,7 @@ async function ensureScheduleChangesExist({ bookId, currentBook, updates }) {
     if ((currentBook.host_name || '') !== (updates.host_name || '')) {
         desiredChanges.push({
             book_id: bookId,
+            club_id: currentActiveClubId,
             book_title: currentBook.title,
             change_type: 'host',
             old_value: currentBook.host_name || '(none)',
@@ -2302,6 +2996,7 @@ async function ensureScheduleChangesExist({ bookId, currentBook, updates }) {
     if ((currentBook.target_date || '') !== (updates.target_date || '')) {
         desiredChanges.push({
             book_id: bookId,
+            club_id: currentActiveClubId,
             book_title: currentBook.title,
             change_type: 'date',
             old_value: currentBook.target_date || '(none)',
@@ -2313,6 +3008,7 @@ async function ensureScheduleChangesExist({ bookId, currentBook, updates }) {
     if ((currentBook.meeting_time || '') !== (updates.meeting_time || '')) {
         desiredChanges.push({
             book_id: bookId,
+            club_id: currentActiveClubId,
             book_title: currentBook.title,
             change_type: 'time',
             old_value: currentBook.meeting_time || '(none)',
@@ -2324,11 +3020,15 @@ async function ensureScheduleChangesExist({ bookId, currentBook, updates }) {
     if (desiredChanges.length === 0) return;
 
     const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
-    const { data: recentChanges, error: recentError } = await supabase
+    let recentChangesQuery = supabase
         .from('schedule_changes')
         .select('book_id, change_type, old_value, new_value, created_at')
         .eq('book_id', Number(bookId))
         .gte('created_at', twoMinutesAgo);
+
+    recentChangesQuery = applyActiveClubFilter(recentChangesQuery);
+
+    const { data: recentChanges, error: recentError } = await recentChangesQuery;
 
     if (recentError) {
         console.warn('Could not check recent schedule changes; falling back to direct insert.', recentError);
@@ -2376,10 +3076,14 @@ async function deleteBook(id) {
         }
         console.log(`Attempting to delete book with ID: ${numericId}`);
 
-        const { error } = await supabase
+        let deleteQuery = supabase
             .from('book_club_list')
             .delete()
             .eq('id', numericId);
+
+        deleteQuery = applyActiveClubFilter(deleteQuery);
+
+        const { error } = await deleteQuery;
 
         if (error) throw error;
 
@@ -2474,10 +3178,14 @@ async function removeTagFromCard(e, bookId, tag) {
 
     const newTags = (book.tags || []).filter(t => t !== decodedTag);
 
-    const { error } = await supabase
+    let tagUpdateQuery = supabase
         .from('book_club_list')
         .update({ tags: newTags })
         .eq('id', bookId);
+
+    tagUpdateQuery = applyActiveClubFilter(tagUpdateQuery);
+
+    const { error } = await tagUpdateQuery;
 
     if (error) {
         console.error('Error removing tag:', error);
@@ -3581,6 +4289,7 @@ saveImportBtn.addEventListener('click', async () => {
         const tags = tagsString.split(',').map(t => t.trim()).filter(t => t);
 
         booksToSave.push({
+            club_id: currentActiveClubId,
             title: book.volumeInfo.title,
             author: (book.volumeInfo.authors || [book.parsedAuthor || 'Unknown']).join(', '),
             google_data: book,
@@ -3603,6 +4312,7 @@ saveImportBtn.addEventListener('click', async () => {
             const tags = tagsString.split(',').map(t => t.trim()).filter(t => t);
 
             booksToSave.push({
+                club_id: currentActiveClubId,
                 title: book.volumeInfo.title,
                 author: (book.volumeInfo.authors || [item.parsedAuthor || 'Unknown']).join(', '),
                 google_data: book,
@@ -3681,7 +4391,9 @@ saveImportBtn.addEventListener('click', async () => {
 let currentView = 'grid'; // 'grid' or 'table'
 
 
-refreshSavedBtn.addEventListener('click', fetchSavedBooks);
+if (refreshSavedBtn) {
+    refreshSavedBtn.addEventListener('click', fetchSavedBooks);
+}
 
 viewGridBtn.addEventListener('click', () => switchView('grid'));
 viewTableBtn.addEventListener('click', () => switchView('table'));
@@ -3714,17 +4426,53 @@ function switchView(view) {
     applyFilters();
 }
 
+function updateNavActiveState(sectionName) {
+    const navMap = {
+        dashboard: navLinkDashboard,
+        search: navLinkSearch,
+        library: navLinkLibrary
+    };
+
+    Object.entries(navMap).forEach(([name, link]) => {
+        if (!link) return;
+        const isActive = name === sectionName;
+        link.classList.toggle('bg-stone-50', isActive);
+        link.classList.toggle('text-stone-900', isActive);
+        link.classList.toggle('shadow-sm', isActive);
+        link.classList.toggle('text-stone-500', !isActive);
+    });
+}
+
 async function fetchSavedBooks() {
     if (!user) return; // Guard: don't fetch if logged out
-    const startTime = performance.now();
 
-    refreshSavedBtn.textContent = 'Loading...';
-    refreshSavedBtn.disabled = true;
+    if (refreshSavedBtn) {
+        refreshSavedBtn.textContent = 'Loading...';
+        refreshSavedBtn.disabled = true;
+    }
 
-    const { data, error } = await supabase
+    if (currentActiveClubId == null) {
+        allSavedBooks = [];
+        savedBookIds.clear();
+        updateYearFilterOptions();
+        updateTagFilterOptions();
+        applyFilters();
+        renderDashboard();
+        if (refreshSavedBtn) {
+            refreshSavedBtn.textContent = 'Refresh';
+            refreshSavedBtn.disabled = false;
+        }
+        return;
+    }
+
+    let booksQuery = supabase
         .from('book_club_list')
         .select('*')
         .order('created_at', { ascending: false });
+
+    booksQuery = applyActiveClubFilter(booksQuery);
+
+    const { data, error } = await booksQuery;
 
     if (error) {
         console.error('Error fetching saved books:', error);
@@ -3750,8 +4498,10 @@ async function fetchSavedBooks() {
         renderDashboard(); // Also update dashboard when books are fetched
     }
 
-    refreshSavedBtn.textContent = 'Refresh';
-    refreshSavedBtn.disabled = false;
+    if (refreshSavedBtn) {
+        refreshSavedBtn.textContent = 'Refresh';
+        refreshSavedBtn.disabled = false;
+    }
 }
 
 function updateYearFilterOptions() {
@@ -3944,6 +4694,15 @@ function showSection(sectionName) {
         dashboardSection.classList.remove('hidden');
         renderDashboard();
     }
+
+    updateNavActiveState(sectionName);
+}
+
+function openSearchSectionAndFocus() {
+    showSection('search');
+    window.requestAnimationFrame(() => {
+        searchInput?.focus();
+    });
 }
 
 // Handle Navigation Links (only internal section links, not external links)
@@ -3979,10 +4738,14 @@ async function exportLibrary() {
         exportBtn.disabled = true;
 
         // Fetch ALL data from the single source of truth
-        const { data, error } = await supabase
+        let exportQuery = supabase
             .from('book_club_list')
             .select('*')
             .order('created_at', { ascending: true });
+
+        exportQuery = applyActiveClubFilter(exportQuery);
+
+        const { data, error } = await exportQuery;
 
         if (error) throw error;
 
@@ -4382,17 +5145,28 @@ async function renderNotifications() {
     if (!notificationsList || !notificationsEmpty || !notificationsBadge) return;
 
     try {
+        if (!user || currentActiveClubId == null) {
+            notificationsList.classList.add('hidden');
+            notificationsEmpty.classList.remove('hidden');
+            notificationsBadge.classList.add('hidden');
+            return;
+        }
+
         // Fetch changes from last 14 days
         const fourteenDaysAgo = new Date();
         fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
 
         // Fetch all changes
-        const { data: allChanges, error } = await supabase
+        let notificationsQuery = supabase
             .from('schedule_changes')
             .select('*')
             .gte('created_at', fourteenDaysAgo.toISOString())
             .order('created_at', { ascending: false })
             .limit(50);
+
+        notificationsQuery = applyActiveClubFilter(notificationsQuery);
+
+        const { data: allChanges, error } = await notificationsQuery;
 
         if (error) {
             console.error('Error fetching notifications:', error);
@@ -4805,6 +5579,7 @@ async function saveBook(button, bookData) {
             .from('book_club_list')
             .insert([
                 {
+                    club_id: currentActiveClubId,
                     title: info.title,
                     author: info.authors ? info.authors.join(', ') : 'Unknown',
                     google_data: bookData,
@@ -5029,10 +5804,12 @@ async function syncBookStatuses(books) {
             for (let i = 0; i < updates.length; i += CHUNK_SIZE) {
                 const chunk = updates.slice(i, i + CHUNK_SIZE);
                 await Promise.all(chunk.map(update =>
-                    supabase
+                    applyActiveClubFilter(
+                        supabase
                         .from('book_club_list')
                         .update({ status: update.status })
                         .eq('id', update.id)
+                    )
                 ));
             }
             console.log('Status sync complete.');
@@ -5249,7 +6026,14 @@ Rules:
 
         // Update DB
         if (currentDiscussionBook.id) {
-            await supabase.from('book_club_list').update({ discussion_questions: questions }).eq('id', currentDiscussionBook.id);
+            let discussionUpdateQuery = supabase
+                .from('book_club_list')
+                .update({ discussion_questions: questions })
+                .eq('id', currentDiscussionBook.id);
+
+            discussionUpdateQuery = applyActiveClubFilter(discussionUpdateQuery);
+
+            await discussionUpdateQuery;
         }
 
         // Refresh UI
@@ -5377,10 +6161,14 @@ async function saveDiscussionQuestions() {
     saveBtn.disabled = true;
 
     try {
-        const { error } = await supabase
+        let questionsUpdateQuery = supabase
             .from('book_club_list')
             .update({ discussion_questions: newQuestions })
             .eq('id', currentDiscussionBook.id);
+
+        questionsUpdateQuery = applyActiveClubFilter(questionsUpdateQuery);
+
+        const { error } = await questionsUpdateQuery;
 
         if (error) throw error;
 
