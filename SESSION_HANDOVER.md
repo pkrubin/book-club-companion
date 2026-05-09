@@ -29,20 +29,50 @@ Instead of rigid rules, we use adaptive, resilient protocols:
 ---
 
 ## Current State
-- **Version:** 1.9.10 deployed on `test` / `prod`
-- **Pending Version:** 1.9.11 on `codex/app-club-awareness-testready`
-- **Branch:** `test` remains the deployment branch; current prep branch is `codex/app-club-awareness-testready`
-- **Last deployment:** PROD (v1.9.10) on 2026-05-03
+- **Version:** 1.9.15 deployed on `test` / `prod`
+- **Prod commit:** `75000d9` (`Merge test v1.9.15 into main`)
+- **Test line:** current `origin/test` carries the `v1.9.15` app behavior plus post-promotion docs updates
+- **Branch:** `test` remains the deployment branch
+- **Last deployment:** PROD (v1.9.15) on 2026-05-09
+- **Current product shape:** multi-club is live; sandbox clubs are available for testing
 
 ## Current Canonical Multi-Club Work
-- **Canonical branch:** `codex/app-club-awareness-testready`
-- **Canonical worktree:** `/private/tmp/book-club-app-club-testready`
-- **Canonical preview URL:** `http://127.0.0.1:8080`
-- **Detached preview rule:** loose `/private/tmp/...` preview copies are disposable unless reconciled back into the canonical worktree the same session
+- **Canonical branch:** `test`
+- **Recommended starting point:** a fresh worktree from current `origin/test`
+- **Current production branch:** `main` at `75000d9`
+- **Detached preview rule:** loose `/private/tmp/...` preview copies are disposable unless reconciled back into the canonical Git-backed worktree the same session
+- **Do not use old `codex/app-club-awareness*` worktrees as the source of truth.**
 
 ---
 
 ## Session Log
+
+### Session: May 9, 2026 (Release Reconciliation & Multi-Club Promotion)
+**Started:** 2026-05-09
+**Ended:** 2026-05-09
+
+**Deployments:**
+- v1.9.11 through v1.9.15 promoted to PROD in one reconciled release
+
+**Work Completed:**
+- **Release reconciliation:**
+  - Confirmed `origin/main` / prod had been left at `v1.9.10` while `origin/test` had advanced to `v1.9.15`.
+  - Confirmed the shared database mismatch risk between old prod and live multi-club test.
+  - Created `docs/RELEASE_STATE.md` as the canonical release/status inventory.
+- **Release bookkeeping:**
+  - Fixed `RELEASE_LOG.md` so `v1.9.15` points to the actual test release commit `eb28e2a`.
+  - Preserved the pre-promotion prod rollback anchor at `8fcbaff`.
+- **Production promotion:**
+  - Promoted reconciled `test` to `main` with merge commit `75000d9`.
+  - User confirmed success after production verification.
+
+**Database Changes:**
+- No new database change was applied in this session.
+- Shared multi-club database behavior was confirmed to already be working correctly on `test` before promotion.
+
+**Issues Resolved:**
+- Removed the old prod/test shared-database mismatch by bringing prod up to the multi-club release line.
+- Replaced stale release assumptions with an explicit release-state document and updated release bookkeeping.
 
 ### Session: Jan 12, 2026 (Adaptive Precision Overhaul)
 **Started:** 2026-01-12
@@ -172,7 +202,7 @@ Instead of rigid rules, we use adaptive, resilient protocols:
 ## Known Issues / In Progress
 - [ ] Rule-based tagging: "New York" incorrectly added from bestseller references
 - [ ] Tag deletion UI may have issues with garbage tags from earlier versions
-- [ ] Multi-book-club support (Phase 3 - future)
+- [ ] Documentation drift remains a recurring risk after releases; update `RELEASE_LOG.md`, `SESSION_HANDOVER.md`, and `AGENTS.md` promptly
 - [ ] Consider VIEW approach for user_profiles when email/phone added later
 - [x] ~~**Host Alerts**: Build notifications when a host claims a month or changes a meeting time~~ (Completed v1.9.5 - "Recent Changes" dropdown)
 
@@ -181,12 +211,13 @@ Instead of rigid rules, we use adaptive, resilient protocols:
 ## Database Reference
 
 ### user_profiles table
-- **Columns:** id, display_name, role, created_at
+- **Columns:** id, display_name, role, created_at, last_seen_at
 - **role constraint:** `CHECK (role IN ('admin', 'member') OR role IS NULL)`
 - **RLS:** Users can only read their OWN profile (kept restrictive by design)
 
 ### book_club_list table  
-- **status constraint:** `CHECK (status IN ('Priority', 'Possible', 'Later', 'Deprioritize', 'Read', 'Proposed', 'Scheduled', 'Test'))`
+- **status constraint:** `CHECK (status IN ('Priority', 'Possible', 'Later', 'Deprioritize', 'Read', 'Proposed', 'Saved', 'Scheduled', 'Test'))`
+- **club-scoping:** live multi-club rollout uses `club_id`
 
 ---
 

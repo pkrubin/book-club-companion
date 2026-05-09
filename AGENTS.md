@@ -9,14 +9,15 @@ If any other repo doc conflicts with this file, follow `AGENTS.md` first, then u
 Book Club Companion is a **book club management tool**, not a personal reading tracker.
 
 Current product shape:
-- single live club in production
+- multi-club is live in both `test` and `prod`
 - member/admin workflows
 - shared Supabase database across `test` and `prod`
+- sandbox clubs are available for testing
 
 Future direction:
-- multi-book-club support
-- per-club memberships/roles
-- sandbox club for testing
+- richer per-club membership and role management
+- fuller club lifecycle tooling
+- broader platform-owner workflows
 
 ## Canonical Supporting Docs
 
@@ -197,7 +198,8 @@ Do not click through auth walls.
 ## Data Safety Rules
 
 If testing changes real data:
-- prefer books with status `Test` until sandbox clubs exist
+- prefer sandbox clubs first for destructive or ambiguous testing
+- within any club, prefer books with status `Test`
 - never casually modify important live `Scheduled` books
 - always include cleanup instructions for test data
 
@@ -206,7 +208,7 @@ If testing changes real data:
 - `RELEASE_LOG.md` is now required, not optional
 - version bumps have been missed in the past; watch this carefully
 - `user_profiles.role` is legacy and should not remain the long-term auth source
-- the app is moving toward club-scoped data and a sandbox-club model
+- the app now relies on live club-scoped data and sandbox clubs in the shared database
 
 ## Database Reference
 
@@ -219,9 +221,13 @@ If a task depends on a table or column not listed here:
 ### Current live/shared-database tables
 Confirmed current table names used by the app and seen in the live project:
 - `public.book_club_list`
+- `public.club_memberships`
+- `public.club_settings`
+- `public.clubs`
 - `public.invite_codes`
 - `public.schedule_changes`
 - `public.user_dismissed_notifications`
+- `public.user_preferences`
 - `public.user_profiles`
 
 ### Confirmed current columns
@@ -230,6 +236,7 @@ Only rely on these names without re-checking:
 #### `public.book_club_list`
 Confirmed in repo schema and app code:
 - `id`
+- `club_id`
 - `created_at`
 - `title`
 - `author`
@@ -255,6 +262,7 @@ Confirmed in app code:
 #### `public.schedule_changes`
 Confirmed in app code and rollout SQL:
 - `id`
+- `club_id`
 - `book_id`
 - `book_title`
 - `change_type`
@@ -276,20 +284,43 @@ Confirmed in app code and rollout SQL:
 - `created_at`
 - `last_seen_at`
 
-### Planned multi-club tables
-These are part of the planned foundation design and should not be treated as live until the migration is merged and applied:
-- `public.clubs`
-- `public.club_settings`
-- `public.club_memberships`
+#### `public.clubs`
+Confirmed in app code:
+- `id`
+- `name`
+- `slug`
+- `description`
+- `club_type`
+- `is_archived`
+- `created_source`
+- `created_by`
+- `created_at`
+
+#### `public.club_settings`
+Confirmed in app code:
+- `club_id`
+- `default_timezone`
+- `updated_by`
+
+#### `public.club_memberships`
+Confirmed in app code:
+- `club_id`
+- `user_id`
+- `role`
+- `status`
+- `membership_source`
+- `created_by`
+
+#### `public.user_preferences`
+Confirmed in app code:
+- `user_id`
+- `active_club_id`
+
+### Additional multi-club tables not yet confirmed as live requirements
+Do not assume these are required for the current app unless the task proves it:
 - `public.platform_roles`
 - `public.club_invites`
 - `public.club_invite_consumptions`
-- `public.user_preferences`
-
-### Planned multi-club columns on existing tables
-These are planned, not live by default:
-- `public.book_club_list.club_id`
-- `public.schedule_changes.club_id`
 
 ## When in Doubt
 
