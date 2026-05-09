@@ -174,7 +174,7 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
 
 ## 2026-05-09 - Sandbox Search Auth Refresh
 - Version: `v1.9.13`
-- Test commit: `pending`
+- Test commit: `db84901`
 - Prod commit: `not yet`
 - Environments: `test`
 - User-facing changes:
