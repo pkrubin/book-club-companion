@@ -150,3 +150,24 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
 - Rollback:
   - Code: revert before this release on `test`
   - Database: not applicable
+
+## 2026-05-09 - Sandbox First-Search Reliability
+- Version: `v1.9.12`
+- Test commit: `pending`
+- Prod commit: `not yet`
+- Environments: `test`
+- User-facing changes:
+  - Search now waits for auth hydration before the first protected `/api/books` request.
+  - The first books search retries one `401` once before surfacing an error.
+  - Search now shows a session-specific message when auth/session readiness is the likely cause.
+- Operational changes:
+  - Database / SQL:
+    - none
+  - Branch / deployment notes:
+    - targeted reliability fix for the sandbox-club first-search failure after hard refresh
+- Validation:
+  - user reproduced the failure after hard refresh in sandbox on `test`
+  - fix validated with code review and targeted runtime guard changes before deployment
+- Rollback:
+  - Code: revert before this release on `test`
+  - Database: not applicable

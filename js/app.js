@@ -1,5 +1,5 @@
 // --- Configuration ---
-const APP_VERSION = '1.9.11'; // Multi-club app awareness and sandbox switching
+const APP_VERSION = '1.9.12'; // Sandbox search hydration reliability fix
 
 // --- Gemini AI Configuration ---
 // Uses /api/gemini serverless function for secure API calls
@@ -107,6 +107,25 @@ async function runQueryWithTimeout(queryFactory, timeoutMs = 5000) {
         ]);
     } finally {
         timeout.clear();
+    }
+}
+
+function sleep(ms) {
+    return new Promise(resolve => window.setTimeout(resolve, ms));
+}
+
+async function waitForAuthHydration(timeoutMs = 2500) {
+    const start = Date.now();
+
+    while (isAuthHydrating) {
+        if (Date.now() - start >= timeoutMs) {
+            throw new Error('Your session is still loading. Please try again in a moment.');
+        }
+        await sleep(100);
+    }
+
+    if (!user?.id) {
+        throw new Error('You must be signed in to use this feature. Please log in again.');
     }
 }
 
@@ -1862,7 +1881,13 @@ async function fetchBooksFromProxy({ q, langRestrict = 'en', maxResults = 12, st
 
     if (langRestrict) params.set('langRestrict', langRestrict);
 
-    const response = await fetchWithSession(`${BOOKS_PROXY_URL}?${params.toString()}`);
+    let response = await fetchWithSession(`${BOOKS_PROXY_URL}?${params.toString()}`);
+
+    if (response.status === 401) {
+        await sleep(300);
+        response = await fetchWithSession(`${BOOKS_PROXY_URL}?${params.toString()}`);
+    }
+
     const data = await response.json();
 
     if (!response.ok) {
@@ -1886,6 +1911,7 @@ async function performSearch() {
     resultsGrid.innerHTML = '<p class="text-center col-span-full text-stone-500">Searching Google Books...</p>';
 
     try {
+        await waitForAuthHydration();
         const data = await fetchBooksFromProxy({ q: query, langRestrict: 'en', maxResults: 12 });
 
         resultsGrid.innerHTML = '';
@@ -1907,6 +1933,8 @@ async function performSearch() {
         console.error('Search error:', error);
         if (error.status === 429) {
             resultsGrid.innerHTML = '<p class="text-center col-span-full text-red-500">Search is temporarily rate-limited. Please try again in a few minutes.</p>';
+        } else if (error.status === 401 || String(error.message || '').toLowerCase().includes('session')) {
+            resultsGrid.innerHTML = '<p class="text-center col-span-full text-red-500">Your session is still loading or expired. Please sign in again or try once more in a moment.</p>';
         } else {
             resultsGrid.innerHTML = '<p class="text-center col-span-full text-red-500">Error searching books. Please try again.</p>';
         }
