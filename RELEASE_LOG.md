@@ -34,8 +34,8 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
 ## 2026-05-09 - Library Refresh Button Removal
 - Version: `v1.9.15`
 - Test commit: `eb28e2a`
-- Prod commit: `not yet`
-- Environments: `test`
+- Prod commit: `75000d9`
+- Environments: `test`, `prod`
 - User-facing changes:
   - Removed the redundant `Refresh` button from the library toolbar.
 - Operational changes:
@@ -45,6 +45,7 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
     - Library loading continues through the existing startup, save, import, edit, delete, and club-switch flows.
 - Validation:
   - Local served app on `8080` loaded the library normally without the button.
+  - Promoted to `prod` successfully on 2026-05-09 as part of the reconciled multi-club release.
 - Rollback:
   - Code: restore the removed toolbar button and direct reload wiring
   - Database: not applicable
@@ -148,8 +149,8 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
 ## 2026-05-08 - Multi-Club App Awareness For Sandbox Testing
 - Version: `v1.9.11`
 - Test commit: `b29d51a`
-- Prod commit: `not yet`
-- Environments: `test`
+- Prod commit: `75000d9`
+- Environments: `test`, `prod`
 - User-facing changes:
   - Added app-side active-club awareness for the current seeded club and sandbox clubs.
   - Added a current-club switcher in the header with sandbox badges and active navigation styling.
@@ -172,8 +173,8 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
 ## 2026-05-09 - Sandbox First-Search Reliability
 - Version: `v1.9.12`
 - Test commit: `c44b157`
-- Prod commit: `not yet`
-- Environments: `test`
+- Prod commit: `75000d9`
+- Environments: `test`, `prod`
 - User-facing changes:
   - Search now waits for auth hydration before the first protected `/api/books` request.
   - The first books search retries one `401` once before surfacing an error.
@@ -193,8 +194,8 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
 ## 2026-05-09 - Sandbox Search Auth Refresh
 - Version: `v1.9.13`
 - Test commit: `db84901`
-- Prod commit: `not yet`
-- Environments: `test`
+- Prod commit: `75000d9`
+- Environments: `test`, `prod`
 - User-facing changes:
   - Protected search requests now force a Supabase session refresh after a `401` before surfacing failure.
   - Search now shows the underlying API error message instead of collapsing everything into a generic failure.
@@ -213,8 +214,8 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
 ## 2026-05-09 - Google Books Transient Retry
 - Version: `v1.9.14`
 - Test commit: `872400c`
-- Prod commit: `not yet`
-- Environments: `test`
+- Prod commit: `75000d9`
+- Environments: `test`, `prod`
 - User-facing changes:
   - Search now retries transient Google Books upstream failures (`502`, `503`, `504`) inside the server-side proxy before surfacing an error.
 - Operational changes:

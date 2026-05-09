@@ -33,18 +33,20 @@
 - Make book selection and scheduling easier
 - Dashboard, Library, Search, Discussion Guides ✅ Built
 
-**Phase 2 (Future - Member Features):**
+**Phase 2 (Current - Member & Club Features):**
 - Members log in and see books on schedule
 - Download discussion guides
 - Add meetings to calendar
 - Suggest books (saved as "Proposed")
+- Switch between clubs
+- Use sandbox clubs for testing
 
-**Phase 3 (Future - Full Admin):**
+**Phase 3 (Future - Deeper Admin & Platform Tools):**
 - Import/export functionality
 - Set schedules
-- Manage members (add, remove, align to clubs)
-- Multi-book-club support
-- Create/delete book clubs
+- Expand member management and club-role workflows
+- Mature invite / club lifecycle tooling
+- Broader platform-owner controls
 
 ### What This Is NOT
 - ❌ NOT a personal book tracker (like Goodreads)
@@ -67,7 +69,7 @@
 
 ### Golden Rule of Testing
 **Human logs in, AI tests afterward. Localhost first, then promote.**
-- **DATA SAFETY**: If a test involves changing data (Update, Delete, Create), use ONLY books with the status **'Test'**. Never modify production data (e.g., 'Scheduled', 'Saved' books) for testing.
+- **DATA SAFETY**: If a test involves changing data (Update, Delete, Create), prefer a **sandbox club** and books with the status **'Test'**. Never modify production data (e.g., 'Scheduled', 'Saved' books) for testing.
 - **AUDIT LOGS**: Maintain a session audit log for ALL data changes performed (as an artifact or in the walkthrough).
 - **EXPLICIT CLEANUP**: Every test plan must include specific instructions for cleaning up test data at the end.
 - **VERIFY BEFORE PUSH**: After editing, pause for localhost verification before promotion work.
