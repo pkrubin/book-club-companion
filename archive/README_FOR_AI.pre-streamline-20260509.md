@@ -1,0 +1,257 @@
+# 🚨 AI SESSION QUICK START - READ THIS FIRST
+
+> **Canonical repo instructions now live in `AGENTS.md`. Read that first, then use this file as supporting detail.**
+
+> ⛔ **STOP!** Before doing ANYTHING, you MUST run the `/pre-flight` workflow.
+> 1. Type: `/pre-flight`
+> 2. Confirm your understanding of the rules.
+> 3. **DO NOT run any other tools** until pre-flight is complete.
+
+## 📋 Session Handover (READ FIRST!)
+
+**Read `SESSION_HANDOVER.md` immediately** - it contains:
+- Current version and recent deployments
+- What was worked on in recent sessions
+- Known issues and in-progress items
+- Database state and design decisions
+- What NOT to change without asking
+
+**Repo instruction note:** The canonical repo instruction file is `AGENTS.md`. Use this file and `DEPLOYMENT_GUIDE.md` as supporting detail.
+
+> **At END of every session:** Update SESSION_HANDOVER.md with what was accomplished in the session.
+
+---
+
+## What Is This App?
+
+**Book Club Companion** is a **book club management tool** (NOT a personal tracker like Goodreads).
+
+### Purpose & Vision
+
+**Phase 1 (Current - Admin Tools):**
+- Simplify the administrator's work to import, tag, and rate books
+- Make book selection and scheduling easier
+- Dashboard, Library, Search, Discussion Guides ✅ Built
+
+**Phase 2 (Current - Member & Club Features):**
+- Members log in and see books on schedule
+- Download discussion guides
+- Add meetings to calendar
+- Suggest books (saved as "Proposed")
+- Switch between clubs
+- Use sandbox clubs for testing
+
+**Phase 3 (Future - Deeper Admin & Platform Tools):**
+- Import/export functionality
+- Set schedules
+- Expand member management and club-role workflows
+- Mature invite / club lifecycle tooling
+- Broader platform-owner controls
+
+### What This Is NOT
+- ❌ NOT a personal book tracker (like Goodreads)
+- ❌ NOT a reading journal
+- ✅ IS a book CLUB management tool for GROUPS
+
+---
+
+## ⭐ The Three Golden Rules
+
+### Golden Rule of Development
+**Safety first. Small incremental changes. One thing at a time.**
+- This file is context. `AGENTS.md` is policy.
+- Make one small change at a time.
+- Test it in a served environment first.
+- Avoid massive bundled edits.
+
+**Detailed best practices** (silent failure avoidance, no hardcoding, logging, etc.):
+→ See `project_guidelines.md` "Development Protocols & Lessons Learned" section
+
+### Golden Rule of Testing
+**Human logs in, AI tests afterward. Localhost first, then promote.**
+- **DATA SAFETY**: If a test involves changing data (Update, Delete, Create), prefer a **sandbox club** and books with the status **'Test'**. Never modify production data (e.g., 'Scheduled', 'Saved' books) for testing.
+- **AUDIT LOGS**: Maintain a session audit log for ALL data changes performed (as an artifact or in the walkthrough).
+- **EXPLICIT CLEANUP**: Every test plan must include specific instructions for cleaning up test data at the end.
+- **VERIFY BEFORE PUSH**: After editing, pause for localhost verification before promotion work.
+- **THE ACTIVE TAB PROTOCOL**: Always prioritize the tab currently focused by the user (marked `[ACTIVE]` in `browser_state`). Re-use this tab whenever possible to stay within the Human's authenticated session.
+- **CONTENT SIGNALING (MANDATORY)**: You MUST describe the visible UI of your selected tab (e.g., "I see the Dashboard with one book scheduled for April"). This ensures you and the user are looking at the same thing.
+- **HARD STOP: REDIRECT DETECTION**: If navigation redirects to any page other than our app UI (e.g., Vercel Login, SSO, GitHub, Supabase), **STOP IMMEDIATELY**. Report "ENVIRONMENT PROTECTED" and wait for user guidance. Do not attempt to "find the footer" or audit a protected page.
+- Use localhost or another served preview before `test`.
+- User verifies `test` before production.
+
+### Golden Rule of Deployment
+**DEV → TEST → PROD. Never skip a step. Always get approval.**
+- The exact deployment checklist lives in `DEPLOYMENT_GUIDE.md`.
+- The non-negotiable release rules live in `AGENTS.md`.
+
+---
+
+## How We Work Together
+
+**The Testing Golden Rule: Human logs in, AI tests afterward.**
+
+- You CANNOT log in (you don't have credentials)
+- You CANNOT navigate to new URLs (breaks session)
+- You CAN click buttons, take screenshots, check console AFTER human logs in
+
+### Agent-Assisted Testing Protocol
+1. Ensure `node local_server.js` is running (check terminal or ask user)
+2. Ask user: "Please open localhost:8080 and log in"
+3. Wait for: "I am logged in"
+4. Then YOU can: capture screenshots, click buttons, check console, navigate tabs.
+5. Reuse existing tabs: Always scan `browser_state` first. Prioritize the `[ACTIVE]` tab if it matches the target environment. Opening redundant tabs is prohibited.
+
+---
+
+## Environment & Deployment References
+
+- Environment meanings and URLs: see `DEPLOYMENT_GUIDE.md`
+- Release/version requirements: see `AGENTS.md`
+- Current active branch/worktree for in-flight work: see `SESSION_HANDOVER.md`
+
+---
+
+## The Planning Rule
+
+**Before ANY code change:**
+1. Understand the request
+2. Identify affected files
+3. Write a plan (or describe it)
+4. Get user approval
+5. THEN execute
+
+**Massive changes = NEVER. Small incremental changes = ALWAYS.**
+
+---
+
+## Backup Before Major Changes
+
+Before any large refactor:
+1. Create: `Backups/YYYYMMDD_HHMMSS_description/`
+2. Copy: index.html, app.js, styles.css
+3. Add README.md explaining purpose
+
+---
+
+## Common Mistakes to Avoid
+
+### Zero Fabrication Rule
+**NEVER make up:**
+- Variable names (READ the code first)
+- User IDs or passwords (ask human - DO NOT ATTEMPT TO LOG IN)
+- Column names (check schema.sql)
+- API endpoints (verify they exist)
+
+### Environment Visibility & The Redirect Stop
+- If a URL (like TEST or PROD) redirects to a platform login (Vercel, SSO, etc.):
+- **YOU ARE NOT ALLOWED TO PROCEED**.
+- Do NOT click "Login", "Sign In", or "Continue".
+- Do NOT attempt to "find the version in the footer" if the app itself isn't visible.
+- Report "Environment Protected" and wait for the user.
+
+### Code Hygiene
+- View file AFTER editing to verify brackets match
+- Include leading whitespace EXACTLY in edits
+- Don't make 5 edits fixing your own typos
+
+### CSS/UI Protocol
+1. View current HTML structure FIRST
+2. Check if Tailwind class exists (this project uses Tailwind)
+3. Make ONE small change
+4. Ask user to verify visually
+5. Iterate
+
+### Debugging Protocol
+1. Check browser console for errors (ask user for screenshot)
+2. Add ONE console.log at a time
+3. Test IMMEDIATELY after each change
+4. If stuck 3 times, STOP and ask user
+
+---
+
+## Token Efficiency
+
+- **View only what you need** - Use line ranges, not entire 5000-line files
+- **Don't re-read** - Remember what you've seen
+- **Edit once, correctly** - Triple-check before editing
+- **Brevity in communication** - Bullet points > paragraphs
+
+---
+
+## Stop Conditions
+
+**STOP and ask the user if:**
+1. You've tried the same approach 3 times
+2. You're unsure what they meant
+3. You're about to delete/overwrite something
+4. You're about to change more than 50 lines
+5. Human says "wait", "stop", "not yet"
+
+**HOW to stop gracefully:**
+- Finish current atomic operation (don't leave partial edits)
+- Commit any completed work to avoid losing progress
+- Summarize current state: "I've done X, Y is pending"
+- Ask for direction before continuing
+
+**DON'T keep trying. DON'T leave things half-done. ASK.**
+
+---
+
+## Architecture Quick Reference
+
+```
+project/
+├── index.html        # Single-page app, all UI
+├── js/app.js         # Large file (~4700 lines), main logic
+├── css/styles.css    # Custom styles + Tailwind
+├── api/gemini.js     # AI endpoint (serverless)
+├── local_server.js   # Dev server proxy
+├── schema.sql        # Database schema
+└── *.md              # Documentation
+```
+
+**Key Info:**
+- Current version: Check `js/app.js` line 3 for `APP_VERSION`
+- Tailwind CSS (CDN, pinned to 3.4.1)
+- Supabase (PostgreSQL) for database
+- Backend changes require server restart (`Ctrl+C` then `node local_server.js`)
+
+---
+
+## Git Protocol
+
+- **Default branch:** `test` (for development)
+- **Protected branch:** `main` (production only)
+- Always run `git branch` before any git operation to confirm you're on `test`
+- Project root: `/Users/pamrubin/Desktop/book-club/`
+- Always use ABSOLUTE paths in tool calls
+
+**Quick reference:**
+```bash
+git checkout test        # Switch to dev branch
+git branch               # Verify current branch
+git push origin test     # Deploy to TEST site
+git checkout main && git merge test && git push origin main  # Deploy to PROD (after approval)
+```
+
+---
+
+## First Message Requirement
+
+At the START of every new conversation:
+1. Read this file
+2. Say: "I've read README_FOR_AI.md and understand the rules"
+3. Ask: "What would you like to work on?"
+
+DO NOT start coding until you've confirmed understanding.
+
+---
+
+## Where to Find More
+
+- `SESSION_HANDOVER.md` - **Read first!** Current state and recent work
+- `FEATURES.md` - Complete feature inventory by page
+- `project_guidelines.md` - Detailed rules and lessons learned
+- `DEPLOYMENT_GUIDE.md` - Full deployment instructions  
+- `CHANGELOG.md` - Historical changes
+- `schema.sql` - Database structure
