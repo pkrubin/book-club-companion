@@ -153,7 +153,7 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
 
 ## 2026-05-09 - Sandbox First-Search Reliability
 - Version: `v1.9.12`
-- Test commit: `pending`
+- Test commit: `c44b157`
 - Prod commit: `not yet`
 - Environments: `test`
 - User-facing changes:
