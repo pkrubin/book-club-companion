@@ -1,0 +1,4 @@
+interface:
+  display_name: "Book Club Workflow"
+  short_description: "Use the Book Club repo delivery workflow"
+  default_prompt: "Use $book-club-workflow to work carefully in the Book Club Companion repo."
