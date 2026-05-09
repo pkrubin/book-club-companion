@@ -9,6 +9,39 @@ function clampInt(value, min, max, fallback) {
     return Math.min(max, Math.max(min, parsed));
 }
 
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function fetchGoogleBooksWithRetry(url, attempts = 3) {
+    let lastResponse = null;
+    let lastError = null;
+
+    for (let attempt = 1; attempt <= attempts; attempt += 1) {
+        try {
+            const response = await fetch(url, {
+                headers: { Accept: 'application/json' }
+            });
+
+            if (![502, 503, 504].includes(response.status) || attempt === attempts) {
+                return response;
+            }
+
+            lastResponse = response;
+        } catch (error) {
+            lastError = error;
+            if (attempt === attempts) {
+                throw error;
+            }
+        }
+
+        await sleep(250 * attempt);
+    }
+
+    if (lastResponse) return lastResponse;
+    throw lastError || new Error('Google Books request failed');
+}
+
 export default async function handler(req, res) {
     if (req.method !== 'GET') {
         return res.status(405).json({ error: 'Method not allowed' });
@@ -49,9 +82,7 @@ export default async function handler(req, res) {
 
     try {
         console.log(`Books Proxy: ${authUser.id} searched for "${q.slice(0, 80)}"`);
-        const upstreamResponse = await fetch(url, {
-            headers: { Accept: 'application/json' }
-        });
+        const upstreamResponse = await fetchGoogleBooksWithRetry(url);
 
         const text = await upstreamResponse.text();
         let payload;

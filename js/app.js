@@ -1,5 +1,5 @@
 // --- Configuration ---
-const APP_VERSION = '1.9.13'; // Sandbox search auth refresh and error visibility
+const APP_VERSION = '1.9.14'; // Google Books transient retry for sandbox search
 
 // --- Gemini AI Configuration ---
 // Uses /api/gemini serverless function for secure API calls

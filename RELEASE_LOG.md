@@ -191,3 +191,22 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
 - Rollback:
   - Code: revert before this release on `test`
   - Database: not applicable
+
+## 2026-05-09 - Google Books Transient Retry
+- Version: `v1.9.14`
+- Test commit: `pending`
+- Prod commit: `not yet`
+- Environments: `test`
+- User-facing changes:
+  - Search now retries transient Google Books upstream failures (`502`, `503`, `504`) inside the server-side proxy before surfacing an error.
+- Operational changes:
+  - Database / SQL:
+    - none
+  - Branch / deployment notes:
+    - follow-up to the sandbox search investigation after the underlying error was identified as `Service temporarily unavailable.`
+- Validation:
+  - user reproduced the upstream service-unavailable error on `v1.9.13`
+  - retry/backoff added at the proxy layer so client behavior stays simple
+- Rollback:
+  - Code: revert before this release on `test`
+  - Database: not applicable
