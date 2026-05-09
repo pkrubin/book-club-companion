@@ -194,7 +194,7 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
 
 ## 2026-05-09 - Google Books Transient Retry
 - Version: `v1.9.14`
-- Test commit: `pending`
+- Test commit: `872400c`
 - Prod commit: `not yet`
 - Environments: `test`
 - User-facing changes:
