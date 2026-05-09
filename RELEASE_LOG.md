@@ -33,7 +33,7 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
 
 ## 2026-05-09 - Library Refresh Button Removal
 - Version: `v1.9.15`
-- Test commit: `pending`
+- Test commit: `eb28e2a`
 - Prod commit: `not yet`
 - Environments: `test`
 - User-facing changes:
