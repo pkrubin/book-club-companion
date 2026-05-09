@@ -21,6 +21,11 @@ Read in this order:
 2. `RELEASE_LOG.md`
 3. `docs/PRODUCT_SCOPE.md`
 
+Repo-local workflow skill:
+- `.codex/skills/book-club-workflow`
+- If the runtime discovers repo-local skills, use it for routine Book Club Companion work.
+- To guarantee use, invoke it explicitly as `$book-club-workflow`.
+
 Read only when relevant:
 - `docs/MULTI_CLUB_RFC.md` for architecture context
 - `docs/RELEASE_STATE.md` for release recovery or incident context
