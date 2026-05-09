@@ -14,6 +14,9 @@ Read in this order:
 2. `RELEASE_LOG.md`
 3. `docs/PRODUCT_SCOPE.md`
 
+For multi-session or resumed work:
+4. `docs/CURRENT_TASK.md`
+
 Only read additional docs if the task specifically needs them.
 
 ## Core Rules
@@ -75,6 +78,7 @@ Treat these as the active docs:
 - `AGENTS.md`
 - `RELEASE_LOG.md`
 - `docs/PRODUCT_SCOPE.md`
+- `docs/CURRENT_TASK.md` for active multi-session task memory
 
 Treat these as retired or incident-only unless explicitly needed:
 - `README_FOR_AI.md`
@@ -91,5 +95,12 @@ Update docs only when operational reality changes:
 - `AGENTS.md` for workflow/live architecture assumptions
 - `docs/PRODUCT_SCOPE.md` for current capabilities
 - `RELEASE_LOG.md` for releases
+
+Update `docs/CURRENT_TASK.md` when:
+- the main goal changes
+- the next step changes materially
+- a task is being handed across chats
+
+Keep `docs/CURRENT_TASK.md` short and operational.
 
 Avoid reviving long narrative status docs for routine work.

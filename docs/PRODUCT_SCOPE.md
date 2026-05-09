@@ -106,7 +106,13 @@ When testing changes that touch real data:
 
 ## Near-Term Backlog
 
-- richer club membership and role management
+- richer club membership and role management, including a club `manager` role
+- super-admin / platform-owner workflows for cross-club administration
+- metadata reuse to reduce Goodreads and other API churn across clubs
 - more complete invite and club lifecycle tooling
 - ongoing tag quality improvements
+- future security hardening
+- future UI cleanup / optimization
+- discussion guide refinement
+- admin import / export improvements
 - continued documentation simplification

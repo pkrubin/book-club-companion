@@ -21,6 +21,9 @@ Read in this order:
 2. `RELEASE_LOG.md`
 3. `docs/PRODUCT_SCOPE.md`
 
+For multi-session feature work or when resuming after a chat switch:
+4. `docs/CURRENT_TASK.md`
+
 Repo-local workflow skill:
 - `.codex/skills/book-club-workflow`
 - If the runtime discovers repo-local skills, use it for routine Book Club Companion work.
@@ -86,6 +89,13 @@ Branch policy:
 3. Implement locally.
 4. Test on a served app, not `file://`.
 5. Ask for human verification when the change needs authenticated or visual confirmation.
+
+For work likely to span multiple chats:
+6. Keep `docs/CURRENT_TASK.md` current with:
+   - active goal
+   - the real next step
+   - major open risks or decisions
+7. Keep it short and operational, not narrative.
 
 ## Release Workflow
 
@@ -153,6 +163,9 @@ When a release changes operational reality, update:
 - `RELEASE_LOG.md`
 - `AGENTS.md` if workflow or live architecture assumptions changed
 - `docs/PRODUCT_SCOPE.md` if current capabilities changed
+
+When active feature priorities or next steps change across sessions, update:
+- `docs/CURRENT_TASK.md`
 
 Avoid reviving long narrative handoff documents unless there is a real incident.
 
