@@ -31,6 +31,24 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
   - Database: `<rollback sql file or note>`
 ```
 
+## 2026-05-09 - Library Refresh Button Removal
+- Version: `v1.9.15`
+- Test commit: `pending`
+- Prod commit: `not yet`
+- Environments: `test`
+- User-facing changes:
+  - Removed the redundant `Refresh` button from the library toolbar.
+- Operational changes:
+  - Database / SQL:
+    - none
+  - Branch / deployment notes:
+    - Library loading continues through the existing startup, save, import, edit, delete, and club-switch flows.
+- Validation:
+  - Local served app on `8080` loaded the library normally without the button.
+- Rollback:
+  - Code: restore the removed toolbar button and direct reload wiring
+  - Database: not applicable
+
 ## 2026-05-01 - Search, Ratings, and Vision Import Hardening
 - Version: `v1.9.9`
 - Test commit: `daa487c`
