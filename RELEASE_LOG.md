@@ -171,3 +171,23 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
 - Rollback:
   - Code: revert before this release on `test`
   - Database: not applicable
+
+## 2026-05-09 - Sandbox Search Auth Refresh
+- Version: `v1.9.13`
+- Test commit: `pending`
+- Prod commit: `not yet`
+- Environments: `test`
+- User-facing changes:
+  - Protected search requests now force a Supabase session refresh after a `401` before surfacing failure.
+  - Search now shows the underlying API error message instead of collapsing everything into a generic failure.
+- Operational changes:
+  - Database / SQL:
+    - none
+  - Branch / deployment notes:
+    - follow-up to the sandbox first-search investigation after `v1.9.12` did not resolve the test failure
+- Validation:
+  - user reproduced the sandbox search failure on `v1.9.12`
+  - fix prepared for immediate `test` validation
+- Rollback:
+  - Code: revert before this release on `test`
+  - Database: not applicable

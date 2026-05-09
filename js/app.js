@@ -1,5 +1,5 @@
 // --- Configuration ---
-const APP_VERSION = '1.9.12'; // Sandbox search hydration reliability fix
+const APP_VERSION = '1.9.13'; // Sandbox search auth refresh and error visibility
 
 // --- Gemini AI Configuration ---
 // Uses /api/gemini serverless function for secure API calls
@@ -71,8 +71,12 @@ async function touchUserLastSeen() {
     return touchedAt;
 }
 
-async function getAccessToken() {
-    const { data: { session } } = await supabase.auth.getSession();
+async function getAccessToken(forceRefresh = false) {
+    const sessionResult = forceRefresh
+        ? await supabase.auth.refreshSession()
+        : await supabase.auth.getSession();
+
+    const session = sessionResult?.data?.session;
     const accessToken = session?.access_token;
 
     if (!accessToken) {
@@ -83,14 +87,23 @@ async function getAccessToken() {
 }
 
 async function fetchWithSession(url, options = {}) {
-    const accessToken = await getAccessToken();
-    const headers = new Headers(options.headers || {});
-    headers.set('Authorization', `Bearer ${accessToken}`);
+    const makeRequest = async (accessToken) => {
+        const headers = new Headers(options.headers || {});
+        headers.set('Authorization', `Bearer ${accessToken}`);
 
-    return fetch(url, {
-        ...options,
-        headers
-    });
+        return fetch(url, {
+            ...options,
+            headers
+        });
+    };
+
+    let response = await makeRequest(await getAccessToken());
+
+    if (response.status === 401) {
+        response = await makeRequest(await getAccessToken(true));
+    }
+
+    return response;
 }
 
 async function runQueryWithTimeout(queryFactory, timeoutMs = 5000) {
@@ -1881,13 +1894,7 @@ async function fetchBooksFromProxy({ q, langRestrict = 'en', maxResults = 12, st
 
     if (langRestrict) params.set('langRestrict', langRestrict);
 
-    let response = await fetchWithSession(`${BOOKS_PROXY_URL}?${params.toString()}`);
-
-    if (response.status === 401) {
-        await sleep(300);
-        response = await fetchWithSession(`${BOOKS_PROXY_URL}?${params.toString()}`);
-    }
-
+    const response = await fetchWithSession(`${BOOKS_PROXY_URL}?${params.toString()}`);
     const data = await response.json();
 
     if (!response.ok) {
@@ -1936,7 +1943,7 @@ async function performSearch() {
         } else if (error.status === 401 || String(error.message || '').toLowerCase().includes('session')) {
             resultsGrid.innerHTML = '<p class="text-center col-span-full text-red-500">Your session is still loading or expired. Please sign in again or try once more in a moment.</p>';
         } else {
-            resultsGrid.innerHTML = '<p class="text-center col-span-full text-red-500">Error searching books. Please try again.</p>';
+            resultsGrid.innerHTML = `<p class="text-center col-span-full text-red-500">${escapeHtml(error.message || 'Error searching books. Please try again.')}</p>`;
         }
     }
 
