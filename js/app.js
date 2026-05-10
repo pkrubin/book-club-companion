@@ -1,5 +1,5 @@
 // --- Configuration ---
-const APP_VERSION = '1.9.17'; // Phone-first navigation and library filter sheet
+const APP_VERSION = '1.9.18'; // Tighten mobile book detail modal
 
 // --- Gemini AI Configuration ---
 // Uses /api/gemini serverless function for secure API calls

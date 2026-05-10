@@ -31,7 +31,9 @@ Make Book Club Companion usable and accessible on phones and tablets while conti
   - [x] verify served localhost loads at iPhone and tablet widths with no console errors
   - [x] use real iPhone screenshots from `test` to identify layout issues in authenticated Dashboard, Find Books, and Library
   - [x] implement phone-first correction for compact header/nav, compact dashboard hero, separated search controls, and a mobile library filter sheet
-  - [ ] verify `v1.9.17` on hosted `test` from iPhone/iPad
+  - [x] verify `v1.9.17` on hosted `test` from iPhone and capture remaining book-detail density issues
+  - [x] tighten the mobile book detail modal by demoting external links, shrinking tags, and pairing edit fields
+  - [ ] verify `v1.9.18` on hosted `test` from iPhone/iPad
   - [ ] fix any remaining authenticated iPhone findings before considering prod promotion
 
 - [ ] Extend mobile accessibility work to iPad/tablet layouts
@@ -84,8 +86,8 @@ These exist in historical docs or RFCs but should not be treated as the next fea
 ## Suggested Next Decision
 
 Next recommended task:
-- human-authenticated iPhone verification on served localhost, then address any remaining core-flow issues
+- human-authenticated iPhone verification on hosted `test`, then address any remaining core-flow issues
 
 ## Release Note
 
-No version bump until mobile accessibility fixes are implemented and ready for `test`.
+Current mobile book-detail pass is preparing `v1.9.18` for `test`.

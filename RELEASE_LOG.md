@@ -31,6 +31,30 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
   - Database: `<rollback sql file or note>`
 ```
 
+## 2026-05-10 - Mobile Book Detail Modal Cleanup
+- Version: `v1.9.18`
+- Test commit: `pending`
+- Prod commit: `not yet`
+- Environments: `test`
+- User-facing changes:
+  - Tightened the mobile book detail modal so the cover, rating, links, and discussion-guide action take much less vertical space.
+  - Demoted Goodreads, Amazon, and Library from large stacked buttons into compact secondary links.
+  - Shrunk mobile tags back into compact chips and paired schedule fields into two-column rows where phone width allows.
+- Operational changes:
+  - Env vars: none
+  - Database / SQL: none
+  - Branch / deployment notes:
+    - Follow-up to real iPhone screenshots from `v1.9.17`.
+- Validation:
+  - `node --check js/app.js`
+  - `git diff --check`
+  - Local served app returned `200 OK` on `http://127.0.0.1:8080`
+  - Local logged-out browser smoke loaded `v1.9.18` with no console errors.
+  - Authenticated phone and iPad flows still need human verification on `test`.
+- Rollback:
+  - Code: revert this test release commit
+  - Database: not applicable
+
 ## 2026-05-10 - Phone-First Mobile Layout Correction
 - Version: `v1.9.17`
 - Test commit: `f959cf2`
