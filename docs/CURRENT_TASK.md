@@ -9,6 +9,9 @@ Planning / backlog triage
 - Read it when resuming work after a chat switch or when several tasks are competing for attention.
 - Keep it short and operational.
 - Update it when the active goal, the next step, or the main risks change materially.
+- Check off completed items instead of leaving them mixed into the open queue.
+- Keep this file as the actionable tracker.
+- Keep `docs/PRODUCT_SCOPE.md` higher-level and non-duplicative.
 
 ## Big Goal
 
@@ -18,71 +21,43 @@ Finish the multi-club architecture so the live app has a complete club-managemen
 - Start new work from fresh `origin/test`
 - Use `$book-club-workflow`
 
-## Confirmed Leftover Work
+## Active Queue
 
-These items are supported by the current repo docs and archived handoff:
+- [ ] Define and implement the multi-club role model
+  - add a per-club `manager` role
+  - define permissions split among `member`, `manager`, and current club-admin behavior
 
-1. Complete multi-club role model
-   - Source: user clarification in current chat
-   - Source: `docs/PRODUCT_SCOPE.md`
-   - Source: `docs/MULTI_CLUB_RFC.md`
-   - Notes:
-     - add a per-club `manager` role
-     - keep per-club membership management separate from platform-wide power
-     - define the exact permissions split among `member`, `manager`, and existing club-level admin behaviors
+- [ ] Add club-scoped member management workflows
+  - managers should be able to add, update, and remove members only in clubs they manage
+  - decide whether manager is distinct from current club admin or a rename/re-scope
 
-2. Add club-scoped member management UI and workflows
-   - Source: user clarification in current chat
-   - Source: `docs/PRODUCT_SCOPE.md`
-   - Source: `docs/MULTI_CLUB_RFC.md`
-   - Notes:
-     - club managers should be able to add, update, and remove members only in clubs they manage
-     - clarify whether club admins and club managers are distinct roles or whether manager replaces part of the current club-admin surface
+- [ ] Add super-admin / platform-owner workflow
+  - cross-club visibility
+  - club and member administration across the system
+  - confirm naming and final power boundary during implementation
 
-3. Add super-admin / platform-owner workflow
-   - Source: user clarification in current chat
-   - Source: `docs/MULTI_CLUB_RFC.md`
-   - Notes:
-     - this role needs cross-club visibility
-     - this role should be able to administer clubs, members, and broader system state
-     - this likely aligns with the RFC's platform-owner concept, but naming and exact powers need confirmation during implementation
+- [ ] Implement metadata reuse to reduce API churn
+  - reuse stored ratings and tags when equivalent book metadata already exists
+  - decide matching strategy: Google Books ID, ISBN, title/author, or fallback order
 
-4. API optimization through metadata reuse
-   - Source: user clarification in current chat
-   - Notes:
-     - reuse stored metadata such as ratings and tags when the same book is added to another club
-     - reduce Goodreads and other API churn when equivalent metadata already exists elsewhere in the shared dataset
-     - decide what counts as the same book for reuse: title/author match, Google Books ID, ISBN, or a ranked fallback
+- [ ] Verify and address the invite code race condition
+  - confirm whether it still exists in the current live flow
+  - fold findings into invite/lifecycle work
 
-5. Invite and club lifecycle tooling
-   - Source: `docs/PRODUCT_SCOPE.md`
-   - Source: `docs/MULTI_CLUB_RFC.md`
-   - Notes:
-     - current app has invite-based sign-up, but the RFC still calls for fuller club-scoped invite flows and club lifecycle controls
-     - verify whether the old invite code race condition is still present before redesigning the flow
+- [ ] Tag quality cleanup
+  - fix incorrect `"New York"` tagging
+  - review garbage-tag cleanup and deletion edge cases
 
-6. Tag quality cleanup
-   - Source: `docs/PRODUCT_SCOPE.md`
-   - Source: `archive/SESSION_HANDOVER.pre-streamline-20260509.md`
-   - Notes:
-     - fix rule-based tagging issue where `"New York"` can be added incorrectly
-     - review possible garbage-tag cleanup / deletion edge cases
+- [ ] Decide whether to retire `Test` status
+  - confirm whether sandbox clubs are now sufficient to replace mixed live-club testing
 
-7. Decide whether to retire `Test` status
-   - Source: `docs/MULTI_CLUB_RFC.md`
-   - Notes: RFC says sandbox clubs should replace mixed live-club `Test` workflows after verification
+## Future Queue
 
-8. Future work explicitly called out by user
-   - Source: user clarification in current chat
-   - Notes:
-     - security hardening
-     - UI optimization / cleanup
-     - discussion guide refinement
-     - admin import / export
-
-9. Continue documentation simplification
-   - Source: `docs/PRODUCT_SCOPE.md`
-   - Notes: current simplification is in good shape, but future work should avoid reintroducing large overlapping handoff docs
+- [ ] Security hardening
+- [ ] UI optimization / cleanup
+- [ ] Discussion guide refinement
+- [ ] Admin import / export improvements
+- [ ] Continue documentation simplification without reintroducing large overlapping handoff docs
 
 ## Not Yet Confirmed As Active Build Work
 
@@ -92,12 +67,7 @@ These exist in historical docs or RFCs but should not be treated as the next fea
 
 ## Suggested Next Decision
 
-Choose the next real product task from:
-1. define and implement the `manager` role
-2. define and implement the super-admin / platform-owner surface
-3. implement metadata reuse to cut API churn
-4. verify and address invite race-condition risk
-5. tag quality cleanup
+Choose the next real product task from the top of the Active Queue.
 
 ## Release Note
 

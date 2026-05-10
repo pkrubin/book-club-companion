@@ -41,6 +41,11 @@ Only read additional docs if the task specifically needs them.
 4. Test on a served app, not `file://`.
 5. If auth is needed, wait for the human to log in first.
 6. Pause for human verification when the change is visually important or authenticated.
+7. Keep `docs/CURRENT_TASK.md` in sync for multi-session work:
+   - move the active task to the top
+   - update the real next step
+   - check off completed items
+   - remove or downgrade stale items when they are no longer actionable
 
 ## Preparing A Test Release
 
@@ -100,7 +105,10 @@ Update `docs/CURRENT_TASK.md` when:
 - the main goal changes
 - the next step changes materially
 - a task is being handed across chats
+- a meaningful subtask is completed
+- priorities are reordered
 
 Keep `docs/CURRENT_TASK.md` short and operational.
+Treat it as the task tracker, not as another product doc.
 
 Avoid reviving long narrative status docs for routine work.

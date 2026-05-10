@@ -95,6 +95,7 @@ For work likely to span multiple chats:
    - active goal
    - the real next step
    - major open risks or decisions
+   - completed items checked off
 7. Keep it short and operational, not narrative.
 
 ## Release Workflow
@@ -166,6 +167,10 @@ When a release changes operational reality, update:
 
 When active feature priorities or next steps change across sessions, update:
 - `docs/CURRENT_TASK.md`
+
+`docs/CURRENT_TASK.md` is the task tracker.
+`docs/PRODUCT_SCOPE.md` is the high-level product/state doc.
+Do not duplicate detailed actionable backlog in both places.
 
 Avoid reviving long narrative handoff documents unless there is a real incident.
 
