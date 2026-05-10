@@ -31,6 +31,31 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
   - Database: `<rollback sql file or note>`
 ```
 
+## 2026-05-10 - iPhone Home Screen Icon Setup
+- Version: `v1.9.19`
+- Test commit: `pending`
+- Prod commit: `not yet`
+- Environments: `test`
+- User-facing changes:
+  - Reused the existing Book Club Companion icon for iPhone/iPad Add to Home Screen setup.
+  - Added Apple touch icon metadata and a web app manifest so the saved Home Screen shortcut has the proper name and icon.
+- Operational changes:
+  - Env vars: none
+  - Database / SQL: none
+  - Branch / deployment notes:
+    - Generated `180x180`, `192x192`, and `512x512` icon assets from `images/logo-icon.png`.
+    - Added the `.webmanifest` MIME type to the local development server for cleaner local validation.
+- Validation:
+  - `node --check js/app.js`
+  - `node --check local_server.js`
+  - `git diff --check`
+  - Local manifest and icon assets returned `200 OK`.
+  - Local manifest served as `application/manifest+json; charset=utf-8`.
+  - Home-screen icon behavior still needs verification from Safari on iPhone/iPad after `test` deploys.
+- Rollback:
+  - Code: revert this test release commit
+  - Database: not applicable
+
 ## 2026-05-10 - Mobile Book Detail Modal Cleanup
 - Version: `v1.9.18`
 - Test commit: `8a15ad7`

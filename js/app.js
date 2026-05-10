@@ -1,5 +1,5 @@
 // --- Configuration ---
-const APP_VERSION = '1.9.18'; // Tighten mobile book detail modal
+const APP_VERSION = '1.9.19'; // Add iPhone home-screen icon metadata
 
 // --- Gemini AI Configuration ---
 // Uses /api/gemini serverless function for secure API calls
