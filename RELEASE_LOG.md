@@ -33,7 +33,7 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
 
 ## 2026-05-10 - Mobile Book Modal Date and Header Tightening
 - Version: `v1.9.22`
-- Test commit: `pending`
+- Test commit: `646faab`
 - Prod commit: `not yet`
 - Environments: `test`
 - User-facing changes:
