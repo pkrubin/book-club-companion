@@ -205,6 +205,10 @@ body.modal-open {
     }
 
     #book-modal > div > div:first-child {
+        display: grid;
+        grid-template-columns: 5.75rem minmax(0, 1fr);
+        align-items: center;
+        justify-items: center;
         gap: 0.45rem;
         padding: 0.8rem 0.9rem 0.7rem !important;
         background:
@@ -216,6 +220,19 @@ body.modal-open {
         height: 5.75rem;
         margin-bottom: 0.15rem;
         box-shadow: 0 10px 18px -12px rgba(28, 25, 23, 0.55);
+        grid-row: 1 / span 4;
+        grid-column: 1;
+    }
+
+    #book-modal #modal-rating-actions {
+        grid-column: 2;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+        gap: 0.3rem;
+        width: 100%;
+        margin-bottom: 0 !important;
     }
 
     #book-modal #modal-rating-container {
@@ -237,28 +254,35 @@ body.modal-open {
 
     #book-modal #modal-refresh-rating-btn {
         min-height: 32px !important;
+        width: 32px;
+        justify-content: center;
         padding: 0.2rem 0.5rem;
         font-size: 0.8rem;
         line-height: 1;
     }
 
+    #book-modal #modal-refresh-rating-btn span {
+        display: none;
+    }
+
     #book-modal #modal-external-links {
+        grid-column: 2;
         flex-direction: row !important;
         flex-wrap: wrap;
         justify-content: center;
         gap: 0.35rem !important;
         max-width: none !important;
-        margin-top: 0.1rem;
+        margin-top: 0;
     }
 
     #book-modal #modal-external-links a {
-        min-height: 32px;
+        min-height: 28px;
         width: auto;
-        padding: 0.35rem 0.55rem;
+        padding: 0.28rem 0.46rem;
         border-color: #e7e5e4;
         background: rgba(255, 255, 255, 0.72);
         box-shadow: none;
-        font-size: 0.74rem;
+        font-size: 0.68rem;
         line-height: 1;
     }
 
@@ -267,19 +291,21 @@ body.modal-open {
     }
 
     #book-modal #discussion-guide-left {
+        grid-column: 2;
         max-width: none;
-        margin-top: 0.2rem;
+        margin-top: 0;
     }
 
     #book-modal #btn-open-guide-modal-left {
         min-height: 36px !important;
-        max-width: 14rem;
+        max-width: none;
         margin: 0 auto;
-        padding: 0.45rem 0.75rem;
+        padding: 0.4rem 0.65rem;
         font-size: 0.8rem;
     }
 
     #book-modal #modal-save-section {
+        grid-column: 2;
         max-width: 14rem;
         margin-top: 0.35rem;
     }
@@ -1017,6 +1043,13 @@ body.modal-open {
         gap: 0.5rem;
     }
 
+    #dashboard-hero .dashboard-book-actions {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.5rem;
+        width: 100%;
+    }
+
     #dashboard-hero button {
         width: 100%;
         justify-content: center;
@@ -1027,8 +1060,10 @@ body.modal-open {
         width: 100%;
     }
 
-    #dashboard-hero .dashboard-calendar-action {
-        display: none;
+    #dashboard-upcoming-list .dashboard-book-actions button {
+        min-height: 36px;
+        width: 100%;
+        justify-content: center;
     }
 
     #library-section {

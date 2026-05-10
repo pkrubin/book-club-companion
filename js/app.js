@@ -1,5 +1,5 @@
 // --- Configuration ---
-const APP_VERSION = '1.9.20'; // Fix mobile date clear icon overlap
+const APP_VERSION = '1.9.21'; // Tighten dashboard and book modal actions
 
 // --- Gemini AI Configuration ---
 // Uses /api/gemini serverless function for secure API calls
@@ -5108,11 +5108,10 @@ function renderDashboard() {
     dashboardHero.classList.remove('hidden');
 
     // Apply container classes directly to dashboardHero to avoid "double card"
-    dashboardHero.className = 'max-w-3xl mx-auto bg-white rounded-2xl shadow-sm border border-stone-200 overflow-hidden flex flex-row items-center mb-12';
+    dashboardHero.className = 'max-w-3xl mx-auto bg-white rounded-2xl shadow-sm border border-stone-200 overflow-hidden flex flex-row items-center mb-12 cursor-pointer';
 
     dashboardHero.innerHTML = `
-            <div class="w-1/3 md:w-56 bg-stone-100 flex-shrink-0 border-r border-stone-100 flex items-center justify-center p-4 rounded-l-2xl cursor-pointer hover:bg-stone-200 transition-colors"
-                onclick="openModal(allSavedBooks.find(b => b.id === ${nextBook.id}).google_data, allSavedBooks.find(b => b.id === ${nextBook.id}))">
+            <div class="w-1/3 md:w-56 bg-stone-100 flex-shrink-0 border-r border-stone-100 flex items-center justify-center p-4 rounded-l-2xl hover:bg-stone-200 transition-colors">
                 <img src="${nextThumbnail}" 
                     alt="${nextTitle}" 
                     class="w-full h-auto shadow-md rounded-sm object-contain max-h-full"
@@ -5144,36 +5143,37 @@ function renderDashboard() {
                     </div>` : ''}
             </div>
 
-            <div class="flex flex-wrap gap-2 md:gap-3 mt-auto pt-2 md:pt-4">
-                <button onclick="openModal(allSavedBooks.find(b => b.id === ${nextBook.id}).google_data, allSavedBooks.find(b => b.id === ${nextBook.id}))"
-                    class="bg-gradient-to-b from-slate-600 to-slate-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] text-white px-5 py-2.5 rounded-lg hover:from-slate-700 hover:to-slate-800 transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-0.5 font-bold text-sm tracking-wide">
-                    View Details
-                </button>
-
-                <button onclick="openDiscussionModal(allSavedBooks.find(b => b.id === ${nextBook.id}))"
-                    class="bg-white text-stone-700 border border-stone-200 px-4 py-2.5 rounded-lg hover:bg-stone-50 hover:border-stone-300 transition-all duration-300 shadow-sm hover:shadow-md font-bold text-sm flex items-center gap-2">
-                    <iconify-icon icon="solar:chat-round-dots-broken" class="text-base"></iconify-icon>
-                    Guide
-                </button>
-
+            <div class="dashboard-book-actions flex flex-wrap gap-2 md:gap-3 mt-auto pt-2 md:pt-4" data-dashboard-action>
                 <div class="relative dashboard-calendar-action">
                     <button onclick="toggleCalendarDropdown(event)" class="bg-white text-stone-700 border border-stone-200 px-4 py-2 rounded-lg hover:bg-stone-50 hover:border-stone-300 transition-all duration-300 shadow-sm hover:shadow-md font-bold text-sm flex items-center gap-2">
                         <iconify-icon icon="solar:calendar-add-broken" class="text-base"></iconify-icon>
                         Add to Calendar
                     </button>
                     <div id="calendar-dropdown" class="absolute bottom-full left-0 mb-2 w-48 bg-white rounded-lg shadow-xl border border-stone-100 hidden z-10 overflow-hidden">
-                        <a href="${generateGoogleCalendarLink(nextInfo.title, nextBook.target_date, nextBook.meeting_time)}" target="_blank" class="block px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 hover:text-rose-600 transition text-left border-b border-stone-50">
+                        <a href="${generateGoogleCalendarLink(nextInfo.title, nextBook.target_date, nextBook.meeting_time)}" target="_blank" onclick="event.stopPropagation()" class="block px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 hover:text-rose-600 transition text-left border-b border-stone-50">
                             Google Calendar
                         </a>
-                        <button onclick="downloadIcsFile(${toInlineJsArg(nextInfo.title)}, ${toInlineJsArg(nextBook.target_date)}, ${toInlineJsArg(nextBook.meeting_time || '')})" class="block w-full text-left px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 hover:text-rose-600 transition">
+                        <button onclick="event.stopPropagation(); downloadIcsFile(${toInlineJsArg(nextInfo.title)}, ${toInlineJsArg(nextBook.target_date)}, ${toInlineJsArg(nextBook.meeting_time || '')})" class="block w-full text-left px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 hover:text-rose-600 transition">
                         Outlook / Apple
                     </button>
                 </div>
             </div>
+
+                <button onclick="event.stopPropagation(); openDiscussionModal(allSavedBooks.find(b => b.id === ${nextBook.id}))"
+                    class="bg-white text-stone-700 border border-stone-200 px-4 py-2.5 rounded-lg hover:bg-stone-50 hover:border-stone-300 transition-all duration-300 shadow-sm hover:shadow-md font-bold text-sm flex items-center gap-2">
+                    <iconify-icon icon="solar:chat-round-dots-broken" class="text-base"></iconify-icon>
+                    Guide
+                </button>
         </div>
             </div >
         </div >
         `;
+
+    dashboardHero.onclick = (event) => {
+        if (event.target.closest('[data-dashboard-action]')) return;
+        const selectedBook = allSavedBooks.find(b => b.id === nextBook.id);
+        if (selectedBook) openModal(selectedBook.google_data, selectedBook);
+    };
 
     // 2. Render Upcoming List (Rest of books)
     const laterBooks = upcomingBooks.slice(1);
@@ -5249,22 +5249,30 @@ function renderDashboard() {
                 <p class="text-xs text-stone-500 truncate mb-3">${safeAuthor}</p>
             </div>
 
-            <div class="relative">
-                <button onclick="event.stopPropagation(); document.getElementById('${uniqueId}').classList.toggle('hidden')"
-                    class="text-[10px] bg-stone-50 text-stone-600 border border-stone-200 px-3 py-1.5 rounded-lg hover:bg-stone-100 transition font-medium flex items-center gap-1 w-fit">
+            <div class="dashboard-book-actions flex items-center gap-2" data-dashboard-action>
+                <div class="relative flex-1">
+                <button onclick="toggleCalendarDropdown(event, '${uniqueId}')"
+                    class="text-[10px] bg-stone-50 text-stone-600 border border-stone-200 px-3 py-1.5 rounded-lg hover:bg-stone-100 transition font-medium flex items-center justify-center gap-1 w-full">
                     <iconify-icon icon="solar:calendar-add-broken" class="text-xs"></iconify-icon>
-                    Add to Calendar
+                    Calendar
                 </button>
                 <div id="${uniqueId}" class="hidden absolute bottom-full mb-1 left-0 w-40 bg-white rounded-lg shadow-lg border border-stone-100 py-1 z-20">
                     <a href="${generateGoogleCalendarLink(info.title, book.target_date, book.meeting_time)}" target="_blank"
+                        onclick="event.stopPropagation()"
                         class="block px-3 py-1.5 text-xs text-stone-700 hover:bg-stone-50 font-medium">
                         Google Calendar
                     </a>
-                    <a href="#" onclick="downloadIcsFile(${toInlineJsArg(info.title)}, ${toInlineJsArg(book.target_date)}, ${toInlineJsArg(book.meeting_time || '')})"
-                                    class="block px-3 py-1.5 text-xs text-stone-700 hover:bg-stone-50 font-medium">
+                    <a href="#" onclick="event.preventDefault(); event.stopPropagation(); downloadIcsFile(${toInlineJsArg(info.title)}, ${toInlineJsArg(book.target_date)}, ${toInlineJsArg(book.meeting_time || '')})"
+                        class="block px-3 py-1.5 text-xs text-stone-700 hover:bg-stone-50 font-medium">
                     Outlook / Apple (.ics)
                 </a>
             </div>
+        </div>
+                <button onclick="event.stopPropagation(); openDiscussionModal(allSavedBooks.find(b => b.id === ${book.id}))"
+                    class="flex-1 text-[10px] bg-stone-50 text-stone-600 border border-stone-200 px-3 py-1.5 rounded-lg hover:bg-stone-100 transition font-medium flex items-center justify-center gap-1">
+                    <iconify-icon icon="solar:chat-round-dots-broken" class="text-xs"></iconify-icon>
+                    Guide
+                </button>
         </div>
                     </div >
                 </div >
