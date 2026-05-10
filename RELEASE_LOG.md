@@ -33,7 +33,7 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
 
 ## 2026-05-10 - Mobile Accessibility Test Release
 - Version: `v1.9.16`
-- Test commit: `pending`
+- Test commit: `fe20920`
 - Prod commit: `not yet`
 - Environments: `test`
 - User-facing changes:
