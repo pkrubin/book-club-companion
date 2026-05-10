@@ -104,15 +104,10 @@ When testing changes that touch real data:
 - Start new work from fresh `origin/test`
 - Prefer smaller releases with clear rollback anchors
 
-## Near-Term Backlog
+## Near-Term Focus Areas
 
-- richer club membership and role management, including a club `manager` role
-- super-admin / platform-owner workflows for cross-club administration
-- metadata reuse to reduce Goodreads and other API churn across clubs
-- more complete invite and club lifecycle tooling
-- ongoing tag quality improvements
-- future security hardening
-- future UI cleanup / optimization
-- discussion guide refinement
-- admin import / export improvements
-- continued documentation simplification
+- complete the multi-club role and administration model
+- improve cross-club metadata reuse and operational efficiency
+- continue invite and club lifecycle maturation
+- improve quality, security, and admin tooling over time
+- keep docs and release workflow lean
