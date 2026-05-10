@@ -33,7 +33,7 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
 
 ## 2026-05-10 - Mobile Book Detail Modal Cleanup
 - Version: `v1.9.18`
-- Test commit: `pending`
+- Test commit: `8a15ad7`
 - Prod commit: `not yet`
 - Environments: `test`
 - User-facing changes:
