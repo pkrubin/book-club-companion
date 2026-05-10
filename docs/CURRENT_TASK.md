@@ -37,7 +37,9 @@ Make Book Club Companion usable and accessible on phones and tablets while conti
   - [x] fix mobile target-date clear icon overlap in the book detail modal
   - [x] replace redundant dashboard detail button with Calendar and Guide actions
   - [x] tighten the mobile book detail modal action stack into a compact cover/action header
-  - [ ] verify `v1.9.21` on hosted `test` from iPhone/iPad
+  - [x] move mobile modal rating under the cover and hide the lower-priority Library link on phone
+  - [x] fix the mobile Target Date / Meeting Time row overflow
+  - [ ] verify `v1.9.22` on hosted `test` from iPhone/iPad
   - [ ] fix any remaining authenticated iPhone findings before considering prod promotion
 
 - [ ] Extend mobile accessibility work to iPad/tablet layouts
@@ -94,4 +96,4 @@ Next recommended task:
 
 ## Release Note
 
-Current dashboard and book detail action cleanup pass is preparing `v1.9.21` for `test`.
+Current mobile modal date row and header density pass is preparing `v1.9.22` for `test`.

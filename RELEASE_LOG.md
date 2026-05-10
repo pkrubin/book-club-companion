@@ -31,6 +31,32 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
   - Database: `<rollback sql file or note>`
 ```
 
+## 2026-05-10 - Mobile Book Modal Date and Header Tightening
+- Version: `v1.9.22`
+- Test commit: `pending`
+- Prod commit: `not yet`
+- Environments: `test`
+- User-facing changes:
+  - Fixed the mobile Target Date field so the clear trash icon no longer overlaps the year.
+  - Prevented the Target Date field from overflowing into Meeting Time on iPhone.
+  - Moved the rating and refresh action under the book cover on mobile, like the dashboard card pattern.
+  - Hid the lower-priority Library/WorldCat link on mobile so the modal header has fewer action rows.
+- Operational changes:
+  - Env vars: none
+  - Database / SQL: none
+  - Branch / deployment notes:
+    - Follow-up to real iPhone screenshot review of `v1.9.21`.
+- Validation:
+  - `node --check js/app.js`
+  - `node --check local_server.js`
+  - `git diff --check`
+  - Local served app returned `200 OK` on `http://127.0.0.1:8080`
+  - Local logged-out browser smoke loaded `v1.9.22` with no console errors.
+  - Authenticated phone and iPad flows still need human verification on `test`.
+- Rollback:
+  - Code: revert this test release commit
+  - Database: not applicable
+
 ## 2026-05-10 - Mobile Dashboard and Book Action Cleanup
 - Version: `v1.9.21`
 - Test commit: `a2eaeff`
