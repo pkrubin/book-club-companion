@@ -33,7 +33,7 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
 
 ## 2026-05-10 - Mobile Date Field Icon Fix
 - Version: `v1.9.20`
-- Test commit: `pending`
+- Test commit: `c5c2d79`
 - Prod commit: `not yet`
 - Environments: `test`
 - User-facing changes:
