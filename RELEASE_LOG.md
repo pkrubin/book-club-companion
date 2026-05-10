@@ -33,7 +33,7 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
 
 ## 2026-05-10 - Mobile Dashboard and Book Action Cleanup
 - Version: `v1.9.21`
-- Test commit: `pending`
+- Test commit: `a2eaeff`
 - Prod commit: `not yet`
 - Environments: `test`
 - User-facing changes:
