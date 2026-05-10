@@ -33,7 +33,7 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
 
 ## 2026-05-10 - Phone-First Mobile Layout Correction
 - Version: `v1.9.17`
-- Test commit: `pending`
+- Test commit: `f959cf2`
 - Prod commit: `not yet`
 - Environments: `test`
 - User-facing changes:
