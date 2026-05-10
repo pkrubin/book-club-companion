@@ -31,6 +31,31 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
   - Database: `<rollback sql file or note>`
 ```
 
+## 2026-05-10 - Phone-First Mobile Layout Correction
+- Version: `v1.9.17`
+- Test commit: `pending`
+- Prod commit: `not yet`
+- Environments: `test`
+- User-facing changes:
+  - Reworked the phone header into a compact two-row pattern instead of wrapping desktop controls into three rows.
+  - Moved mobile `Sign Out` and admin `Import Books` actions into Settings so primary navigation stays focused on Dashboard, Find Books, and Library.
+  - Converted the mobile dashboard hero from a full-cover image block into a compact next-meeting card with a thumbnail, readable metadata, and no content overlap.
+  - Improved Find Books mobile spacing so the search field and Search button read as separate, tappable controls.
+  - Replaced the mobile library filter stack with one `Filter & Sort` button that opens a bottom sheet, keeping books visible first.
+- Operational changes:
+  - Env vars: none
+  - Database / SQL: none
+  - Branch / deployment notes:
+    - Follow-up to the `v1.9.16` hosted test discovery pass from real iPhone screenshots.
+- Validation:
+  - `node --check js/app.js`
+  - `git diff --check`
+  - Local served app loaded at iPhone `390x844` with no console errors while logged out.
+  - Authenticated phone and iPad flows still need human verification on `test`.
+- Rollback:
+  - Code: revert this test release commit
+  - Database: not applicable
+
 ## 2026-05-10 - Mobile Accessibility Test Release
 - Version: `v1.9.16`
 - Test commit: `fe20920`

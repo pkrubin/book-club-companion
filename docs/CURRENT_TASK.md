@@ -29,8 +29,10 @@ Make Book Club Companion usable and accessible on phones and tablets while conti
   - [x] implement first safe mobile pass for login spacing, nav wrapping, search controls, library filters, table/card overflow, modal sizing, tap targets, menu state, and Escape handling
   - [x] fix unauthenticated app-content bleed caused by mismatched nav markup and weak hidden-state enforcement
   - [x] verify served localhost loads at iPhone and tablet widths with no console errors
-  - [ ] human login needed to verify authenticated flows: club switcher, dashboard, search, library data, book modal, discussion guide, import, settings
-  - [ ] fix any authenticated iPhone findings from that pass before preparing a test release
+  - [x] use real iPhone screenshots from `test` to identify layout issues in authenticated Dashboard, Find Books, and Library
+  - [x] implement phone-first correction for compact header/nav, compact dashboard hero, separated search controls, and a mobile library filter sheet
+  - [ ] verify `v1.9.17` on hosted `test` from iPhone/iPad
+  - [ ] fix any remaining authenticated iPhone findings before considering prod promotion
 
 - [ ] Extend mobile accessibility work to iPad/tablet layouts
   - audit portrait and landscape tablet widths after iPhone fixes are stable

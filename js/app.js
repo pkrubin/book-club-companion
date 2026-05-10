@@ -1,5 +1,5 @@
 // --- Configuration ---
-const APP_VERSION = '1.9.16'; // Mobile accessibility and iPhone ergonomics pass
+const APP_VERSION = '1.9.17'; // Phone-first navigation and library filter sheet
 
 // --- Gemini AI Configuration ---
 // Uses /api/gemini serverless function for secure API calls
@@ -529,6 +529,11 @@ const filterRating = document.getElementById('filter-rating');
 // filterYear removed (replaced by custom logic)
 // filterStatus removed (replaced by custom logic)
 const sortBy = document.getElementById('sort-by');
+const mobileFilterBtn = document.getElementById('mobile-filter-btn');
+const mobileFilterCloseBtn = document.getElementById('mobile-filter-close-btn');
+const libraryToolbar = document.getElementById('library-toolbar');
+const mobileImportBtn = document.getElementById('mobile-import-btn');
+const mobileSettingsLogoutBtn = document.getElementById('mobile-settings-logout-btn');
 
 
 
@@ -1167,7 +1172,7 @@ if (signupForm) {
     signupForm.addEventListener('submit', handleSignup);
 }
 
-logoutBtn.addEventListener('click', async () => {
+async function handleLogout() {
     try {
         console.log('Logging out (local scope)...');
         // Use local scope to ensure the session is cleared in this browser even if server call fails (403/origin issues)
@@ -1179,7 +1184,10 @@ logoutBtn.addEventListener('click', async () => {
         user = null;
         updateUI();
     }
-});
+}
+
+logoutBtn.addEventListener('click', handleLogout);
+mobileSettingsLogoutBtn?.addEventListener('click', handleLogout);
 
 // --- Font Size Logic ---
 // --- Font Size Logic ---
@@ -1646,6 +1654,34 @@ if (filterYearBtn && filterYearMenu) {
         }
     });
 }
+
+function closeMobileFilters() {
+    libraryToolbar?.classList.remove('mobile-filters-open');
+    mobileFilterBtn?.setAttribute('aria-expanded', 'false');
+    filterStatusMenu?.classList.add('hidden');
+    filterYearMenu?.classList.add('hidden');
+    filterStatusBtn?.setAttribute('aria-expanded', 'false');
+    filterYearBtn?.setAttribute('aria-expanded', 'false');
+}
+
+function openMobileFilters() {
+    libraryToolbar?.classList.add('mobile-filters-open');
+    mobileFilterBtn?.setAttribute('aria-expanded', 'true');
+    closeClubSwitcherMenu();
+    closeSettingsMenu();
+    closeNotificationsMenu();
+}
+
+mobileFilterBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (libraryToolbar?.classList.contains('mobile-filters-open')) {
+        closeMobileFilters();
+    } else {
+        openMobileFilters();
+    }
+});
+
+mobileFilterCloseBtn?.addEventListener('click', closeMobileFilters);
 
 // Ensure login persists
 async function startAuthenticatedHydration(sessionUser, sourceEvent) {
@@ -3252,13 +3288,17 @@ window.removeTagFromCard = removeTagFromCard;
 
 // --- Import Logic ---
 
-importBtn.addEventListener('click', () => {
+function openImportModal() {
+    closeSettingsMenu();
     openDialog(importModal, importText);
     importText.value = '';
     importProgress.classList.add('hidden');
     startImportBtn.disabled = false;
     startImportBtn.textContent = 'Start Import';
-});
+}
+
+importBtn.addEventListener('click', openImportModal);
+mobileImportBtn?.addEventListener('click', openImportModal);
 
 const closeImport = () => {
     closeDialog(importModal);
@@ -3321,10 +3361,7 @@ document.addEventListener('keydown', (e) => {
     closeClubSwitcherMenu();
     closeSettingsMenu();
     closeNotificationsMenu();
-    filterStatusMenu?.classList.add('hidden');
-    filterYearMenu?.classList.add('hidden');
-    filterStatusBtn?.setAttribute('aria-expanded', 'false');
-    filterYearBtn?.setAttribute('aria-expanded', 'false');
+    closeMobileFilters();
 });
 
 startImportBtn.addEventListener('click', async () => {
@@ -5119,7 +5156,7 @@ function renderDashboard() {
                     Guide
                 </button>
 
-                <div class="relative">
+                <div class="relative dashboard-calendar-action">
                     <button onclick="toggleCalendarDropdown(event)" class="bg-white text-stone-700 border border-stone-200 px-4 py-2 rounded-lg hover:bg-stone-50 hover:border-stone-300 transition-all duration-300 shadow-sm hover:shadow-md font-bold text-sm flex items-center gap-2">
                         <iconify-icon icon="solar:calendar-add-broken" class="text-base"></iconify-icon>
                         Add to Calendar
