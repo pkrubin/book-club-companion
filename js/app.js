@@ -1,5 +1,5 @@
 // --- Configuration ---
-const APP_VERSION = '1.9.19'; // Add iPhone home-screen icon metadata
+const APP_VERSION = '1.9.20'; // Fix mobile date clear icon overlap
 
 // --- Gemini AI Configuration ---
 // Uses /api/gemini serverless function for secure API calls

@@ -31,6 +31,30 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
   - Database: `<rollback sql file or note>`
 ```
 
+## 2026-05-10 - Mobile Date Field Icon Fix
+- Version: `v1.9.20`
+- Test commit: `pending`
+- Prod commit: `not yet`
+- Environments: `test`
+- User-facing changes:
+  - Fixed the small trash-can clear icon overlapping the year in the mobile book detail Target Date field.
+  - Kept the compact two-column mobile edit layout while reserving explicit text space inside the date input.
+- Operational changes:
+  - Env vars: none
+  - Database / SQL: none
+  - Branch / deployment notes:
+    - Follow-up to real iPhone review of the `v1.9.18`/`v1.9.19` book detail modal.
+- Validation:
+  - `node --check js/app.js`
+  - `node --check local_server.js`
+  - `git diff --check`
+  - Local served app returned `200 OK` on `http://127.0.0.1:8080`
+  - Local logged-out browser smoke loaded `v1.9.20` with no console errors.
+  - Authenticated phone and iPad flows still need human verification on `test`.
+- Rollback:
+  - Code: revert this test release commit
+  - Database: not applicable
+
 ## 2026-05-10 - iPhone Home Screen Icon Setup
 - Version: `v1.9.19`
 - Test commit: `22e4e6a`

@@ -340,10 +340,17 @@ body.modal-open {
         letter-spacing: -0.03em;
     }
 
+    #book-modal #edit-date {
+        padding-right: 2.45rem !important;
+        text-align: left;
+    }
+
     #book-modal #clear-date-btn {
         min-height: 32px !important;
         width: 32px;
+        height: 32px;
         padding: 0;
+        right: 0.25rem !important;
     }
 
     #book-modal #modal-tags-container {
