@@ -15,13 +15,25 @@ Planning / backlog triage
 
 ## Big Goal
 
-Finish the multi-club architecture so the live app has a complete club-management model, lower API churn, and a clearer admin surface.
+Make Book Club Companion usable and accessible on phones and tablets while continuing the multi-club architecture work.
 
 ## Default Start Point
 - Start new work from fresh `origin/test`
 - Use `$book-club-workflow`
 
 ## Active Queue
+
+- [ ] Make the website mobile accessible, iPhone first
+  - audit the current app on small iPhone widths before changing UI
+  - identify blocked or painful workflows: login, club switcher, dashboard, search, library, book modal, discussion guide, import, settings
+  - fix tap targets, overflow, modals, tables, nav, filter controls, and text scaling issues
+  - preserve desktop behavior while improving mobile ergonomics
+  - verify on served localhost with iPhone-sized viewports before preparing a test release
+
+- [ ] Extend mobile accessibility work to iPad/tablet layouts
+  - audit portrait and landscape tablet widths after iPhone fixes are stable
+  - tune layouts for medium-width density instead of simply stretching phone UI
+  - verify dashboard, library table/grid, modals, import review, and discussion guide flows
 
 - [ ] Define and implement the multi-club role model
   - add a per-club `manager` role
@@ -67,8 +79,9 @@ These exist in historical docs or RFCs but should not be treated as the next fea
 
 ## Suggested Next Decision
 
-Choose the next real product task from the top of the Active Queue.
+Next recommended task:
+- mobile accessibility audit and iPhone-first implementation plan
 
 ## Release Note
 
-No version bump until a real feature or fix is ready for `test`.
+No version bump until mobile accessibility fixes are implemented and ready for `test`.
