@@ -19,6 +19,15 @@ body {
     /* stone-900 for high contrast */
 }
 
+body.modal-open {
+    overflow: hidden;
+}
+
+.hidden,
+[aria-hidden="true"] {
+    display: none !important;
+}
+
 /* 2025 Button Styles */
 /* Button Styles (Premium 2025) */
 .btn-primary {
@@ -177,6 +186,411 @@ body {
 /* Pill Shapes for Inputs */
 .fade-in {
     animation: fadeIn 0.3s ease-out forwards;
+}
+
+@media (hover: none) {
+    .btn-primary:hover,
+    .btn-secondary:hover,
+    .card-modern:hover,
+    .card-modern:hover .book-cover-shadow,
+    .modal-book-float:hover,
+    .input-pill:hover,
+    .input-modern:hover {
+        transform: none;
+    }
+}
+
+@media (max-width: 640px) {
+    body {
+        overflow-x: hidden;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+        font-size: max(1rem, 16px);
+    }
+
+    button,
+    select,
+    input[type="button"],
+    input[type="submit"],
+    .btn-primary,
+    .btn-secondary {
+        min-height: 44px;
+    }
+
+    #auth-section {
+        align-items: flex-start;
+        padding: 1rem;
+    }
+
+    #auth-section > div {
+        margin-block: 1rem;
+        padding: 2rem 1.25rem;
+    }
+
+    #auth-section img {
+        width: 8rem;
+        height: 8rem;
+    }
+
+    #app-section nav > div > div {
+        height: auto;
+        min-height: 4rem;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        padding-block: 0.75rem;
+    }
+
+    #app-section nav img[alt="Logo"] {
+        width: 2.25rem;
+        height: 2.25rem;
+        margin-right: 0.5rem;
+    }
+
+    #app-section nav .text-editorial-headline {
+        max-width: 9rem;
+        font-size: 1.35rem !important;
+        line-height: 1;
+    }
+
+    #club-switcher-btn {
+        max-width: calc(100vw - 14rem) !important;
+        min-height: 44px;
+    }
+
+    #nav-actions:not(.hidden) {
+        display: flex;
+        flex-basis: 100%;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.55rem;
+        width: 100%;
+    }
+
+    #nav-actions > div:first-child {
+        display: flex;
+        gap: 0.25rem;
+        overflow-x: auto;
+        padding-bottom: 0.25rem;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    #nav-actions > div:first-child > * {
+        flex: 0 0 auto;
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        white-space: nowrap;
+    }
+
+    #nav-actions > div:last-child {
+        justify-content: space-between;
+        width: 100%;
+        gap: 0.75rem;
+    }
+
+    #nav-actions > div:last-child > .h-4 {
+        display: none;
+    }
+
+    #settings-btn,
+    #notifications-btn,
+    #logout-btn {
+        min-width: 44px;
+        min-height: 44px;
+        align-items: center;
+        justify-content: center;
+    }
+
+    #club-switcher-menu,
+    #settings-menu,
+    #notifications-menu {
+        position: fixed;
+        left: 0.75rem;
+        right: 0.75rem;
+        top: 4.25rem;
+        width: auto;
+        max-height: calc(100svh - 5rem);
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    #settings-menu {
+        max-width: none;
+    }
+
+    main > div {
+        padding-inline: 1rem !important;
+        padding-top: 1rem !important;
+    }
+
+    #dashboard-section {
+        margin-bottom: 2rem;
+    }
+
+    #dashboard-hero {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        max-width: none !important;
+        margin-bottom: 2rem !important;
+    }
+
+    #dashboard-hero > div:first-child {
+        width: 100% !important;
+        max-height: 14rem;
+        border-right: 0 !important;
+        border-bottom: 1px solid #e7e5e4;
+        border-radius: 1rem 1rem 0 0 !important;
+    }
+
+    #dashboard-hero button,
+    #dashboard-upcoming-list button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    #search-section {
+        max-width: none;
+        text-align: left;
+    }
+
+    #search-section h1 {
+        font-size: 2rem;
+        line-height: 1.1;
+    }
+
+    #search-section p {
+        font-size: 1rem;
+    }
+
+    #search-section .relative > .flex {
+        flex-direction: column;
+        border-radius: 1rem;
+        overflow: hidden;
+    }
+
+    #search-input {
+        width: 100%;
+        padding: 0.95rem 1rem;
+        border-bottom: 1px solid #e7e5e4;
+        border-radius: 0;
+    }
+
+    #search-btn {
+        width: 100%;
+        border-radius: 0;
+        padding-block: 0.95rem;
+    }
+
+    #library-section > div:first-child {
+        gap: 1rem;
+    }
+
+    #library-section > div:first-child > div:last-child {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        width: 100%;
+        gap: 0.5rem;
+    }
+
+    #filter-status-btn,
+    #filter-year-btn,
+    #filter-tag,
+    #filter-rating,
+    #sort-by {
+        width: 100%;
+        max-width: none;
+        min-height: 44px;
+    }
+
+    #filter-status-menu,
+    #filter-year-menu {
+        position: fixed;
+        left: 0.75rem;
+        right: 0.75rem;
+        top: auto;
+        bottom: 1rem;
+        width: auto;
+        max-height: min(22rem, calc(100svh - 2rem));
+        overflow-y: auto;
+        z-index: 60;
+    }
+
+    #library-section .flex.bg-stone-100.rounded-lg {
+        grid-column: 1 / -1;
+        justify-content: stretch;
+    }
+
+    #view-grid-btn,
+    #view-table-btn {
+        flex: 1 1 0;
+    }
+
+    #saved-grid {
+        gap: 0.75rem;
+    }
+
+    #saved-grid .card-modern,
+    #dashboard-upcoming-list .card-modern {
+        min-height: 9.5rem;
+    }
+
+    .book-frame-modern {
+        width: 6.25rem;
+    }
+
+    #saved-table-container,
+    #import-review-list {
+        overflow-x: visible;
+    }
+
+    #saved-table-container table,
+    #saved-table-container thead,
+    #saved-table-container tbody,
+    #saved-table-container tr,
+    #saved-table-container td,
+    #import-review-list table,
+    #import-review-list thead,
+    #import-review-list tbody,
+    #import-review-list tr,
+    #import-review-list td {
+        display: block;
+        width: 100%;
+    }
+
+    #saved-table-container thead,
+    #import-review-list thead {
+        display: none;
+    }
+
+    #saved-table-container tr,
+    #import-review-list tr {
+        margin-bottom: 0.75rem;
+        border: 1px solid #e7e5e4;
+        border-radius: 0.875rem;
+        overflow: hidden;
+        background: #fff;
+    }
+
+    #saved-table-container td,
+    #import-review-list td {
+        min-height: 44px;
+        padding: 0.75rem 1rem !important;
+        white-space: normal !important;
+    }
+
+    #saved-table-container td::before,
+    #import-review-list td::before {
+        content: attr(data-label);
+        display: block;
+        margin-bottom: 0.25rem;
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #78716c;
+    }
+
+    #book-modal,
+    #import-modal,
+    #create-club-modal,
+    #error-modal,
+    #unsaved-changes-modal,
+    #ai-overwrite-modal,
+    #discussion-modal,
+    #comparison-modal {
+        align-items: flex-start;
+        justify-content: center;
+        overflow-y: auto;
+        padding: max(0.75rem, env(safe-area-inset-top)) 0.75rem max(0.75rem, env(safe-area-inset-bottom));
+    }
+
+    #book-modal > div,
+    #import-modal > div,
+    #create-club-modal > div,
+    #discussion-modal > div,
+    #comparison-modal > div {
+        width: 100%;
+        max-width: none;
+        max-height: calc(100svh - 1.5rem);
+        border-radius: 1rem;
+    }
+
+    #book-modal > div {
+        overflow-y: auto;
+    }
+
+    #book-modal > div > div:first-child {
+        justify-content: flex-start;
+        padding: 1rem;
+    }
+
+    #modal-image {
+        height: 8rem;
+    }
+
+    #book-modal #modal-edit-section {
+        flex-grow: 0;
+    }
+
+    #book-modal #modal-edit-section .space-y-2 {
+        overflow: visible;
+        max-height: none;
+    }
+
+    #book-modal .input-modern,
+    #discussion-content-edit,
+    #import-text {
+        min-height: 44px;
+        font-size: 1rem;
+    }
+
+    #modal-update-btn,
+    #modal-delete-btn {
+        flex: 1 1 0;
+        min-height: 44px;
+    }
+
+    #modal-tags-container button,
+    #clear-date-btn,
+    #modal-ai-tags-btn,
+    #modal-refresh-rating-btn,
+    #btn-open-guide-modal-left,
+    #btn-open-guide-modal {
+        min-height: 44px;
+    }
+
+    #import-modal > div,
+    #create-club-modal > div {
+        padding: 1rem;
+    }
+
+    #import-tabs,
+    #import-expanded-actions,
+    #import-collapsed-bar,
+    #discussion-modal .border-t,
+    #comparison-modal .border-t {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    #import-tabs button,
+    #import-expanded-actions button,
+    #import-collapsed-bar button,
+    #discussion-modal .border-t button,
+    #comparison-modal .border-t button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    #discussion-modal .border-t > div,
+    #comparison-modal .border-t > div {
+        width: 100%;
+        flex-direction: column;
+    }
 }
 
 /* --- Modal Micro-Interactions --- */

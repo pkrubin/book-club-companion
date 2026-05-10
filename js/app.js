@@ -1,5 +1,5 @@
 // --- Configuration ---
-const APP_VERSION = '1.9.15'; // Remove redundant library refresh button
+const APP_VERSION = '1.9.16'; // Mobile accessibility and iPhone ergonomics pass
 
 // --- Gemini AI Configuration ---
 // Uses /api/gemini serverless function for secure API calls
@@ -358,6 +358,36 @@ const clubSwitcherFooter = document.getElementById('club-switcher-footer');
 const navLinkDashboard = document.getElementById('nav-link-dashboard');
 const navLinkSearch = document.getElementById('nav-link-search');
 const navLinkLibrary = document.getElementById('nav-link-library');
+
+function setAriaHidden(element, hidden) {
+    if (!element) return;
+    element.setAttribute('aria-hidden', hidden ? 'true' : 'false');
+}
+
+function hasOpenDialog() {
+    return Boolean(document.querySelector('[role="dialog"]:not(.hidden), [role="alertdialog"]:not(.hidden)'));
+}
+
+function openDialog(element, focusTarget = null) {
+    if (!element) return;
+    element.classList.remove('hidden');
+    setAriaHidden(element, false);
+    document.body.classList.add('modal-open');
+    window.requestAnimationFrame(() => {
+        if (focusTarget && typeof focusTarget.focus === 'function') {
+            focusTarget.focus();
+        }
+    });
+}
+
+function closeDialog(element) {
+    if (!element) return;
+    element.classList.add('hidden');
+    setAriaHidden(element, true);
+    if (!hasOpenDialog()) {
+        document.body.classList.remove('modal-open');
+    }
+}
 
 const searchInput = document.getElementById('search-input');
 const searchBtn = document.getElementById('search-btn');
@@ -731,8 +761,18 @@ function closeClubSwitcherMenu() {
     if (clubSwitcherBtn) clubSwitcherBtn.setAttribute('aria-expanded', 'false');
 }
 
+function closeSettingsMenu() {
+    if (settingsMenu) settingsMenu.classList.add('hidden');
+    if (settingsBtn) settingsBtn.setAttribute('aria-expanded', 'false');
+}
+
+function closeNotificationsMenu() {
+    if (notificationsMenu) notificationsMenu.classList.add('hidden');
+    if (notificationsBtn) notificationsBtn.setAttribute('aria-expanded', 'false');
+}
+
 function closeCreateClubModal() {
-    if (createClubModal) createClubModal.classList.add('hidden');
+    closeDialog(createClubModal);
     if (createClubForm) createClubForm.reset();
     if (createClubTimezoneInput) createClubTimezoneInput.value = 'America/New_York';
     if (createClubTypeSelect) createClubTypeSelect.value = 'sandbox';
@@ -748,9 +788,8 @@ function openCreateClubModal() {
         return;
     }
 
-    if (createClubModal) createClubModal.classList.remove('hidden');
+    openDialog(createClubModal, createClubNameInput);
     createClubStandardNote?.classList.toggle('hidden', createClubTypeSelect?.value !== 'standard');
-    if (createClubNameInput) createClubNameInput.focus();
 }
 
 async function persistActiveClubPreference(clubId) {
@@ -901,6 +940,8 @@ function updateUI() {
         authSection.classList.add('hidden');
         appSection.classList.remove('hidden');
         navActions.classList.remove('hidden');
+        setAriaHidden(authSection, true);
+        setAriaHidden(appSection, false);
         renderClubSwitcher();
 
         // Init Font Size
@@ -928,6 +969,8 @@ function updateUI() {
         authSection.classList.remove('hidden');
         appSection.classList.add('hidden');
         navActions.classList.add('hidden');
+        setAriaHidden(authSection, false);
+        setAriaHidden(appSection, true);
         isInitialLoad = true; // Reset so next login redirects
 
         // --- CLEANUP: Clear all data on logout ---
@@ -1366,8 +1409,8 @@ if (clubSwitcherBtn && clubSwitcherMenu) {
         e.stopPropagation();
         clubSwitcherMenu.classList.toggle('hidden');
         clubSwitcherBtn.setAttribute('aria-expanded', clubSwitcherMenu.classList.contains('hidden') ? 'false' : 'true');
-        if (settingsMenu) settingsMenu.classList.add('hidden');
-        if (notificationsMenu) notificationsMenu.classList.add('hidden');
+        closeSettingsMenu();
+        closeNotificationsMenu();
     });
 
     clubSwitcherList?.addEventListener('click', async (e) => {
@@ -1389,7 +1432,9 @@ if (settingsBtn && settingsMenu) {
     settingsBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         settingsMenu.classList.toggle('hidden');
+        settingsBtn.setAttribute('aria-expanded', settingsMenu.classList.contains('hidden') ? 'false' : 'true');
         closeClubSwitcherMenu();
+        closeNotificationsMenu();
     });
 
     // Font Size Buttons
@@ -1403,14 +1448,14 @@ if (settingsBtn && settingsMenu) {
     // Close on Click Outside
     window.addEventListener('click', (e) => {
         if (!settingsBtn.contains(e.target) && !settingsMenu.contains(e.target)) {
-            settingsMenu.classList.add('hidden');
+            closeSettingsMenu();
         }
     });
 }
 
 if (openCreateClubBtn) {
     openCreateClubBtn.addEventListener('click', () => {
-        if (settingsMenu) settingsMenu.classList.add('hidden');
+        closeSettingsMenu();
         openCreateClubModal();
     });
 }
@@ -1466,14 +1511,15 @@ if (notificationsBtn && notificationsMenu) {
     notificationsBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         notificationsMenu.classList.toggle('hidden');
-        // Close settings menu if open
-        if (settingsMenu) settingsMenu.classList.add('hidden');
+        notificationsBtn.setAttribute('aria-expanded', notificationsMenu.classList.contains('hidden') ? 'false' : 'true');
+        closeSettingsMenu();
+        closeClubSwitcherMenu();
     });
 
     // Close on Click Outside
     window.addEventListener('click', (e) => {
         if (!notificationsBtn.contains(e.target) && !notificationsMenu.contains(e.target)) {
-            notificationsMenu.classList.add('hidden');
+            closeNotificationsMenu();
         }
     });
 
@@ -1542,7 +1588,9 @@ if (filterStatusBtn && filterStatusMenu) {
     filterStatusBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         filterStatusMenu.classList.toggle('hidden');
-        // Close other menus if open (optional)
+        filterStatusBtn.setAttribute('aria-expanded', filterStatusMenu.classList.contains('hidden') ? 'false' : 'true');
+        filterYearMenu?.classList.add('hidden');
+        filterYearBtn?.setAttribute('aria-expanded', 'false');
     });
 
     // Handle Selection
@@ -1563,6 +1611,7 @@ if (filterStatusBtn && filterStatusMenu) {
 
             // Close Menu
             filterStatusMenu.classList.add('hidden');
+            filterStatusBtn.setAttribute('aria-expanded', 'false');
         });
     });
 
@@ -1570,6 +1619,7 @@ if (filterStatusBtn && filterStatusMenu) {
     window.addEventListener('click', (e) => {
         if (!filterStatusBtn.contains(e.target) && !filterStatusMenu.contains(e.target)) {
             filterStatusMenu.classList.add('hidden');
+            filterStatusBtn.setAttribute('aria-expanded', 'false');
         }
     });
 }
@@ -1584,11 +1634,15 @@ if (filterYearBtn && filterYearMenu) {
     filterYearBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         filterYearMenu.classList.toggle('hidden');
+        filterYearBtn.setAttribute('aria-expanded', filterYearMenu.classList.contains('hidden') ? 'false' : 'true');
+        filterStatusMenu?.classList.add('hidden');
+        filterStatusBtn?.setAttribute('aria-expanded', 'false');
     });
 
     window.addEventListener('click', (e) => {
         if (!filterYearBtn.contains(e.target) && !filterYearMenu.contains(e.target)) {
             filterYearMenu.classList.add('hidden');
+            filterYearBtn.setAttribute('aria-expanded', 'false');
         }
     });
 }
@@ -1990,11 +2044,11 @@ function createBookCard(book) {
 
 function showError(msg) {
     errorMessage.textContent = msg;
-    errorModal.classList.remove('hidden');
+    openDialog(errorModal, closeErrorBtn);
 }
 
 closeErrorBtn.addEventListener('click', () => {
-    errorModal.classList.add('hidden');
+    closeDialog(errorModal);
 });
 
 // --- AI-Powered Tagging & Summary (Gemini) ---
@@ -2814,8 +2868,7 @@ function openModal(book, savedData = null) {
     }
 
     // Show Modal
-    modal.classList.remove('hidden');
-    document.body.style.overflow = 'hidden'; // Prevent background scrolling
+    openDialog(modal, closeModalBtn);
 
     // Check for description overflow - show "See more" if text is truncated OR sufficiently long
     // ONLY for saved books where we want to preserve space for the edit section
@@ -2867,8 +2920,7 @@ function hasUnsavedChanges() {
 }
 
 function closeModal() {
-    modal.classList.add('hidden');
-    document.body.style.overflow = '';
+    closeDialog(modal);
     modalInitialValues = null;
     currentModalBookId = null;
 
@@ -2887,11 +2939,11 @@ function attemptCloseModal() {
 }
 
 function showUnsavedChangesModal() {
-    document.getElementById('unsaved-changes-modal').classList.remove('hidden');
+    openDialog(document.getElementById('unsaved-changes-modal'), document.getElementById('unsaved-cancel-btn'));
 }
 
 function hideUnsavedChangesModal() {
-    document.getElementById('unsaved-changes-modal').classList.add('hidden');
+    closeDialog(document.getElementById('unsaved-changes-modal'));
 }
 
 // Unsaved changes modal button handlers
@@ -3201,7 +3253,7 @@ window.removeTagFromCard = removeTagFromCard;
 // --- Import Logic ---
 
 importBtn.addEventListener('click', () => {
-    importModal.classList.remove('hidden');
+    openDialog(importModal, importText);
     importText.value = '';
     importProgress.classList.add('hidden');
     startImportBtn.disabled = false;
@@ -3209,7 +3261,7 @@ importBtn.addEventListener('click', () => {
 });
 
 const closeImport = () => {
-    importModal.classList.add('hidden');
+    closeDialog(importModal);
     // Reset state
     importText.value = '';
     importText.classList.remove('hidden'); // Show input again
@@ -3225,6 +3277,55 @@ const closeImport = () => {
 };
 closeImportBtn.addEventListener('click', closeImport);
 cancelImportBtn.addEventListener('click', closeImport);
+
+document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+
+    const unsavedModal = document.getElementById('unsaved-changes-modal');
+    const aiOverwriteModal = document.getElementById('ai-overwrite-modal');
+    const discussionModal = document.getElementById('discussion-modal');
+
+    if (unsavedModal && !unsavedModal.classList.contains('hidden')) {
+        hideUnsavedChangesModal();
+        return;
+    }
+    if (aiOverwriteModal && !aiOverwriteModal.classList.contains('hidden')) {
+        closeDialog(aiOverwriteModal);
+        return;
+    }
+    if (errorModal && !errorModal.classList.contains('hidden')) {
+        closeDialog(errorModal);
+        return;
+    }
+    if (comparisonModal && !comparisonModal.classList.contains('hidden')) {
+        closeComparisonModal();
+        return;
+    }
+    if (discussionModal && !discussionModal.classList.contains('hidden')) {
+        closeDiscussionModal();
+        return;
+    }
+    if (importModal && !importModal.classList.contains('hidden')) {
+        closeImport();
+        return;
+    }
+    if (createClubModal && !createClubModal.classList.contains('hidden')) {
+        closeCreateClubModal();
+        return;
+    }
+    if (modal && !modal.classList.contains('hidden')) {
+        attemptCloseModal();
+        return;
+    }
+
+    closeClubSwitcherMenu();
+    closeSettingsMenu();
+    closeNotificationsMenu();
+    filterStatusMenu?.classList.add('hidden');
+    filterYearMenu?.classList.add('hidden');
+    filterStatusBtn?.setAttribute('aria-expanded', 'false');
+    filterYearBtn?.setAttribute('aria-expanded', 'false');
+});
 
 startImportBtn.addEventListener('click', async () => {
     const lines = importText.value.split('\n').map(l => l.trim()).filter(l => l);
@@ -3704,7 +3805,7 @@ function renderImportReview() {
         // Build cover cell with hover zoom - USE SAME URL, just scale up
         const safeThumb = thumb ? thumb.replace('http:', 'https:') : '';
         const coverCell = thumb
-            ? `<td class="px-2 py-2 relative group">
+            ? `<td class="px-2 py-2 relative group" data-label="Cover">
                     <div class="w-9 h-12 bg-stone-100 border border-stone-200 rounded overflow-hidden flex items-center justify-center cursor-pointer">
                         <img src="${safeThumb}" class="max-w-full max-h-full object-contain">
                     </div>
@@ -3712,14 +3813,14 @@ function renderImportReview() {
                         <img src="${safeThumb}" style="max-height: 160px; max-width: 120px;">
                     </div>
                </td>`
-            : `<td class="px-2 py-2">
+            : `<td class="px-2 py-2" data-label="Cover">
                     <div class="w-9 h-12 bg-stone-100 border border-stone-200 rounded flex items-center justify-center text-stone-400">
                         <iconify-icon icon="solar:book-2-line-duotone" class="text-sm"></iconify-icon>
                     </div>
                </td>`;
 
         row.innerHTML = `
-            <td class="px-2 py-2 text-center">
+            <td class="px-2 py-2 text-center" data-label="Select">
                 <input type="checkbox" 
                     data-row="${rowIndex}" 
                     data-type="${item.type}" 
@@ -3729,18 +3830,18 @@ function renderImportReview() {
             </td>
             ${coverCell}
             </td>
-            <td class="px-2 py-2 max-w-[10rem]">
+            <td class="px-2 py-2 max-w-[10rem]" data-label="Query">
                 <div class="text-xs text-stone-600 line-clamp-2" title="${item.query}">"${item.query}"</div>
                 ${matchIndicator}
             </td>
-            <td class="px-2 py-2 max-w-[14rem]">
+            <td class="px-2 py-2 max-w-[14rem]" data-label="Title">
                 <p class="font-medium text-stone-800 text-sm line-clamp-2" title="${title}">${title}</p>
             </td>
-            <td class="px-2 py-2 max-w-[10rem]">
+            <td class="px-2 py-2 max-w-[10rem]" data-label="Author">
                 <p class="text-stone-600 text-sm line-clamp-2" title="${author}">${author}</p>
             </td>
-            <td class="px-2 py-2 text-stone-400 text-sm">${year}</td>
-            <td class="px-2 py-2 text-center">
+            <td class="px-2 py-2 text-stone-400 text-sm" data-label="Year">${year}</td>
+            <td class="px-2 py-2 text-center" data-label="Refine">
                 <button onclick="refineSearch(${rowIndex}, '${item.type}', ${item.index})" 
                     class="text-xs text-stone-500 hover:text-stone-800 flex items-center gap-1 mx-auto">
                     <iconify-icon icon="solar:pen-new-square-linear"></iconify-icon>
@@ -5519,7 +5620,7 @@ function renderSavedBooks(books) {
         const tr = document.createElement('tr');
         tr.className = 'hover:bg-stone-50 transition cursor-pointer';
         tr.innerHTML = `
-        <td class="px-6 py-4 whitespace-nowrap">
+        <td class="px-6 py-4 whitespace-nowrap" data-label="Book">
             <div class="flex items-center">
                 <div class="h-10 w-8 flex-shrink-0">
                     <img class="h-10 w-8 rounded object-cover" src="${thumbnail}" alt="">
@@ -5530,30 +5631,30 @@ function renderSavedBooks(books) {
                 </div>
             </div>
             </td>
-            <td class="px-6 py-4 whitespace-nowrap">
+            <td class="px-6 py-4 whitespace-nowrap" data-label="Status">
                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full border ${statusClass}">
                     ${status}
                 </span>
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-stone-500">
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-stone-500" data-label="Rating">
                 ${rating}
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-stone-500">
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-stone-500" data-label="Host">
                 ${safeHost}
             </td>
 
-            <td class="px-6 py-4 text-sm text-stone-500 max-w-xs">
+            <td class="px-6 py-4 text-sm text-stone-500 max-w-xs" data-label="Tags">
                 <div class="flex flex-wrap gap-1">
                     ${row.tags ? row.tags.map(t => `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getTagColor(t)}">${escapeHtml(t)}</span>`).join('') : '-'}
                 </div>
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-stone-500">
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-stone-500" data-label="Club Date">
                 ${safeDate}
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-stone-500">
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-stone-500" data-label="Added">
                 ${new Date(row.created_at).toLocaleDateString()}
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium" data-label="Actions">
                 <!-- Edit button removed -->
             </td>
     `;
@@ -6063,7 +6164,7 @@ function confirmAIOverwrite() {
         }
 
         const cleanup = (result) => {
-            modal.classList.add('hidden');
+            closeDialog(modal);
             confirmBtn.replaceWith(confirmBtn.cloneNode(true));
             keepBtn.replaceWith(keepBtn.cloneNode(true));
             closeBtn.replaceWith(closeBtn.cloneNode(true));
@@ -6077,7 +6178,7 @@ function confirmAIOverwrite() {
         document.getElementById('ai-cancel-replace-btn').addEventListener('click', onCancel);
         document.getElementById('ai-close-replace-btn').addEventListener('click', onCancel);
 
-        modal.classList.remove('hidden');
+        openDialog(modal, keepBtn);
     });
 }
 
@@ -6106,14 +6207,14 @@ function openDiscussionModal(book) {
     if (editBtn) editBtn.textContent = 'Edit Questions';
     document.getElementById('btn-save-questions').classList.add('hidden');
 
-    modal.classList.remove('hidden');
     modal.classList.add('flex');
+    openDialog(modal, modal.querySelector('button'));
 }
 
 function closeDiscussionModal() {
     const modal = document.getElementById('discussion-modal');
-    modal.classList.add('hidden');
     modal.classList.remove('flex');
+    closeDialog(modal);
     currentDiscussionBook = null;
 }
 
@@ -6755,7 +6856,7 @@ let currentComparisonBook = null;
 let currentAiTagsResult = null;
 
 function closeComparisonModal() {
-    comparisonModal.classList.add('hidden');
+    closeDialog(comparisonModal);
     currentComparisonBook = null;
     currentAiTagsResult = null;
 }
@@ -6765,7 +6866,7 @@ if (comparisonCancelBtn) comparisonCancelBtn.addEventListener('click', closeComp
 
 async function openComparisonModal(book) {
     currentComparisonBook = book;
-    comparisonModal.classList.remove('hidden');
+    openDialog(comparisonModal, closeComparisonBtn);
 
     // Reset State
     const setButtons = (enabled) => {

@@ -1,7 +1,7 @@
 # Current Task
 
 ## Status
-Planning / backlog triage
+Mobile accessibility implementation in progress
 
 ## Usage
 
@@ -24,11 +24,13 @@ Make Book Club Companion usable and accessible on phones and tablets while conti
 ## Active Queue
 
 - [ ] Make the website mobile accessible, iPhone first
-  - audit the current app on small iPhone widths before changing UI
-  - identify blocked or painful workflows: login, club switcher, dashboard, search, library, book modal, discussion guide, import, settings
-  - fix tap targets, overflow, modals, tables, nav, filter controls, and text scaling issues
-  - preserve desktop behavior while improving mobile ergonomics
-  - verify on served localhost with iPhone-sized viewports before preparing a test release
+  - [x] start from a fresh `origin/test` worktree on `codex/mobile-a11y`
+  - [x] audit the unauthenticated app on a 390px iPhone-sized viewport before changing UI
+  - [x] implement first safe mobile pass for login spacing, nav wrapping, search controls, library filters, table/card overflow, modal sizing, tap targets, menu state, and Escape handling
+  - [x] fix unauthenticated app-content bleed caused by mismatched nav markup and weak hidden-state enforcement
+  - [x] verify served localhost loads at iPhone and tablet widths with no console errors
+  - [ ] human login needed to verify authenticated flows: club switcher, dashboard, search, library data, book modal, discussion guide, import, settings
+  - [ ] fix any authenticated iPhone findings from that pass before preparing a test release
 
 - [ ] Extend mobile accessibility work to iPad/tablet layouts
   - audit portrait and landscape tablet widths after iPhone fixes are stable
@@ -80,7 +82,7 @@ These exist in historical docs or RFCs but should not be treated as the next fea
 ## Suggested Next Decision
 
 Next recommended task:
-- mobile accessibility audit and iPhone-first implementation plan
+- human-authenticated iPhone verification on served localhost, then address any remaining core-flow issues
 
 ## Release Note
 

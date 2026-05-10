@@ -70,7 +70,7 @@
     <div class="ambient-background"></div>
 
     <!-- Auth Section -->
-    <div id="auth-section" class="flex-grow flex items-center justify-center p-4 login-bg">
+    <div id="auth-section" class="flex-grow flex items-center justify-center p-4 login-bg" aria-hidden="false">
         <div class="bg-white p-8 md:p-12 rounded-2xl shadow-xl max-w-md w-full border border-stone-100">
             <div class="text-center mb-10">
                 <img src="images/logo-icon.png" alt="Book Club Companion Logo"
@@ -150,9 +150,9 @@
     </div>
 
     <!-- App Section (Hidden by default) -->
-    <div id="app-section" class="hidden flex-grow flex flex-col">
+    <div id="app-section" class="hidden flex-grow flex flex-col" aria-hidden="true">
         <!-- Navigation -->
-        <nav class="bg-white border-b border-stone-200 sticky top-0 z-40 shadow-sm">
+        <nav class="bg-white border-b border-stone-200 sticky top-0 z-40 shadow-sm" aria-label="Primary">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex items-center gap-5 h-16">
                     <div class="flex items-center gap-3 min-w-0 shrink-0">
@@ -166,7 +166,8 @@
 
                         <div class="relative shrink-0 pl-3 border-l border-stone-200">
                             <button id="club-switcher-btn"
-                                class="group inline-flex max-w-[170px] items-center gap-2 rounded-lg px-2 py-1 transition hover:bg-stone-50 focus:outline-none focus:ring-2 focus:ring-stone-200">
+                                class="group inline-flex max-w-[170px] items-center gap-2 rounded-lg px-2 py-1 transition hover:bg-stone-50 focus:outline-none focus:ring-2 focus:ring-stone-200"
+                                aria-haspopup="menu" aria-expanded="false" aria-controls="club-switcher-menu">
                                 <iconify-icon icon="solar:users-group-rounded-broken" class="shrink-0 text-sm text-stone-400"></iconify-icon>
                                 <span id="club-switcher-label" class="truncate text-[15px] font-semibold leading-tight text-stone-900">Loading club...</span>
                                 <span id="club-switcher-role" class="hidden"></span>
@@ -177,7 +178,8 @@
                             </button>
 
                             <div id="club-switcher-menu"
-                                class="hidden absolute left-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-stone-100 z-50 overflow-hidden">
+                                class="hidden absolute left-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-stone-100 z-50 overflow-hidden"
+                                role="menu" aria-label="Switch club">
                                 <div class="px-4 py-3 border-b border-stone-100 bg-stone-50">
                                     <p class="text-xs font-semibold uppercase tracking-[0.16em] text-stone-400 mb-1">Current Club</p>
                                     <div id="club-switcher-current" class="text-sm text-stone-700"></div>
@@ -221,13 +223,15 @@
                             <div class="relative">
                                 <button id="settings-btn"
                                     class="text-stone-500 hover:text-stone-900 text-sm font-medium transition flex items-center gap-1 focus:outline-none"
-                                    title="Settings">
+                                    title="Settings" aria-label="Settings" aria-haspopup="menu" aria-expanded="false"
+                                    aria-controls="settings-menu">
                                     <iconify-icon icon="solar:settings-linear" class="text-xl"></iconify-icon>
                                 </button>
 
                                 <!-- Dropdown Menu -->
                                 <div id="settings-menu"
-                                    class="hidden absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-stone-100 py-2 z-50 divide-y divide-stone-100">
+                                    class="hidden absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-stone-100 py-2 z-50 divide-y divide-stone-100"
+                                    role="menu" aria-label="Settings">
 
                                     <!-- Exports -->
                                     <div class="px-1 py-1">
@@ -303,13 +307,13 @@
                                     </div>
                                 </div>
                             </div>
-                            </div>
 
                             <!-- Notification Bell -->
                             <div class="relative">
                                 <button id="notifications-btn"
                                     class="text-stone-500 hover:text-stone-900 text-sm font-medium transition flex items-center gap-1 focus:outline-none relative"
-                                    title="Recent Changes">
+                                    title="Recent Changes" aria-label="Recent changes" aria-haspopup="menu"
+                                    aria-expanded="false" aria-controls="notifications-menu">
                                     <iconify-icon icon="solar:bell-bold" class="text-xl"></iconify-icon>
                                     <span id="notifications-badge"
                                         class="hidden absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold min-w-[18px] text-center">0</span>
@@ -317,7 +321,8 @@
 
                                 <!-- Notifications Dropdown -->
                                 <div id="notifications-menu"
-                                    class="hidden absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-stone-100 z-50 overflow-hidden">
+                                    class="hidden absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-stone-100 z-50 overflow-hidden"
+                                    role="menu" aria-label="Recent changes">
                                     <div
                                         class="flex justify-between items-center px-4 py-3 border-b border-stone-100 bg-stone-50">
                                         <span class="font-bold text-stone-800 text-sm">Recent Changes</span>
@@ -449,13 +454,15 @@
                             <!-- Filter: Status (Custom Dropdown) -->
                             <div class="relative">
                                 <button id="filter-status-btn"
-                                    class="bg-white text-stone-700 font-bold text-sm border border-stone-200 rounded-lg px-3 py-2 hover:border-stone-300 transition flex items-center gap-2 shadow-sm min-w-[120px] justify-between">
+                                    class="bg-white text-stone-700 font-bold text-sm border border-stone-200 rounded-lg px-3 py-2 hover:border-stone-300 transition flex items-center gap-2 shadow-sm min-w-[120px] justify-between"
+                                    aria-haspopup="menu" aria-expanded="false" aria-controls="filter-status-menu">
                                     <span id="filter-status-label">Statuses</span>
                                     <iconify-icon icon="solar:alt-arrow-down-bold"
                                         class="text-stone-400 text-xs"></iconify-icon>
                                 </button>
                                 <div id="filter-status-menu"
-                                    class="hidden absolute left-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-stone-100 py-1 z-30 animate-in fade-in zoom-in-95 duration-100">
+                                    class="hidden absolute left-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-stone-100 py-1 z-30 animate-in fade-in zoom-in-95 duration-100"
+                                    role="menu" aria-label="Filter by status">
                                     <button data-value="all"
                                         class="w-full text-left px-4 py-2 text-sm text-stone-700 hover:bg-stone-50 hover:text-rose-600 transition font-medium">All
                                         Statuses</button>
@@ -490,13 +497,15 @@
                             <!-- Filter: Year (Custom Dropdown) -->
                             <div class="relative">
                                 <button id="filter-year-btn"
-                                    class="bg-white text-stone-700 font-bold text-sm border border-stone-200 rounded-lg px-3 py-2 hover:border-stone-300 transition flex items-center gap-2 shadow-sm min-w-[100px] justify-between">
+                                    class="bg-white text-stone-700 font-bold text-sm border border-stone-200 rounded-lg px-3 py-2 hover:border-stone-300 transition flex items-center gap-2 shadow-sm min-w-[100px] justify-between"
+                                    aria-haspopup="menu" aria-expanded="false" aria-controls="filter-year-menu">
                                     <span id="filter-year-label">All Years</span>
                                     <iconify-icon icon="solar:alt-arrow-down-bold"
                                         class="text-stone-400 text-xs"></iconify-icon>
                                 </button>
                                 <div id="filter-year-menu"
-                                    class="hidden absolute left-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-stone-100 py-1 z-30 animate-in fade-in zoom-in-95 duration-100 max-h-64 overflow-y-auto custom-scrollbar">
+                                    class="hidden absolute left-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-stone-100 py-1 z-30 animate-in fade-in zoom-in-95 duration-100 max-h-64 overflow-y-auto custom-scrollbar"
+                                    role="menu" aria-label="Filter by year">
                                     <!-- Populated Dynamically -->
                                 </div>
                             </div>
@@ -534,11 +543,13 @@
                             <!-- View Toggle (Flows Naturally) -->
                             <div class="flex bg-stone-100 rounded-lg p-1 border border-stone-200">
                                 <button id="view-grid-btn"
-                                    class="p-1.5 rounded-md bg-white text-stone-800 shadow-sm transition flex items-center justify-center">
+                                    class="p-1.5 rounded-md bg-white text-stone-800 shadow-sm transition flex items-center justify-center"
+                                    aria-label="Show library as cards">
                                     <iconify-icon icon="solar:widget-bold" class="text-lg"></iconify-icon>
                                 </button>
                                 <button id="view-table-btn"
-                                    class="p-1.5 rounded-md text-stone-500 hover:text-stone-800 transition flex items-center justify-center">
+                                    class="p-1.5 rounded-md text-stone-500 hover:text-stone-800 transition flex items-center justify-center"
+                                    aria-label="Show library as table">
                                     <iconify-icon icon="solar:list-bold" class="text-lg"></iconify-icon>
                                 </button>
                             </div>
@@ -600,7 +611,8 @@
 
     <!-- Book Details Modal -->
     <div id="book-modal"
-        class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4 overflow-hidden">
+        class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4 overflow-hidden"
+        role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="modal-title">
         <div
             class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto flex flex-col md:flex-row overflow-hidden">
 
@@ -659,7 +671,8 @@
                 </div>
 
                 <button id="close-modal-btn"
-                    class="absolute top-4 left-4 md:hidden bg-white/80 p-2 rounded-full text-stone-600 hover:text-stone-900 flex items-center justify-center">
+                    class="absolute top-4 left-4 md:hidden bg-white/80 p-2 rounded-full text-stone-600 hover:text-stone-900 flex items-center justify-center"
+                    aria-label="Close book details">
                     <iconify-icon icon="solar:close-circle-broken" class="text-2xl"></iconify-icon>
                 </button>
             </div>
@@ -673,7 +686,8 @@
                         <p id="modal-authors" class="text-base text-stone-600 font-medium"></p>
                     </div>
                     <button id="close-modal-bottom-btn"
-                        class="hidden md:block text-stone-400 hover:text-stone-800 transition">
+                        class="hidden md:block text-stone-400 hover:text-stone-800 transition"
+                        aria-label="Close book details">
                         <iconify-icon icon="solar:close-circle-broken" class="text-3xl"></iconify-icon>
                     </button>
                 </div>
@@ -855,12 +869,13 @@
 
     <!-- Import Modal -->
     <div id="import-modal"
-        class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4"
+        role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="import-modal-title">
         <div
             class="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] flex flex-col p-6 transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)]">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="font-serif text-2xl font-bold text-stone-800">Bulk Import</h3>
-                <button id="close-import-btn" class="text-stone-400 hover:text-stone-800">
+                <h3 id="import-modal-title" class="font-serif text-2xl font-bold text-stone-800">Bulk Import</h3>
+                <button id="close-import-btn" class="text-stone-400 hover:text-stone-800" aria-label="Close import">
                     <iconify-icon icon="solar:close-circle-broken" class="text-2xl"></iconify-icon>
                 </button>
             </div>
@@ -995,15 +1010,16 @@
     </div>
 
     <div id="create-club-modal"
-        class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm hidden z-[55] flex items-center justify-center p-4">
+        class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm hidden z-[55] flex items-center justify-center p-4"
+        role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="create-club-modal-title">
         <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] flex flex-col p-6">
             <div class="flex justify-between items-start mb-5">
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-[0.16em] text-rose-500 mb-1">Club Setup</p>
-                    <h3 class="font-serif text-2xl font-bold text-stone-800">Create a New Club</h3>
+                    <h3 id="create-club-modal-title" class="font-serif text-2xl font-bold text-stone-800">Create a New Club</h3>
                     <p class="text-sm text-stone-500 mt-1">Set up a new space without touching the current club’s books.</p>
                 </div>
-                <button id="close-create-club-btn" class="text-stone-400 hover:text-stone-800">
+                <button id="close-create-club-btn" class="text-stone-400 hover:text-stone-800" aria-label="Close create club">
                     <iconify-icon icon="solar:close-circle-broken" class="text-2xl"></iconify-icon>
                 </button>
             </div>
@@ -1068,7 +1084,8 @@
 
     <!-- Error Modal -->
     <div id="error-modal"
-        class="fixed inset-0 bg-stone-900/50 backdrop-blur-sm hidden z-[60] flex items-center justify-center p-4">
+        class="fixed inset-0 bg-stone-900/50 backdrop-blur-sm hidden z-[60] flex items-center justify-center p-4"
+        role="alertdialog" aria-modal="true" aria-hidden="true" aria-labelledby="modal-title">
         <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 text-center transform transition-all scale-100">
             <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
                 <iconify-icon icon="solar:danger-circle-broken" class="text-red-600 text-3xl"></iconify-icon>
@@ -1088,12 +1105,13 @@
 
     <!-- Unsaved Changes Confirmation Modal -->
     <div id="unsaved-changes-modal"
-        class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm hidden z-[70] flex items-center justify-center p-4">
+        class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm hidden z-[70] flex items-center justify-center p-4"
+        role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="unsaved-changes-title">
         <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 text-center transform transition-all scale-100">
             <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-amber-100 mb-4">
                 <iconify-icon icon="solar:danger-triangle-bold" class="text-amber-600 text-2xl"></iconify-icon>
             </div>
-            <h3 class="text-lg leading-6 font-serif font-bold text-stone-900 mb-2">Unsaved Changes</h3>
+            <h3 id="unsaved-changes-title" class="text-lg leading-6 font-serif font-bold text-stone-900 mb-2">Unsaved Changes</h3>
             <p class="text-sm text-stone-500 mb-6">You have unsaved changes. What would you like to do?</p>
             <div class="flex flex-col gap-2">
                 <button id="unsaved-save-btn"
@@ -1116,12 +1134,13 @@
 
     <!-- AI Overwrite Confirmation Modal -->
     <div id="ai-overwrite-modal"
-        class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm hidden z-[70] flex items-center justify-center p-4">
+        class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm hidden z-[70] flex items-center justify-center p-4"
+        role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="ai-overwrite-title">
         <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 text-center transform transition-all scale-100">
             <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-rose-100 mb-4">
                 <iconify-icon icon="solar:magic-stick-3-bold" class="text-rose-600 text-2xl"></iconify-icon>
             </div>
-            <h3 class="text-lg leading-6 font-serif font-bold text-stone-900 mb-2">Replace Discussion Guide?</h3>
+            <h3 id="ai-overwrite-title" class="text-lg leading-6 font-serif font-bold text-stone-900 mb-2">Replace Discussion Guide?</h3>
             <p class="text-sm text-stone-500 mb-6">This book already has a discussion guide. Generating a new one will
                 completely replace your current text. Are you sure?</p>
             <div class="flex flex-col gap-2">
@@ -1145,7 +1164,8 @@
 
     <!-- Discussion Guide Modal -->
     <div id="discussion-modal"
-        class="fixed inset-0 bg-stone-900/50 hidden items-center justify-center z-50 p-4 backdrop-blur-sm">
+        class="fixed inset-0 bg-stone-900/50 hidden items-center justify-center z-50 p-4 backdrop-blur-sm"
+        role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="discussion-modal-title">
         <div
             class="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden transform transition-all scale-100">
             <!-- Header -->
@@ -1156,7 +1176,8 @@
                     <p class="text-xs text-stone-500 font-medium uppercase tracking-wide mt-1">Book Club Companion</p>
                 </div>
                 <button onclick="closeDiscussionModal()"
-                    class="text-stone-400 hover:text-stone-600 transition p-1 rounded-full hover:bg-stone-200 flex items-center justify-center">
+                    class="text-stone-400 hover:text-stone-600 transition p-1 rounded-full hover:bg-stone-200 flex items-center justify-center"
+                    aria-label="Close discussion guide">
                     <iconify-icon icon="solar:close-circle-broken" class="text-2xl"></iconify-icon>
                 </button>
             </div>
@@ -1208,15 +1229,16 @@
 
     <!-- AI Comparison Modal -->
     <div id="comparison-modal"
-        class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm hidden z-[70] flex items-center justify-center p-4">
+        class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm hidden z-[70] flex items-center justify-center p-4"
+        role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="comparison-modal-title">
         <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden">
             <!-- Header -->
             <div class="px-6 py-4 border-b border-stone-100 flex justify-between items-center bg-stone-50">
                 <div>
-                    <h3 class="text-xl font-serif font-bold text-stone-900 leading-tight">AI Tag Suggestions</h3>
+                    <h3 id="comparison-modal-title" class="text-xl font-serif font-bold text-stone-900 leading-tight">AI Tag Suggestions</h3>
                     <p class="text-xs text-stone-500 font-medium uppercase tracking-wide mt-1">Review & Accept</p>
                 </div>
-                <button id="close-comparison-btn" class="text-stone-400 hover:text-stone-600 transition p-1">
+                <button id="close-comparison-btn" class="text-stone-400 hover:text-stone-600 transition p-1" aria-label="Close tag suggestions">
                     <iconify-icon icon="solar:close-circle-broken" class="text-2xl"></iconify-icon>
                 </button>
             </div>

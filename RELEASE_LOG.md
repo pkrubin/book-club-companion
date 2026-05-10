@@ -31,6 +31,30 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
   - Database: `<rollback sql file or note>`
 ```
 
+## 2026-05-10 - Mobile Accessibility Test Release
+- Version: `v1.9.16`
+- Test commit: `pending`
+- Prod commit: `not yet`
+- Environments: `test`
+- User-facing changes:
+  - Improved iPhone ergonomics for login, navigation, search, library controls, tables/cards, modals, import review, discussion guide, and settings surfaces.
+  - Added larger mobile tap targets, safer mobile overflow behavior, responsive filters, and mobile-friendly dialog sizing.
+  - Fixed unauthenticated app-content bleed so hidden app content no longer appears below the login view or in the accessibility tree.
+- Operational changes:
+  - Env vars: none
+  - Database / SQL: none
+  - Branch / deployment notes:
+    - Prepared for device validation on the hosted `test` environment because local iPhone/iPad access to port `8080` was unreliable.
+- Validation:
+  - `node --check js/app.js`
+  - `git diff --check`
+  - Local served app returned `200 OK` on `http://127.0.0.1:8080`
+  - Browser smoke at iPhone `390x844` and tablet `768x1024` completed with no console errors.
+  - Authenticated mobile flows still need human verification on `test`.
+- Rollback:
+  - Code: revert this test release commit
+  - Database: not applicable
+
 ## 2026-05-09 - Library Refresh Button Removal
 - Version: `v1.9.15`
 - Test commit: `eb28e2a`
