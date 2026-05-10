@@ -33,7 +33,7 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
 
 ## 2026-05-10 - iPhone Home Screen Icon Setup
 - Version: `v1.9.19`
-- Test commit: `pending`
+- Test commit: `22e4e6a`
 - Prod commit: `not yet`
 - Environments: `test`
 - User-facing changes:
