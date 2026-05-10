@@ -24,6 +24,11 @@ Book Club Companion is a multi-club book club management tool for organizers and
 
 ## Current User-Facing Capabilities
 
+### Mobile And Accessibility
+- Desktop web app is live
+- iPhone accessibility and ergonomics are the next active improvement area
+- iPad/tablet refinement follows the iPhone pass
+
 ### Authentication And Access
 - Email/password sign-in
 - Invite-based sign-up
@@ -106,6 +111,7 @@ When testing changes that touch real data:
 
 ## Near-Term Focus Areas
 
+- make the app accessible and usable on iPhones, then iPads
 - complete the multi-club role and administration model
 - improve cross-club metadata reuse and operational efficiency
 - continue invite and club lifecycle maturation
