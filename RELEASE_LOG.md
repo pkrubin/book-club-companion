@@ -33,7 +33,7 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
 
 ## 2026-05-14 - Supabase Public RLS Hardening
 - Version: `unchanged`
-- Test commit: `pending`
+- Test commit: `a2d90c3`
 - Prod commit: `not yet`
 - Environments: `test`, `prod`
 - User-facing changes:
