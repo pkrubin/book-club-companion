@@ -50,9 +50,10 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
     - Preflight confirmed Pam admin memberships, no users without active memberships, no invalid active-club preferences, no clubs without active members, and compatible `bigint`/`uuid` column types.
 - Validation:
   - Supabase `pg_tables` verification shows `rowsecurity = true` for `clubs`, `club_settings`, `club_memberships`, `user_preferences`, `platform_roles`, `club_invites`, and `club_invite_consumptions`.
+  - Supabase Security Advisor cleared the seven prior public-table RLS findings.
   - Pam verified hosted `test` works after the SQL change.
   - Pam verified hosted `prod` works after the SQL change.
-  - Broader member/admin flow smoke and Supabase Security Advisor rerun still pending.
+  - Broader member/admin flow smoke still pending.
 - Rollback:
   - Code: not applicable
   - Database: run `public_rls_hardening_rollback.sql` only if a critical access issue appears.

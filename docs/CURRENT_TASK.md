@@ -36,7 +36,7 @@ Make Book Club Companion usable and accessible on phones and tablets while conti
   - [x] verify all seven flagged public tables now have RLS enabled in `pg_tables`
   - [x] verify Pam admin access on hosted `test` and `prod`
   - [ ] verify member access, club switcher, dashboard, search, library, book modal, discussion guide, import, settings, and create-sandbox-club
-  - [ ] rerun Supabase Security Advisor and confirm the seven RLS warnings clear
+  - [x] rerun Supabase Security Advisor and confirm the seven RLS warnings clear
 
 - [ ] Make the website mobile accessible, iPhone first
   - [x] start from a fresh `origin/test` worktree on `codex/mobile-a11y`
@@ -109,8 +109,8 @@ These exist in historical docs or RFCs but should not be treated as the next fea
 ## Suggested Next Decision
 
 Next recommended task:
-- finish member/admin smoke tests for RLS hardening, then rerun Supabase Security Advisor
+- finish broader member/admin smoke tests for RLS hardening
 
 ## Release Note
 
-Security hardening SQL has been applied to the shared Supabase database in phased chunks; all seven flagged public tables report `rowsecurity = true`, and Pam admin smoke passed on hosted `test` and `prod`.
+Security hardening SQL has been applied to the shared Supabase database in phased chunks; all seven flagged public tables report `rowsecurity = true`, Supabase Security Advisor has cleared, and Pam admin smoke passed on hosted `test` and `prod`.
