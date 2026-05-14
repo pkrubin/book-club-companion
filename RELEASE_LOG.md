@@ -31,6 +31,31 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
   - Database: `<rollback sql file or note>`
 ```
 
+## 2026-05-14 - Mobile Book Modal Header Refinement
+- Version: `v1.9.23`
+- Test commit: `pending`
+- Prod commit: `not yet`
+- Environments: `test`
+- User-facing changes:
+  - Redesigned the mobile book detail header to feel more like a book card: cover and rating on the left, primary Guide action on the right, and Goodreads/Amazon as quiet secondary actions.
+  - Kept the rating refresh with the rating cluster instead of treating it as a separate action row.
+  - Stacked Target Date and Meeting Time on mobile so the native iOS date field can no longer push into the time field.
+- Operational changes:
+  - Env vars: none
+  - Database / SQL: none
+  - Branch / deployment notes:
+    - Follow-up to real iPhone screenshot review of `v1.9.22`.
+- Validation:
+  - `node --check js/app.js`
+  - `node --check local_server.js`
+  - `git diff --check`
+  - Local served app returned `200 OK` on `http://127.0.0.1:8080`
+  - Local logged-out browser smoke loaded `v1.9.23` with no console errors.
+  - Authenticated phone and iPad flows still need human verification on `test`.
+- Rollback:
+  - Code: revert this test release commit
+  - Database: not applicable
+
 ## 2026-05-10 - Mobile Book Modal Date and Header Tightening
 - Version: `v1.9.22`
 - Test commit: `646faab`

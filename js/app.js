@@ -1,5 +1,5 @@
 // --- Configuration ---
-const APP_VERSION = '1.9.22'; // Fix mobile date row and compact modal header
+const APP_VERSION = '1.9.23'; // Refine mobile book modal header and date row
 
 // --- Gemini AI Configuration ---
 // Uses /api/gemini serverless function for secure API calls
