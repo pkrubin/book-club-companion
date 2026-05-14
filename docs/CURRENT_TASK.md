@@ -33,6 +33,7 @@ Make Book Club Companion usable and accessible on phones and tablets while conti
   - [x] confirm SQL against live table column types in Supabase SQL editor
   - [x] confirm no users/preferences/clubs would be hidden by membership-based RLS
   - [x] apply SQL during a focused maintenance window
+  - [x] verify all seven flagged public tables now have RLS enabled in `pg_tables`
   - [x] verify Pam admin access on hosted `test` and `prod`
   - [ ] verify member access, club switcher, dashboard, search, library, book modal, discussion guide, import, settings, and create-sandbox-club
   - [ ] rerun Supabase Security Advisor and confirm the seven RLS warnings clear
@@ -108,8 +109,8 @@ These exist in historical docs or RFCs but should not be treated as the next fea
 ## Suggested Next Decision
 
 Next recommended task:
-- rerun Supabase Security Advisor, then finish member/admin smoke tests for RLS hardening
+- finish member/admin smoke tests for RLS hardening, then rerun Supabase Security Advisor
 
 ## Release Note
 
-Security hardening SQL has been applied to the shared Supabase database; Pam admin smoke passed on hosted `test` and `prod`.
+Security hardening SQL has been applied to the shared Supabase database in phased chunks; all seven flagged public tables report `rowsecurity = true`, and Pam admin smoke passed on hosted `test` and `prod`.

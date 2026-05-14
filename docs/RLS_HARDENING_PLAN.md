@@ -164,9 +164,14 @@ Steps:
 
 1. Confirm rollback SQL is open in a separate Supabase SQL tab.
 2. Confirm the admin app session is open.
-3. Run the final reviewed `public_rls_hardening.sql`.
+3. Run the final reviewed `public_rls_hardening.sql`, or apply it in phased chunks: helpers/indexes first, policies second, RLS enablement last.
 4. Do not close SQL Editor.
 5. Immediately run the Phase 5 smoke tests.
+
+Rollout note:
+
+- On 2026-05-14, the shared Supabase database was hardened using the phased-chunk approach.
+- Verification confirmed all seven flagged public tables report `rowsecurity = true`.
 
 ## Phase 5: Immediate Smoke Tests
 

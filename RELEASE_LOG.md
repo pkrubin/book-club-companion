@@ -42,13 +42,14 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
 - Operational changes:
   - Env vars: none
   - Database / SQL:
-    - Manual Supabase step applied: `public_rls_hardening.sql`
+    - Manual Supabase steps applied in phased chunks based on `public_rls_hardening.sql`: helper functions and indexes, create-only RLS policies, then `alter table ... enable row level security`.
     - Emergency rollback prepared: `public_rls_hardening_rollback.sql`
     - Read-only preflight checks prepared: `public_rls_preflight_checks.sql`
   - Branch / deployment notes:
     - `test` and `prod` share one Supabase database, so the RLS SQL affected both environments immediately.
     - Preflight confirmed Pam admin memberships, no users without active memberships, no invalid active-club preferences, no clubs without active members, and compatible `bigint`/`uuid` column types.
 - Validation:
+  - Supabase `pg_tables` verification shows `rowsecurity = true` for `clubs`, `club_settings`, `club_memberships`, `user_preferences`, `platform_roles`, `club_invites`, and `club_invite_consumptions`.
   - Pam verified hosted `test` works after the SQL change.
   - Pam verified hosted `prod` works after the SQL change.
   - Broader member/admin flow smoke and Supabase Security Advisor rerun still pending.
