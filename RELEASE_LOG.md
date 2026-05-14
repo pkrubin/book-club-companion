@@ -31,6 +31,31 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
   - Database: `<rollback sql file or note>`
 ```
 
+## 2026-05-14 - Supabase Public RLS Hardening
+- Version: `unchanged`
+- Test commit: `pending`
+- Prod commit: `not yet`
+- Environments: `test`, `prod`
+- User-facing changes:
+  - No intentional UI changes.
+  - Browser database access is now governed by RLS policies for the previously flagged public multi-club tables.
+- Operational changes:
+  - Env vars: none
+  - Database / SQL:
+    - Manual Supabase step applied: `public_rls_hardening.sql`
+    - Emergency rollback prepared: `public_rls_hardening_rollback.sql`
+    - Read-only preflight checks prepared: `public_rls_preflight_checks.sql`
+  - Branch / deployment notes:
+    - `test` and `prod` share one Supabase database, so the RLS SQL affected both environments immediately.
+    - Preflight confirmed Pam admin memberships, no users without active memberships, no invalid active-club preferences, no clubs without active members, and compatible `bigint`/`uuid` column types.
+- Validation:
+  - Pam verified hosted `test` works after the SQL change.
+  - Pam verified hosted `prod` works after the SQL change.
+  - Broader member/admin flow smoke and Supabase Security Advisor rerun still pending.
+- Rollback:
+  - Code: not applicable
+  - Database: run `public_rls_hardening_rollback.sql` only if a critical access issue appears.
+
 ## 2026-05-14 - Mobile Book Modal Header Refinement
 - Version: `v1.9.23`
 - Test commit: `abd9f8e`

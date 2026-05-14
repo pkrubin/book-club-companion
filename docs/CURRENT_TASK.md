@@ -23,6 +23,20 @@ Make Book Club Companion usable and accessible on phones and tablets while conti
 
 ## Active Queue
 
+- [ ] Harden Supabase public-table RLS
+  - [x] inspect Supabase Security Advisor warning for `rls_disabled_in_public`
+  - [x] map flagged tables to current app access patterns
+  - [x] draft reviewed forward SQL in `public_rls_hardening.sql`
+  - [x] draft emergency rollback SQL in `public_rls_hardening_rollback.sql`
+  - [x] create phased rollout plan in `docs/RLS_HARDENING_PLAN.md`
+  - [x] create read-only preflight checks in `public_rls_preflight_checks.sql`
+  - [x] confirm SQL against live table column types in Supabase SQL editor
+  - [x] confirm no users/preferences/clubs would be hidden by membership-based RLS
+  - [x] apply SQL during a focused maintenance window
+  - [x] verify Pam admin access on hosted `test` and `prod`
+  - [ ] verify member access, club switcher, dashboard, search, library, book modal, discussion guide, import, settings, and create-sandbox-club
+  - [ ] rerun Supabase Security Advisor and confirm the seven RLS warnings clear
+
 - [ ] Make the website mobile accessible, iPhone first
   - [x] start from a fresh `origin/test` worktree on `codex/mobile-a11y`
   - [x] audit the unauthenticated app on a 390px iPhone-sized viewport before changing UI
@@ -94,8 +108,8 @@ These exist in historical docs or RFCs but should not be treated as the next fea
 ## Suggested Next Decision
 
 Next recommended task:
-- human-authenticated iPhone verification on hosted `test`, then address any remaining core-flow issues
+- rerun Supabase Security Advisor, then finish member/admin smoke tests for RLS hardening
 
 ## Release Note
 
-Current mobile modal header and date-row refinement is preparing `v1.9.23` for `test`.
+Security hardening SQL has been applied to the shared Supabase database; Pam admin smoke passed on hosted `test` and `prod`.
