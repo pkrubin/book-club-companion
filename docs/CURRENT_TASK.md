@@ -38,6 +38,16 @@ Make Book Club Companion usable and accessible on phones and tablets while conti
   - [ ] verify member access, club switcher, dashboard, search, library, book modal, discussion guide, import, settings, and create-sandbox-club
   - [x] rerun Supabase Security Advisor and confirm the seven RLS warnings clear
 
+- [ ] Plan and phase remaining Supabase Security Advisor warnings
+  - [x] review exported Supabase warning CSV
+  - [x] group warnings by root cause and risk
+  - [x] create phased warning hardening plan in `docs/SUPABASE_WARNING_HARDENING_PLAN.md`
+  - [ ] Phase 1: enable leaked password protection and verify login
+  - [ ] Phase 2: remove GraphQL exposure if unused and verify REST app flows
+  - [ ] Phase 3: restrict direct `SECURITY DEFINER` function execution with rollback
+  - [ ] Phase 4: replace broad `book_club_list` write policies with club-scoped policies
+  - [ ] Phase 5: replace browser-side `invite_codes` updates with trusted invite consumption
+
 - [ ] Make the website mobile accessible, iPhone first
   - [x] start from a fresh `origin/test` worktree on `codex/mobile-a11y`
   - [x] audit the unauthenticated app on a 390px iPhone-sized viewport before changing UI
@@ -109,7 +119,7 @@ These exist in historical docs or RFCs but should not be treated as the next fea
 ## Suggested Next Decision
 
 Next recommended task:
-- finish broader member/admin smoke tests for RLS hardening
+- start Supabase warning hardening with leaked-password protection and GraphQL exposure cleanup
 
 ## Release Note
 
