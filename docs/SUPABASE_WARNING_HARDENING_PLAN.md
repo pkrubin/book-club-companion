@@ -94,6 +94,7 @@ Current status:
 
 - Complete. `pg_graphql` was disabled from the Supabase Extensions screen.
 - Pam verified no issues in hosted `test` or hosted `prod` after disabling it.
+- Supabase Security Advisor warning count dropped from 44 to 20 after refresh, consistent with the 24 GraphQL exposure warnings clearing.
 
 Alternative action:
 

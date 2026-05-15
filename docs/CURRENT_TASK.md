@@ -43,7 +43,7 @@ Make Book Club Companion usable and accessible on phones and tablets while conti
   - [x] group warnings by root cause and risk
   - [x] create phased warning hardening plan in `docs/SUPABASE_WARNING_HARDENING_PLAN.md`
   - [ ] Phase 1: enable leaked password protection after configuring an email provider
-  - [x] Phase 2: remove GraphQL exposure if unused and verify REST app flows
+  - [x] Phase 2: remove GraphQL exposure if unused and verify REST app flows; Advisor warnings dropped from 44 to 20
   - [ ] Phase 3: restrict direct `SECURITY DEFINER` function execution with rollback
   - [ ] Phase 4: replace broad `book_club_list` write policies with club-scoped policies
   - [ ] Phase 5: replace browser-side `invite_codes` updates with trusted invite consumption
