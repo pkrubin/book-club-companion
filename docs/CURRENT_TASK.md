@@ -42,8 +42,8 @@ Make Book Club Companion usable and accessible on phones and tablets while conti
   - [x] review exported Supabase warning CSV
   - [x] group warnings by root cause and risk
   - [x] create phased warning hardening plan in `docs/SUPABASE_WARNING_HARDENING_PLAN.md`
-  - [ ] Phase 1: enable leaked password protection and verify login
-  - [ ] Phase 2: remove GraphQL exposure if unused and verify REST app flows
+  - [ ] Phase 1: enable leaked password protection after configuring an email provider
+  - [x] Phase 2: remove GraphQL exposure if unused and verify REST app flows
   - [ ] Phase 3: restrict direct `SECURITY DEFINER` function execution with rollback
   - [ ] Phase 4: replace broad `book_club_list` write policies with club-scoped policies
   - [ ] Phase 5: replace browser-side `invite_codes` updates with trusted invite consumption
@@ -119,7 +119,7 @@ These exist in historical docs or RFCs but should not be treated as the next fea
 ## Suggested Next Decision
 
 Next recommended task:
-- start Supabase warning hardening with leaked-password protection and GraphQL exposure cleanup
+- rerun Supabase Security Advisor after GraphQL removal, then plan `SECURITY DEFINER` function execution hardening
 
 ## Release Note
 

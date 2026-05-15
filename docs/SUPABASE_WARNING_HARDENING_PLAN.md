@@ -52,6 +52,11 @@ Action:
 
 - Enable Supabase Auth leaked-password protection in the Dashboard.
 
+Current status:
+
+- Deferred. Supabase requires configuring a custom email provider before this setting can be enabled.
+- Do not configure an email provider solely to clear this warning without separately planning email deliverability and signup/password-reset impacts.
+
 Expected impact:
 
 - New signups, password resets, or password changes may reject known-compromised passwords.
@@ -84,6 +89,11 @@ Current evidence:
 Preferred action:
 
 - Disable the `pg_graphql` extension if we do not intentionally use Supabase GraphQL.
+
+Current status:
+
+- Complete. `pg_graphql` was disabled from the Supabase Extensions screen.
+- Pam verified no issues in hosted `test` or hosted `prod` after disabling it.
 
 Alternative action:
 
