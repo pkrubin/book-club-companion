@@ -33,7 +33,7 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
 
 ## 2026-06-04 - Admin Guide Preparation Access
 - Version: `v1.9.26`
-- Test commit: `not yet`
+- Test commit: `596a2dc`
 - Prod commit: `not yet`
 - Environments: `test`
 - User-facing changes:
