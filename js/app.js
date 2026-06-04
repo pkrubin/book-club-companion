@@ -1,5 +1,5 @@
 // --- Configuration ---
-const APP_VERSION = '1.9.29'; // Tighten guide quality checks
+const APP_VERSION = '1.9.30'; // Block weak guide saves
 
 // --- Gemini AI Configuration ---
 // Uses /api/gemini serverless function for secure API calls
@@ -6248,11 +6248,11 @@ ${verifiedGuideContext ? `\n${verifiedGuideContext}\n` : ''}
 
 Create 12 to 15 questions that feel natural to ask out loud in a real book club conversation. The questions should be smart, textured, and specific to the actual book, but not academic, generic, simplistic, or formulaic.
 
-Build a varied mix:
+Build exactly 15 questions in this varied mix:
 - 3 to 4 character-and-choice questions about motives, turning points, moral ambiguity, difficult decisions, and when readers' sympathies changed.
 - 3 to 4 specific-moment questions that ask readers to point to a scene, reveal, reversal, object, relationship, or decision from the book.
 - 2 to 3 idea questions about freedom, power, friendship, secrecy, courage, complicity, identity, justice, or social pressure.
-- 2 passage-centered questions that ask readers to bring a memorable line, phrase, or passage from their own copy; do not provide quoted text unless exact verified quotes are supplied in the context.
+- 2 passage-centered questions that ask readers to bring a memorable line, phrase, or passage from their own copy; one should begin with "What line..." and one should begin with "Which passage..."
 - 1 or 2 warm entry-point questions are fine, but the full list must not feel basic.
 
 What good questions should do:
@@ -6269,6 +6269,7 @@ Accuracy rules:
 - Do not invent quotes, scenes, character actions, plot events, or specific facts.
 - Use only verified source details for names, relationships, facts, quotes, and plot events.
 - Do not quote the book unless an exact verified quote is provided in the source material.
+- Never provide quoted book text unless exact verified quotes are supplied in the context.
 - If exact quote text is not provided, ask readers which line or passage they noticed instead of supplying one.
 - If source detail is limited, frame questions so readers provide the evidence from the book rather than you inventing it.
 
@@ -6285,7 +6286,7 @@ Style rules:
 - Avoid overly obvious questions that simply restate the premise.
 - Vary the question openings so the list does not feel templated.
 
-Return ONLY a numbered list of 12 to 15 questions.`;
+Return ONLY a numbered list of exactly 15 questions.`;
 
         let data = null;
         let questions = '';
@@ -6313,7 +6314,7 @@ Return ONLY a numbered list of 12 to 15 questions.`;
         }
 
         if (qualityIssues.length) {
-            console.warn('Discussion guide saved with remaining quality warnings:', qualityIssues);
+            throw new Error(`The AI draft still missed quality checks: ${qualityIssues.join(' ')}`);
         }
 
         // Append Model Attribution (so users know quality level)

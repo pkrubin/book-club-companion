@@ -31,6 +31,28 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
   - Database: `<rollback sql file or note>`
 ```
 
+## 2026-06-04 - Discussion Guide Save Quality Block
+- Version: `v1.9.30`
+- Test commit: `not yet`
+- Prod commit: `not yet`
+- Environments: `test`
+- User-facing changes:
+  - Changed AI discussion-guide generation so drafts that still fail quality checks are not saved over the shared guide.
+  - Tightened guide shape to exactly 15 questions with two required passage-centered prompts.
+  - Strengthened quote safety by requiring reader-supplied passages unless exact verified quote text is available.
+- Operational changes:
+  - Env vars: none
+  - Database / SQL: none
+  - Branch / deployment notes:
+    - This prevents weak AI drafts from overwriting existing shared guide text.
+- Validation:
+  - `node --check js/app.js`
+  - `git diff --check`
+  - Hosted `test` regeneration/review still needed.
+- Rollback:
+  - Code: revert this test release commit
+  - Database: not applicable
+
 ## 2026-06-04 - Discussion Guide Compound Question Guard
 - Version: `v1.9.29`
 - Test commit: `0aa7def`
