@@ -49,7 +49,7 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
   - `node --check js/app.js`
   - `git diff --check`
   - Local served app returned `200 OK` on `http://127.0.0.1:8080`
-  - Hosted `test` visual verification still needed at small-window/tablet width.
+  - Hosted `test` visual verification passed at ~756px browser width with no header control overlap.
 - Rollback:
   - Code: revert this test release commit
   - Database: not applicable
