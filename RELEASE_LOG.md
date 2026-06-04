@@ -33,7 +33,7 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
 
 ## 2026-06-04 - Discussion Guide Compound Question Guard
 - Version: `v1.9.29`
-- Test commit: `not yet`
+- Test commit: `0aa7def`
 - Prod commit: `not yet`
 - Environments: `test`
 - User-facing changes:
