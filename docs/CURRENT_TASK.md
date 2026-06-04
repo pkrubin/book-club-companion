@@ -23,6 +23,14 @@ Make Book Club Companion usable and accessible on phones and tablets while conti
 
 ## Active Queue
 
+- [ ] Improve AI discussion guide question quality
+  - [x] review current AI discussion prompt
+  - [x] identify why current output feels school-like and multi-part
+  - [x] update prompt for smart, conversational, character-and-choice-centered questions
+  - [x] add strict accuracy rules for quotes, scenes, plot events, and specific facts
+  - [ ] verify generated guide quality on hosted `test`
+  - [ ] consider future source-grounded reader-guide/snippet workflow for admins who want richer context
+
 - [ ] Harden Supabase public-table RLS
   - [x] inspect Supabase Security Advisor warning for `rls_disabled_in_public`
   - [x] map flagged tables to current app access patterns

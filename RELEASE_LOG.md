@@ -31,6 +31,29 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
   - Database: `<rollback sql file or note>`
 ```
 
+## 2026-06-04 - Discussion Guide Prompt Refinement
+- Version: `v1.9.24`
+- Test commit: `not yet`
+- Prod commit: `not yet`
+- Environments: `test`
+- User-facing changes:
+  - Reworked the AI discussion-guide prompt to generate smarter, more conversational book-club questions for a college-educated 60+ women's group.
+  - Shifted the guide away from academic, school-like questions toward characters, motives, relationships, choices, disagreement, and lived experience.
+  - Added strict accuracy instructions so AI-generated guides do not invent quotes, scenes, character actions, plot events, or specific facts.
+  - Capped generated guides at 12-15 one-sentence questions and explicitly disallowed multi-part questions.
+- Operational changes:
+  - Env vars: none
+  - Database / SQL: none
+  - Branch / deployment notes:
+    - Prompt-only app change; source-grounded reader-guide retrieval remains future work.
+- Validation:
+  - `node --check js/app.js`
+  - `git diff --check`
+  - Human verification needed on hosted `test` by generating a guide for a real/sandbox book.
+- Rollback:
+  - Code: revert this test release commit
+  - Database: not applicable
+
 ## 2026-05-14 - Supabase Public RLS Hardening
 - Version: `unchanged`
 - Test commit: `a2d90c3`

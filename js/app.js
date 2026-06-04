@@ -1,5 +1,5 @@
 // --- Configuration ---
-const APP_VERSION = '1.9.23'; // Refine mobile book modal header and date row
+const APP_VERSION = '1.9.24'; // Improve AI discussion guide prompt
 
 // --- Gemini AI Configuration ---
 // Uses /api/gemini serverless function for secure API calls
@@ -6139,13 +6139,36 @@ async function generateDiscussionQuestionsAI() {
         const author = book.google_data.volumeInfo.authors?.join(', ') || 'Unknown';
         const description = book.google_data.volumeInfo.description || '';
 
-        const prompt = `Act as an expert literary discussion leader. Synthesize the top 15 most thought-provoking discussion questions for the book "${title}" by ${author}.
-Context: ${description.substring(0, 500)}...
-Rules:
-1. Questions must be specific to characters and plot points (no generic "did you like it?" filler).
-2. Look for moral dilemmas, character motivations, and thematic elements.
-3. Return ONLY the list of 15 questions, numbered 1-15.
-4. Do not include intro or outro text.`;
+        const prompt = `Create discussion questions for a thoughtful, lively book club of college-educated women in their 60s+.
+
+Book: "${title}" by ${author}
+Publisher/metadata description: ${description.substring(0, 700)}...
+
+Create 12 to 15 questions that feel natural to ask out loud in a real book club conversation. The questions should be smart and specific, but not academic, generic, simplistic, or formulaic.
+
+What good questions should do:
+- Focus on characters, relationships, motives, secrets, turning points, consequences, forgiveness, responsibility, and the choices people make when their options are imperfect.
+- Invite opinion, emotional reaction, judgment, disagreement, and lived experience.
+- Ask why characters do what they do, what choices they had, and when readers' feelings about them changed.
+- Use reader-guide style as inspiration, but rewrite in an original, conversational voice.
+- Include questions that can sustain discussion among adults who have read the book closely.
+
+Accuracy rules:
+- Do not invent quotes, scenes, character actions, plot events, or specific facts.
+- Use only details that are clearly supported by the provided book description.
+- Do not quote the book unless an exact verified quote is provided in the source material.
+- If source detail is limited, ask about the central conflicts, choices, and relationships described in the metadata without pretending to know more.
+
+Style rules:
+- One clear idea per question.
+- Each question must be one sentence.
+- No multi-part questions.
+- Avoid literary-school language such as symbolism, motif, narrative structure, theme, or character arc.
+- Avoid trivia and tiny plot-recall questions.
+- Avoid broad filler such as "Did you like the book?"
+- Vary the question openings so the list does not feel templated.
+
+Return ONLY a numbered list of 12 to 15 questions.`;
 
         const data = await callGeminiProxy({
             prompt,
