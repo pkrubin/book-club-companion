@@ -1,5 +1,5 @@
 // --- Configuration ---
-const APP_VERSION = '1.9.27'; // Refine guide prompt grounding
+const APP_VERSION = '1.9.28'; // Deepen guide prompt with source anchors
 
 // --- Gemini AI Configuration ---
 // Uses /api/gemini serverless function for secure API calls
@@ -6100,6 +6100,30 @@ const CURATED_QUESTIONS = {
     ]
 };
 
+const VERIFIED_GUIDE_CONTEXT = {
+    'The Secret Book Society': {
+        sources: [
+            'Madeline Martin author book club kit',
+            'Bookclubs discussion guide quoting author-site questions',
+            'Madeline Martin author synopsis'
+        ],
+        anchors: [
+            'Lady Duxbury is surrounded by rumors that she murdered her three husbands.',
+            'The Secret Book Society is both a refuge and a risk for women in Victorian London.',
+            'Everyday objects such as hat pins, teacups, pressed flowers, and jewelry carry hidden meanings or double purposes.',
+            'Books function as escape, inspiration, empowerment, and a form of quiet rebellion.',
+            'The women wrestle with the gap between how society defines them and who they understand themselves to be.',
+            'The novel distinguishes between harmful men and men who are also constrained by Victorian expectations.',
+            'Hat pins and poisons connect fear, self-defense, danger, and women finding leverage in a restrictive world.',
+            'Female friendship and solidarity are central to the women surviving and changing their circumstances.',
+            'Eleanor Clarke is a devoted mother in an oppressive marriage.',
+            'Rose Wharton is an American dollar princess trying to fit the mold of an aristocratic wife.',
+            'Lavinia Cavendish is an artistic young woman haunted by a dangerous family secret.'
+        ],
+        quoteInstruction: 'No exact verified book quotes are available in app context, so ask readers to bring a line or passage from their copy instead of supplying quoted text.'
+    }
+};
+
 const GENERIC_FALLBACK_MSG = "<em>No pre-loaded guide available. Click 'Generate Guide AI' to create a custom one instantly.</em>";
 
 function getDiscussionQuestions(book) {
@@ -6113,6 +6137,72 @@ function getDiscussionQuestions(book) {
     }
     // No fallback - return empty to trigger "Generate" prompt
     return "";
+}
+
+function getVerifiedGuideContext(title) {
+    const context = VERIFIED_GUIDE_CONTEXT[title];
+    if (!context) return '';
+
+    const sources = context.sources?.length
+        ? `Reliable source anchors: ${context.sources.join('; ')}.`
+        : '';
+    const anchors = context.anchors?.length
+        ? `Verified context you may use:\n${context.anchors.map(anchor => `- ${anchor}`).join('\n')}`
+        : '';
+    const quoteInstruction = context.quoteInstruction || '';
+
+    return [sources, anchors, quoteInstruction].filter(Boolean).join('\n\n');
+}
+
+function lintDiscussionGuideOutput(rawQuestions) {
+    const text = htmlToPlainText(rawQuestions || '');
+    const lower = text.toLowerCase();
+    const issues = [];
+
+    const forbiddenPhrases = [
+        'the description',
+        'mentioned in the description',
+        'the metadata',
+        'publisher/metadata',
+        'the synopsis',
+        'the publisher'
+    ];
+
+    const foundForbidden = forbiddenPhrases.filter(phrase => lower.includes(phrase));
+    if (foundForbidden.length) {
+        issues.push(`Remove references to source packaging such as ${foundForbidden.join(', ')}.`);
+    }
+
+    const speculativeMatches = lower.match(/\b(imagine|anticipate|might have happened|what do you think might)\b/g) || [];
+    if (speculativeMatches.length > 2) {
+        issues.push('Use fewer speculative questions and ask about choices, moments, passages, and reader judgments instead.');
+    }
+
+    const questions = text
+        .split(/\n+/)
+        .map(line => line.replace(/^\d+[\.\)]\s*/, '').trim())
+        .filter(line => line.endsWith('?'));
+
+    if (questions.length < 12 || questions.length > 15) {
+        issues.push('Return 12 to 15 questions.');
+    }
+
+    const multiPartCount = questions.filter(question => {
+        const extraQuestionMarks = (question.match(/\?/g) || []).length > 1;
+        const hasStackedPrompt = /\b(and why|why or why not|what about|how about)\?/i.test(question);
+        return extraQuestionMarks || hasStackedPrompt;
+    }).length;
+
+    if (multiPartCount > 2) {
+        issues.push('Reduce multi-part questions; each question should have one clean job.');
+    }
+
+    const quoteOrPassageCount = questions.filter(question => /\b(quote|line|passage|sentence|scene|moment)\b/i.test(question)).length;
+    if (quoteOrPassageCount < 2) {
+        issues.push('Include at least two questions centered on a memorable passage, line, scene, or moment from the actual book.');
+    }
+
+    return issues;
 }
 
 async function generateDiscussionQuestionsAI() {
@@ -6141,27 +6231,38 @@ async function generateDiscussionQuestionsAI() {
         const title = book.google_data.volumeInfo.title;
         const author = book.google_data.volumeInfo.authors?.join(', ') || 'Unknown';
         const description = book.google_data.volumeInfo.description || '';
+        const verifiedGuideContext = getVerifiedGuideContext(title);
 
         const prompt = `Create discussion questions for a thoughtful, lively book club of college-educated women in their 60s+.
 
 Book: "${title}" by ${author}
-Publisher/metadata description: ${description.substring(0, 700)}...
+Baseline book description, for orientation only: ${description.substring(0, 700)}...
+${verifiedGuideContext ? `\n${verifiedGuideContext}\n` : ''}
 
-Create 12 to 15 questions that feel natural to ask out loud in a real book club conversation. The questions should be smart and specific, but not academic, generic, simplistic, or formulaic.
+Create 12 to 15 questions that feel natural to ask out loud in a real book club conversation. The questions should be smart, textured, and specific to the actual book, but not academic, generic, simplistic, or formulaic.
+
+Build a varied mix:
+- 3 to 4 character-and-choice questions about motives, turning points, moral ambiguity, difficult decisions, and when readers' sympathies changed.
+- 3 to 4 specific-moment questions that ask readers to point to a scene, reveal, reversal, object, relationship, or decision from the book.
+- 2 to 3 idea questions about freedom, power, friendship, secrecy, courage, complicity, identity, justice, or social pressure.
+- 2 passage-centered questions that ask readers to bring a memorable line, phrase, or passage from their own copy; do not provide quoted text unless exact verified quotes are supplied in the context.
+- 1 or 2 warm entry-point questions are fine, but the full list must not feel basic.
 
 What good questions should do:
 - Focus on characters, relationships, motives, secrets, turning points, consequences, forgiveness, responsibility, and the choices people make when their options are imperfect.
 - Invite opinion, emotional reaction, judgment, disagreement, and lived experience.
 - Ask why characters do what they do, what choices they had, and when readers' feelings about them changed.
 - Ask readers to bring examples from the book when deeper plot detail is not available to you.
-- Prefer natural openings such as "Where did you see...", "When did your opinion of...", "What choice felt...", "Who had the least room to maneuver...", or "Would you have trusted..."
+- Prefer natural openings such as "Where did you see...", "When did your opinion of...", "What choice felt...", "Which moment made you...", "What line stayed with you...", "Who had the least room to maneuver...", or "Would you have trusted..."
 - Use reader-guide style as inspiration, but rewrite in an original, conversational voice.
 - Include questions that can sustain discussion among adults who have read the book closely.
+- Make the questions interesting enough that readers who liked the book and readers who disliked it both have something to say.
 
 Accuracy rules:
 - Do not invent quotes, scenes, character actions, plot events, or specific facts.
-- Use only verified source details for names, facts, quotes, and plot events.
+- Use only verified source details for names, relationships, facts, quotes, and plot events.
 - Do not quote the book unless an exact verified quote is provided in the source material.
+- If exact quote text is not provided, ask readers which line or passage they noticed instead of supplying one.
 - If source detail is limited, frame questions so readers provide the evidence from the book rather than you inventing it.
 
 Style rules:
@@ -6173,18 +6274,38 @@ Style rules:
 - Avoid literary-school language such as symbolism, motif, narrative structure, theme, or character arc.
 - Avoid trivia and tiny plot-recall questions.
 - Avoid broad filler such as "Did you like the book?"
+- Avoid overly obvious questions that simply restate the premise.
 - Vary the question openings so the list does not feel templated.
 
 Return ONLY a numbered list of 12 to 15 questions.`;
 
-        const data = await callGeminiProxy({
-            prompt,
-            maxTokens: 4000
-        });
-        let questions = data.text.trim();
+        let data = null;
+        let questions = '';
+        let qualityIssues = [];
+
+        for (let attempt = 1; attempt <= 2; attempt++) {
+            const retryInstruction = qualityIssues.length
+                ? `\n\nRevise and regenerate the full list. Fix these quality issues:\n- ${qualityIssues.join('\n- ')}\nDo not mention source packaging such as descriptions, metadata, synopsis, or publisher.`
+                : '';
+
+            data = await callGeminiProxy({
+                prompt: `${prompt}${retryInstruction}`,
+                maxTokens: 4000,
+                temperature: attempt === 1 ? 0.75 : 0.65
+            });
+            questions = data.text.trim();
+            qualityIssues = lintDiscussionGuideOutput(questions);
+
+            if (!qualityIssues.length) break;
+            console.warn(`Discussion guide quality retry ${attempt}:`, qualityIssues);
+        }
 
         if (data.finishReason) {
             console.log(`AI Generation Finished. Reason: ${data.finishReason}`);
+        }
+
+        if (qualityIssues.length) {
+            console.warn('Discussion guide saved with remaining quality warnings:', qualityIssues);
         }
 
         // Append Model Attribution (so users know quality level)

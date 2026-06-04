@@ -31,6 +31,28 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
   - Database: `<rollback sql file or note>`
 ```
 
+## 2026-06-04 - Discussion Guide Depth and Quality Gate
+- Version: `v1.9.28`
+- Test commit: `not yet`
+- Prod commit: `not yet`
+- Environments: `test`
+- User-facing changes:
+  - Refined AI discussion-guide generation to produce a more interesting mix of character/choice, specific-moment, idea, and passage-centered questions.
+  - Added verified guide anchors for `The Secret Book Society` from author/reader-guide sources so generated questions can use real book-specific discussion points instead of only the synopsis.
+  - Added a generation quality retry when output references metadata/descriptions, overuses speculative phrasing, lacks passage/scene questions, or returns too many multi-part questions.
+- Operational changes:
+  - Env vars: none
+  - Database / SQL: none
+  - Branch / deployment notes:
+    - Source-grounding is still a first pass; broader automatic source retrieval and no-save preview remain tracked in `docs/CURRENT_TASK.md`.
+- Validation:
+  - `node --check js/app.js`
+  - `git diff --check`
+  - Hosted `test` regeneration/review still needed.
+- Rollback:
+  - Code: revert this test release commit
+  - Database: not applicable
+
 ## 2026-06-04 - Discussion Guide Grounding Prompt Refinement
 - Version: `v1.9.27`
 - Test commit: `e42fbbe`
