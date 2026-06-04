@@ -29,8 +29,11 @@ Make Book Club Companion usable and accessible on phones and tablets while conti
   - [x] update prompt for smart, conversational, character-and-choice-centered questions
   - [x] add strict accuracy rules for quotes, scenes, plot events, and specific facts
   - [x] allow admins to open/test guides for saved books before scheduling
+  - [x] refine prompt to avoid metadata/speculation language and ask readers to supply book examples
   - [ ] verify generated guide quality on hosted `test`
-  - [ ] consider future source-grounded reader-guide/snippet workflow for admins who want richer context
+  - [ ] design source-grounded reader-guide/snippet workflow for admins who want richer context
+    - candidate sources: author/publisher guide, Google Books metadata/snippets, trusted book-club guides, admin-pasted notes
+    - output should use verified facts/quotes only, summarize source inspiration, and avoid copying guide questions wholesale
 
 - [ ] Harden Supabase public-table RLS
   - [x] inspect Supabase Security Advisor warning for `rls_disabled_in_public`

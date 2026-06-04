@@ -1,5 +1,5 @@
 // --- Configuration ---
-const APP_VERSION = '1.9.26'; // Let admins test guides before scheduling
+const APP_VERSION = '1.9.27'; // Refine guide prompt grounding
 
 // --- Gemini AI Configuration ---
 // Uses /api/gemini serverless function for secure API calls
@@ -6153,19 +6153,23 @@ What good questions should do:
 - Focus on characters, relationships, motives, secrets, turning points, consequences, forgiveness, responsibility, and the choices people make when their options are imperfect.
 - Invite opinion, emotional reaction, judgment, disagreement, and lived experience.
 - Ask why characters do what they do, what choices they had, and when readers' feelings about them changed.
+- Ask readers to bring examples from the book when deeper plot detail is not available to you.
+- Prefer natural openings such as "Where did you see...", "When did your opinion of...", "What choice felt...", "Who had the least room to maneuver...", or "Would you have trusted..."
 - Use reader-guide style as inspiration, but rewrite in an original, conversational voice.
 - Include questions that can sustain discussion among adults who have read the book closely.
 
 Accuracy rules:
 - Do not invent quotes, scenes, character actions, plot events, or specific facts.
-- Use only details that are clearly supported by the provided book description.
+- Use only verified source details for names, facts, quotes, and plot events.
 - Do not quote the book unless an exact verified quote is provided in the source material.
-- If source detail is limited, ask about the central conflicts, choices, and relationships described in the metadata without pretending to know more.
+- If source detail is limited, frame questions so readers provide the evidence from the book rather than you inventing it.
 
 Style rules:
 - One clear idea per question.
 - Each question must be one sentence.
 - No multi-part questions.
+- Do not refer to "the description," "the metadata," "the synopsis," or "the publisher" in the questions.
+- Avoid overusing speculative wording like "imagine," "anticipate," or "what do you think might have happened"; use at most two speculative questions.
 - Avoid literary-school language such as symbolism, motif, narrative structure, theme, or character arc.
 - Avoid trivia and tiny plot-recall questions.
 - Avoid broad filler such as "Did you like the book?"
