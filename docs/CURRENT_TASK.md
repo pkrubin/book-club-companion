@@ -37,6 +37,7 @@ Make Book Club Companion usable and accessible on phones and tablets while conti
     - `The Secret Book Society` now has verified guide anchors from author/reader-guide sources without copying official questions
     - prompt now requires a mix of character/choice, specific-moment, idea, and passage-centered questions
     - output lint asks the model to retry if it uses source-packaging language, overuses speculation, lacks passage/scene questions, or returns too many multi-part questions
+  - [x] tighten output lint after `v1.9.28` review to reject compound follow-ups and school-style vocabulary
   - [ ] design source-grounded reader-guide/snippet workflow for admins who want richer context
     - candidate sources: author/publisher guide, Google Books metadata/snippets, trusted book-club guides, admin-pasted notes
     - output should use verified facts/quotes only, summarize source inspiration, and avoid copying guide questions wholesale

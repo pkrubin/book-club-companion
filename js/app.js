@@ -1,5 +1,5 @@
 // --- Configuration ---
-const APP_VERSION = '1.9.28'; // Deepen guide prompt with source anchors
+const APP_VERSION = '1.9.29'; // Tighten guide quality checks
 
 // --- Gemini AI Configuration ---
 // Uses /api/gemini serverless function for secure API calls
@@ -6189,17 +6189,24 @@ function lintDiscussionGuideOutput(rawQuestions) {
 
     const multiPartCount = questions.filter(question => {
         const extraQuestionMarks = (question.match(/\?/g) || []).length > 1;
-        const hasStackedPrompt = /\b(and why|why or why not|what about|how about)\?/i.test(question);
+        const hasStackedPrompt = /\b(and why|why or why not|what about|how about)\?/i.test(question)
+            || /[,;]\s+(and|but)\s+(did|do|does|how|what|when|where|which|who|why|would|could|can)\b/i.test(question)
+            || /\b(and|but)\s+(did|do|does|how|what|when|where|which|who|why|would|could|can)\b/i.test(question);
         return extraQuestionMarks || hasStackedPrompt;
     }).length;
 
-    if (multiPartCount > 2) {
-        issues.push('Reduce multi-part questions; each question should have one clean job.');
+    if (multiPartCount > 0) {
+        issues.push('Remove compound or multi-part questions; each question should ask one thing without "and how," "and did," or "and why" follow-ups.');
     }
 
     const quoteOrPassageCount = questions.filter(question => /\b(quote|line|passage|sentence|scene|moment)\b/i.test(question)).length;
     if (quoteOrPassageCount < 2) {
         issues.push('Include at least two questions centered on a memorable passage, line, scene, or moment from the actual book.');
+    }
+
+    const academicMatches = lower.match(/\b(symbolic|symbolism|motif|theme|themes|narrative structure|character arc)\b/g) || [];
+    if (academicMatches.length) {
+        issues.push(`Remove school-style literary vocabulary such as ${[...new Set(academicMatches)].join(', ')}.`);
     }
 
     return issues;
@@ -6269,9 +6276,10 @@ Style rules:
 - One clear idea per question.
 - Each question must be one sentence.
 - No multi-part questions.
+- Do not add follow-ups such as "and why," "and how did...," "and did...," or "why or why not"; choose the strongest single angle.
 - Do not refer to "the description," "the metadata," "the synopsis," or "the publisher" in the questions.
 - Avoid overusing speculative wording like "imagine," "anticipate," or "what do you think might have happened"; use at most two speculative questions.
-- Avoid literary-school language such as symbolism, motif, narrative structure, theme, or character arc.
+- Avoid literary-school language such as symbolism, symbolic, motif, narrative structure, theme, or character arc.
 - Avoid trivia and tiny plot-recall questions.
 - Avoid broad filler such as "Did you like the book?"
 - Avoid overly obvious questions that simply restate the premise.
@@ -6283,7 +6291,7 @@ Return ONLY a numbered list of 12 to 15 questions.`;
         let questions = '';
         let qualityIssues = [];
 
-        for (let attempt = 1; attempt <= 2; attempt++) {
+        for (let attempt = 1; attempt <= 3; attempt++) {
             const retryInstruction = qualityIssues.length
                 ? `\n\nRevise and regenerate the full list. Fix these quality issues:\n- ${qualityIssues.join('\n- ')}\nDo not mention source packaging such as descriptions, metadata, synopsis, or publisher.`
                 : '';

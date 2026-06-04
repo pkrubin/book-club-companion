@@ -31,6 +31,28 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
   - Database: `<rollback sql file or note>`
 ```
 
+## 2026-06-04 - Discussion Guide Compound Question Guard
+- Version: `v1.9.29`
+- Test commit: `not yet`
+- Prod commit: `not yet`
+- Environments: `test`
+- User-facing changes:
+  - Tightened AI discussion-guide quality checks after reviewing the `v1.9.28` output for `The Secret Book Society`.
+  - Added stricter retry triggers for compound questions such as "and how," "and did," and "and why."
+  - Added retry checks for school-style literary vocabulary such as symbolic, theme, motif, narrative structure, and character arc.
+- Operational changes:
+  - Env vars: none
+  - Database / SQL: none
+  - Branch / deployment notes:
+    - This is a prompt-quality guardrail only; no schema changes.
+- Validation:
+  - `node --check js/app.js`
+  - `git diff --check`
+  - Hosted `test` regeneration/review still needed.
+- Rollback:
+  - Code: revert this test release commit
+  - Database: not applicable
+
 ## 2026-06-04 - Discussion Guide Depth and Quality Gate
 - Version: `v1.9.28`
 - Test commit: `6082e9d`
