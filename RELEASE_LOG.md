@@ -33,7 +33,7 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
 
 ## 2026-06-04 - Discussion Guide Grounding Prompt Refinement
 - Version: `v1.9.27`
-- Test commit: `not yet`
+- Test commit: `e42fbbe`
 - Prod commit: `not yet`
 - Environments: `test`
 - User-facing changes:
