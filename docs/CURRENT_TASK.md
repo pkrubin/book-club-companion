@@ -34,6 +34,11 @@ Make Book Club Companion usable and accessible on phones and tablets while conti
   - [ ] design source-grounded reader-guide/snippet workflow for admins who want richer context
     - candidate sources: author/publisher guide, Google Books metadata/snippets, trusted book-club guides, admin-pasted notes
     - output should use verified facts/quotes only, summarize source inspiration, and avoid copying guide questions wholesale
+    - phase 1: add a no-save preview flow so admins can test a generated guide before replacing the shared guide
+    - phase 2: gather source context from Google Books metadata plus admin-pasted notes or URLs, with clear source labels
+    - phase 3: prefer author/publisher reader guides when discoverable, but use them as inspiration/anchors rather than copying questions
+    - phase 4: pass the model a compact "verified context" block with names, relationships, settings, conflicts, exact quotes if supplied, and citation/source labels
+    - phase 5: show admins a short "Used these sources" note and require confirmation before saving regenerated shared guide text
 
 - [ ] Harden Supabase public-table RLS
   - [x] inspect Supabase Security Advisor warning for `rls_disabled_in_public`
