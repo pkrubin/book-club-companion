@@ -33,7 +33,7 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
 
 ## 2026-06-04 - Tablet Header Overlap Fix
 - Version: `v1.9.25`
-- Test commit: `not yet`
+- Test commit: `87bd0dc`
 - Prod commit: `not yet`
 - Environments: `test`
 - User-facing changes:
