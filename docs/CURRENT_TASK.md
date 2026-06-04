@@ -74,6 +74,7 @@ Make Book Club Companion usable and accessible on phones and tablets while conti
   - [x] fix the mobile Target Date / Meeting Time row overflow
   - [x] redesign the mobile book modal header around cover, rating, Guide, and two secondary links
   - [x] stack the mobile Target Date / Meeting Time row to prevent native iOS date overflow
+  - [x] fix tablet/small-window header overlap around 641-900px widths
   - [ ] verify `v1.9.23` on hosted `test` from iPhone/iPad
   - [ ] fix any remaining authenticated iPhone findings before considering prod promotion
 

@@ -31,6 +31,29 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
   - Database: `<rollback sql file or note>`
 ```
 
+## 2026-06-04 - Tablet Header Overlap Fix
+- Version: `v1.9.25`
+- Test commit: `not yet`
+- Prod commit: `not yet`
+- Environments: `test`
+- User-facing changes:
+  - Added a tablet/small-window header breakpoint so the nav no longer overlaps around 641-900px widths.
+  - Preserved the existing phone layout and full desktop layout.
+  - Moved Import and Sign Out into Settings for tablet/small-window widths, matching the phone information architecture.
+- Operational changes:
+  - Env vars: none
+  - Database / SQL: none
+  - Branch / deployment notes:
+    - Follow-up to in-app browser review showing Dashboard, bell, Sign Out, Find Books, and Library overlapping at ~756px width.
+- Validation:
+  - `node --check js/app.js`
+  - `git diff --check`
+  - Local served app returned `200 OK` on `http://127.0.0.1:8080`
+  - Hosted `test` visual verification still needed at small-window/tablet width.
+- Rollback:
+  - Code: revert this test release commit
+  - Database: not applicable
+
 ## 2026-06-04 - Discussion Guide Prompt Refinement
 - Version: `v1.9.24`
 - Test commit: `9e16a3f`

@@ -1,5 +1,5 @@
 // --- Configuration ---
-const APP_VERSION = '1.9.24'; // Improve AI discussion guide prompt
+const APP_VERSION = '1.9.25'; // Fix tablet header overlap
 
 // --- Gemini AI Configuration ---
 // Uses /api/gemini serverless function for secure API calls
