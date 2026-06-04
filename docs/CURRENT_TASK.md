@@ -28,6 +28,7 @@ Make Book Club Companion usable and accessible on phones and tablets while conti
   - [x] identify why current output feels school-like and multi-part
   - [x] update prompt for smart, conversational, character-and-choice-centered questions
   - [x] add strict accuracy rules for quotes, scenes, plot events, and specific facts
+  - [x] allow admins to open/test guides for saved books before scheduling
   - [ ] verify generated guide quality on hosted `test`
   - [ ] consider future source-grounded reader-guide/snippet workflow for admins who want richer context
 

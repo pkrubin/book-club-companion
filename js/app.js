@@ -1,5 +1,5 @@
 // --- Configuration ---
-const APP_VERSION = '1.9.25'; // Fix tablet header overlap
+const APP_VERSION = '1.9.26'; // Let admins test guides before scheduling
 
 // --- Gemini AI Configuration ---
 // Uses /api/gemini serverless function for secure API calls
@@ -2838,7 +2838,8 @@ function openModal(book, savedData = null) {
                 modalAuditInfo.classList.add('hidden'); // Hide for non-admins
             }
 
-            // --- Discussion Guide Button Logic (Only for Scheduled books) ---
+            // --- Discussion Guide Button Logic ---
+            // Members see guides for scheduled books; admins can prepare/test guides for any saved book.
             const btnOpenGuide = document.getElementById('btn-open-guide-modal');
             const btnOpenGuideLeft = document.getElementById('btn-open-guide-modal-left');
             const discussionGuideLeft = document.getElementById('discussion-guide-left');
@@ -2848,7 +2849,9 @@ function openModal(book, savedData = null) {
                 openDiscussionModal(savedData || { google_data: book, id: book.id });
             };
 
-            if (savedData.status === 'Scheduled') {
+            const canOpenDiscussionGuide = savedData.status === 'Scheduled' || isAdminUser();
+
+            if (canOpenDiscussionGuide) {
                 // Show left column button (primary location)
                 if (discussionGuideLeft) discussionGuideLeft.classList.remove('hidden');
                 if (btnOpenGuideLeft) btnOpenGuideLeft.onclick = guideClickHandler;

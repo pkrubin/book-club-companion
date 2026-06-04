@@ -31,6 +31,28 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
   - Database: `<rollback sql file or note>`
 ```
 
+## 2026-06-04 - Admin Guide Preparation Access
+- Version: `v1.9.26`
+- Test commit: `not yet`
+- Prod commit: `not yet`
+- Environments: `test`
+- User-facing changes:
+  - Admins can now open, generate, and review discussion guides for any saved library book before it is scheduled.
+  - Members still see discussion-guide access only for scheduled books.
+  - This enables safe prompt-quality testing on sandbox/saved books without changing a book's schedule status.
+- Operational changes:
+  - Env vars: none
+  - Database / SQL: none
+  - Branch / deployment notes:
+    - Follow-up to shared test/prod database caution: avoid changing book status solely to test guide generation.
+- Validation:
+  - `node --check js/app.js`
+  - `git diff --check`
+  - Hosted `test` verification still needed by opening a saved sandbox book and generating/reviewing a guide.
+- Rollback:
+  - Code: revert this test release commit
+  - Database: not applicable
+
 ## 2026-06-04 - Tablet Header Overlap Fix
 - Version: `v1.9.25`
 - Test commit: `87bd0dc`
