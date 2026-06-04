@@ -33,7 +33,7 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
 
 ## 2026-06-04 - Preserve Guide After Failed AI Draft
 - Version: `v1.9.31`
-- Test commit: `not yet`
+- Test commit: `be03517`
 - Prod commit: `not yet`
 - Environments: `test`
 - User-facing changes:
