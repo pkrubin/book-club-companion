@@ -33,7 +33,7 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
 
 ## 2026-06-04 - Discussion Guide Depth and Quality Gate
 - Version: `v1.9.28`
-- Test commit: `not yet`
+- Test commit: `6082e9d`
 - Prod commit: `not yet`
 - Environments: `test`
 - User-facing changes:
