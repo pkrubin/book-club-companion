@@ -31,6 +31,27 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
   - Database: `<rollback sql file or note>`
 ```
 
+## 2026-06-04 - Preserve Guide After Failed AI Draft
+- Version: `v1.9.31`
+- Test commit: `not yet`
+- Prod commit: `not yet`
+- Environments: `test`
+- User-facing changes:
+  - When an AI discussion-guide draft fails quality checks, the existing guide remains visible in the modal.
+  - Failed drafts now show a clear "AI draft was not saved" message instead of replacing the guide view with only an error.
+- Operational changes:
+  - Env vars: none
+  - Database / SQL: none
+  - Branch / deployment notes:
+    - Safety follow-up to `v1.9.30`; failed quality checks still do not save to the shared database.
+- Validation:
+  - `node --check js/app.js`
+  - `git diff --check`
+  - Hosted `test` failed-draft behavior still needed.
+- Rollback:
+  - Code: revert this test release commit
+  - Database: not applicable
+
 ## 2026-06-04 - Discussion Guide Save Quality Block
 - Version: `v1.9.30`
 - Test commit: `1970a53`

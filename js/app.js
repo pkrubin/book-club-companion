@@ -1,5 +1,5 @@
 // --- Configuration ---
-const APP_VERSION = '1.9.30'; // Block weak guide saves
+const APP_VERSION = '1.9.31'; // Preserve guide after failed AI draft
 
 // --- Gemini AI Configuration ---
 // Uses /api/gemini serverless function for secure API calls
@@ -6228,6 +6228,7 @@ async function generateDiscussionQuestionsAI() {
     const btn = document.getElementById('btn-generate-ai');
     const viewEl = document.getElementById('discussion-content-view');
     const originalText = btn.innerHTML;
+    const existingQuestions = currentDiscussionBook.discussion_questions || '';
 
     try {
         btn.disabled = true;
@@ -6348,7 +6349,10 @@ Return ONLY a numbered list of exactly 15 questions.`;
 
     } catch (e) {
         console.error(e);
-        viewEl.innerHTML = `<p class="text-rose-600">Error: ${e.message}. Please try again.</p>`;
+        const errorHtml = `<div class="mb-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">AI draft was not saved: ${escapeHtml(e.message)} Please try again.</div>`;
+        viewEl.innerHTML = existingQuestions.trim()
+            ? `${errorHtml}${renderDiscussionQuestionsHtml(existingQuestions)}`
+            : errorHtml;
     } finally {
         btn.disabled = false;
         btn.innerHTML = originalText;
