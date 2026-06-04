@@ -30,7 +30,9 @@ Make Book Club Companion usable and accessible on phones and tablets while conti
   - [x] add strict accuracy rules for quotes, scenes, plot events, and specific facts
   - [x] allow admins to open/test guides for saved books before scheduling
   - [x] refine prompt to avoid metadata/speculation language and ask readers to supply book examples
-  - [ ] verify generated guide quality on hosted `test`
+  - [x] verify generated guide quality on hosted `test`
+    - `The Secret Book Society` regenerated on `v1.9.27`; output improved, with fewer speculative prompts and stronger character/choice framing
+    - remaining issue: model still used "mentioned in the description" once, so add generation lint/retry or post-generation guardrails before relying on prompt-only rules
   - [ ] design source-grounded reader-guide/snippet workflow for admins who want richer context
     - candidate sources: author/publisher guide, Google Books metadata/snippets, trusted book-club guides, admin-pasted notes
     - output should use verified facts/quotes only, summarize source inspiration, and avoid copying guide questions wholesale
