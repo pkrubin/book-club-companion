@@ -33,7 +33,7 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
 
 ## 2026-06-06 - Do Not Block Usable Guide Drafts
 - Version: `v1.9.37`
-- Test commit: `not yet`
+- Test commit: `a9148ed`
 - Prod commit: `not yet`
 - Environments: `test`
 - User-facing changes:
