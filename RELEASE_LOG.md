@@ -33,7 +33,7 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
 
 ## 2026-06-06 - Ensure Generated Guide Source Labels
 - Version: `v1.9.38`
-- Test commit: `not yet`
+- Test commit: `10b834d`
 - Prod commit: `not yet`
 - Environments: `test`
 - User-facing changes:
