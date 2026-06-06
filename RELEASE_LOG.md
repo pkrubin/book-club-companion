@@ -31,6 +31,27 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
   - Database: `<rollback sql file or note>`
 ```
 
+## 2026-06-06 - Ensure Generated Guide Source Labels
+- Version: `v1.9.38`
+- Test commit: `not yet`
+- Prod commit: `not yet`
+- Environments: `test`
+- User-facing changes:
+  - Generated discussion guides now always include a source line, even when Gemini does not return explicit grounding links.
+  - Fallback source text clarifies when questions are AI-generated from Gemini Search grounding and available book metadata.
+- Operational changes:
+  - Env vars: none
+  - Database / SQL: none
+  - Branch / deployment notes:
+    - Follow-up after test generation produced usable questions without visible source attribution.
+- Validation:
+  - `node --check js/app.js`
+  - `git diff --check`
+  - Hosted `test` generation review still needed.
+- Rollback:
+  - Code: revert this test release commit
+  - Database: restore previous discussion guide text manually if needed
+
 ## 2026-06-06 - Do Not Block Usable Guide Drafts
 - Version: `v1.9.37`
 - Test commit: `a9148ed`

@@ -1,5 +1,5 @@
 // --- Configuration ---
-const APP_VERSION = '1.9.37'; // Do not block usable guide drafts
+const APP_VERSION = '1.9.38'; // Ensure generated guide source labels
 
 // --- Gemini AI Configuration ---
 // Uses /api/gemini serverless function for secure API calls
@@ -284,6 +284,13 @@ function appendGroundingSources(rawQuestions, groundingSources = []) {
         .join('; ');
 
     return `${questions}\n\n_Source: ${sourceText}_`;
+}
+
+function ensureDiscussionGuideSource(rawQuestions, fallbackSourceText) {
+    const questions = String(rawQuestions || '').trim();
+    if (!questions || /^_?Sources?:/im.test(questions)) return questions;
+
+    return `${questions}\n\n_Source: ${fallbackSourceText}_`;
 }
 
 function renderDiscussionQuestionsHtml(rawQuestions) {
@@ -6475,6 +6482,7 @@ Return ONLY a numbered list of 10 to 15 questions plus one Source line.`;
         // Cleanup response
         questions = questions.replace(/[\*\"]/g, ''); // Remove bolding/quotes
         questions = appendGroundingSources(questions, data.groundingSources || []);
+        questions = ensureDiscussionGuideSource(questions, 'AI-generated with Gemini Search grounding and available book metadata.');
         questions = normalizeDiscussionGuideText(questions);
 
         // Save & Render
