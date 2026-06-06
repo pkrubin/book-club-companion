@@ -33,7 +33,7 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
 
 ## 2026-06-06 - Protect Against Empty Guide Drafts
 - Version: `v1.9.40`
-- Test commit: `not yet`
+- Test commit: `4911ee5`
 - Prod commit: `not yet`
 - Environments: `test`
 - User-facing changes:
