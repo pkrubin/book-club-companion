@@ -31,6 +31,26 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
   - Database: `<rollback sql file or note>`
 ```
 
+## 2026-06-06 - Official Guide Formatting Cleanup
+- Version: `v1.9.34`
+- Test commit: `not yet`
+- Prod commit: `not yet`
+- Environments: `test`
+- User-facing changes:
+  - Cleaned punctuation spacing in the official `The Secret Book Society` discussion guide import.
+- Operational changes:
+  - Env vars: none
+  - Database / SQL: none
+  - Branch / deployment notes:
+    - Regenerate the guide on hosted `test` after deployment to refresh the saved text.
+- Validation:
+  - `node --check js/app.js`
+  - `git diff --check`
+  - Hosted `test` official-guide refresh still needed.
+- Rollback:
+  - Code: revert this test release commit
+  - Database: restore previous discussion guide text manually if needed
+
 ## 2026-06-06 - Official Discussion Guide Import
 - Version: `v1.9.33`
 - Test commit: `a3fac2a`

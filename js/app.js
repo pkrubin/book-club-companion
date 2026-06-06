@@ -1,5 +1,5 @@
 // --- Configuration ---
-const APP_VERSION = '1.9.33'; // Prefer official guides when available
+const APP_VERSION = '1.9.34'; // Clean official guide formatting
 
 // --- Gemini AI Configuration ---
 // Uses /api/gemini serverless function for secure API calls
@@ -6152,7 +6152,7 @@ const OFFICIAL_DISCUSSION_GUIDES = {
         questions: [
             'Lady Duxbury is at the center of so many rumors, particularly the claim that she murdered her three husbands. How did your opinion of her shift as you learned more about her? Do you see her as a villain, a survivor, or something in between?',
             'Do you think Lady Duxbury killed her husbands? Why or why not?',
-            'In the novel, everyday objects-a hat pin, a teacup, a pressed flower, even the jewelry worn-take on hidden meanings or double purposes. How did these details change the way you thought about Victorian women\'s lives?',
+            'In the novel, everyday objects - a hat pin, a teacup, a pressed flower, even the jewelry worn - take on hidden meanings or double purposes. How did these details change the way you thought about Victorian women\'s lives?',
             'Referring back to question 3, what modern parallels can you think of where women or marginalized groups have created subtle forms of resistance and meaning?',
             'Books in the story are more than entertainment; they\'re escape, inspiration and empowerment. What are some books that have been particularly impactful to you in your life?',
             'Many of the characters wrestle with how society defines them versus who they really are. Which character\'s struggle with identity, agency, or belonging did you find most compelling?',
