@@ -1,5 +1,5 @@
 // --- Configuration ---
-const APP_VERSION = '1.9.34'; // Clean official guide formatting
+const APP_VERSION = '1.9.35'; // Strip guide intro chatter
 
 // --- Gemini AI Configuration ---
 // Uses /api/gemini serverless function for secure API calls
@@ -245,8 +245,23 @@ function toInlineJsArg(value) {
         .replace(/'/g, '&#39;');
 }
 
+function isDiscussionGuideIntroLine(line) {
+    return /^here (are|is)\s+\d*\s*(book club |discussion )?questions?\b/i.test(line)
+        || /^discussion questions? for\b/i.test(line)
+        || /^book club questions? for\b/i.test(line);
+}
+
+function normalizeDiscussionGuideText(rawQuestions) {
+    return htmlToPlainText(rawQuestions)
+        .split(/\n+/)
+        .map(line => line.trim())
+        .filter(Boolean)
+        .filter(line => !isDiscussionGuideIntroLine(line))
+        .join('\n\n');
+}
+
 function renderDiscussionQuestionsHtml(rawQuestions) {
-    const lines = htmlToPlainText(rawQuestions)
+    const lines = normalizeDiscussionGuideText(rawQuestions)
         .split(/\n+/)
         .map(line => line.trim())
         .filter(Boolean);
@@ -6424,6 +6439,7 @@ Return ONLY a numbered list of 10 to 15 questions.`;
 
         // Cleanup response
         questions = questions.replace(/[\*\"]/g, ''); // Remove bolding/quotes
+        questions = normalizeDiscussionGuideText(questions);
 
         // Save & Render
         currentDiscussionBook.discussion_questions = questions;

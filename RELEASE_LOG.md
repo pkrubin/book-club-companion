@@ -31,6 +31,27 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
   - Database: `<rollback sql file or note>`
 ```
 
+## 2026-06-06 - Strip Discussion Guide Intro Chatter
+- Version: `v1.9.35`
+- Test commit: `not yet`
+- Prod commit: `not yet`
+- Environments: `test`
+- User-facing changes:
+  - Removed pre-question commentary such as "Here are 12 discussion questions..." from discussion-guide display.
+  - AI-generated guide text is normalized before saving so intro chatter does not become question 1.
+- Operational changes:
+  - Env vars: none
+  - Database / SQL: none
+  - Branch / deployment notes:
+    - Existing saved guide text does not require a database migration; the renderer strips intro lines at display time.
+- Validation:
+  - `node --check js/app.js`
+  - `git diff --check`
+  - Hosted `test` render verification still needed.
+- Rollback:
+  - Code: revert this test release commit
+  - Database: not applicable
+
 ## 2026-06-06 - Official Guide Formatting Cleanup
 - Version: `v1.9.34`
 - Test commit: `8af2448`

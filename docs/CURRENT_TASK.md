@@ -48,6 +48,7 @@ Make Book Club Companion usable and accessible on phones and tablets while conti
     - regenerate loads official author questions with source instead of asking AI to imitate them
     - fallback AI lint rejects intros, speculative phrasing, and source-packaging language observed in `v1.9.32`
   - [x] verify official `The Secret Book Society` guide loads on hosted `test` with source attribution
+  - [x] strip guide intro chatter like "Here are 12 discussion questions..." before display/save
   - [ ] design source-grounded reader-guide/snippet workflow for admins who want richer context
     - candidate sources: author/publisher guide, Google Books metadata/snippets, trusted book-club guides, admin-pasted notes
     - output should use verified facts/quotes only, summarize source inspiration, and avoid copying guide questions wholesale
