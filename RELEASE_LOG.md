@@ -33,7 +33,7 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
 
 ## 2026-06-06 - Strip Discussion Guide Intro Chatter
 - Version: `v1.9.35`
-- Test commit: `not yet`
+- Test commit: `7845cb0`
 - Prod commit: `not yet`
 - Environments: `test`
 - User-facing changes:
