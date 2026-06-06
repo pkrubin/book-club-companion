@@ -31,6 +31,28 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
   - Database: `<rollback sql file or note>`
 ```
 
+## 2026-06-06 - Author-Guide Discussion Prompt Standard
+- Version: `v1.9.32`
+- Test commit: `not yet`
+- Prod commit: `not yet`
+- Environments: `test`
+- User-facing changes:
+  - Tuned generated discussion-guide prompts to follow author/publisher reader-guide patterns: concrete book anchors, reader judgment, personal connection, and natural follow-ups.
+  - Added official `The Secret Book Society` guide questions as a citeable fallback when no custom guide has been saved.
+  - Relaxed overly rigid linting so strong book-club follow-ups like "Why or why not?" are allowed while still rejecting worksheet-like output.
+- Operational changes:
+  - Env vars: none
+  - Database / SQL: none
+  - Branch / deployment notes:
+    - Saved custom guides still take precedence over bundled official fallback questions.
+- Validation:
+  - `node --check js/app.js`
+  - `git diff --check`
+  - Hosted `test` generation/review still needed.
+- Rollback:
+  - Code: revert this test release commit
+  - Database: not applicable
+
 ## 2026-06-04 - Preserve Guide After Failed AI Draft
 - Version: `v1.9.31`
 - Test commit: `be03517`
