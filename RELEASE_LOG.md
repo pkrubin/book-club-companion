@@ -31,6 +31,28 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
   - Database: `<rollback sql file or note>`
 ```
 
+## 2026-06-06 - Do Not Block Usable Guide Drafts
+- Version: `v1.9.37`
+- Test commit: `not yet`
+- Prod commit: `not yet`
+- Environments: `test`
+- User-facing changes:
+  - Fixed discussion-guide generation so minor quality warnings do not replace usable output with an error message.
+  - Speculative phrasing now triggers a retry only when overused, instead of blocking a guide for a single word.
+  - Remaining quality warnings are logged for debugging while the generated guide is still shown and saved.
+- Operational changes:
+  - Env vars: none
+  - Database / SQL: none
+  - Branch / deployment notes:
+    - Follow-up to `v1.9.36` after `The Correspondent` generated an error-only modal.
+- Validation:
+  - `node --check js/app.js`
+  - `git diff --check`
+  - Hosted `test` generation review still needed.
+- Rollback:
+  - Code: revert this test release commit
+  - Database: restore previous discussion guide text manually if needed
+
 ## 2026-06-06 - Search-Grounded Discussion Guide Generation
 - Version: `v1.9.36`
 - Test commit: `9ade7c3`

@@ -1,5 +1,5 @@
 // --- Configuration ---
-const APP_VERSION = '1.9.36'; // Search for citeable guide questions
+const APP_VERSION = '1.9.37'; // Do not block usable guide drafts
 
 // --- Gemini AI Configuration ---
 // Uses /api/gemini serverless function for secure API calls
@@ -6272,8 +6272,8 @@ function lintDiscussionGuideOutput(rawQuestions, title = '') {
     }
 
     const speculativeMatches = lower.match(/\b(imagine|anticipate|might have happened|what do you think might)\b/g) || [];
-    if (speculativeMatches.length) {
-        issues.push('Remove speculative phrasing like imagine or anticipate; ask about real book details, reader judgment, or reader experience instead.');
+    if (speculativeMatches.length > 2) {
+        issues.push('Use fewer speculative prompts like imagine or anticipate; ask about real book details, reader judgment, or reader experience instead.');
     }
 
     const candidateLines = text
@@ -6462,7 +6462,7 @@ Return ONLY a numbered list of 10 to 15 questions plus one Source line.`;
         }
 
         if (qualityIssues.length) {
-            throw new Error(`The AI draft still missed quality checks: ${qualityIssues.join(' ')}`);
+            console.warn('Discussion guide saved with remaining quality warnings:', qualityIssues);
         }
 
         // Append Model Attribution (so users know quality level)
