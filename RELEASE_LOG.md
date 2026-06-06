@@ -33,7 +33,7 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
 
 ## 2026-06-06 - Prefer Guide Source Labels Over Model Labels
 - Version: `v1.9.39`
-- Test commit: `not yet`
+- Test commit: `61efed3`
 - Prod commit: `not yet`
 - Environments: `test`
 - User-facing changes:
