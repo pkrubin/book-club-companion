@@ -49,6 +49,10 @@ Make Book Club Companion usable and accessible on phones and tablets while conti
     - fallback AI lint rejects intros, speculative phrasing, and source-packaging language observed in `v1.9.32`
   - [x] verify official `The Secret Book Society` guide loads on hosted `test` with source attribution
   - [x] strip guide intro chatter like "Here are 12 discussion questions..." before display/save
+  - [x] add automated search-grounded guide generation path
+    - Gemini searches for official/citeable book-club questions before generating fallback questions
+    - source links from grounding metadata are attached when available
+    - admin-provided source material remains a future last-resort override, not the default path
   - [ ] design source-grounded reader-guide/snippet workflow for admins who want richer context
     - candidate sources: author/publisher guide, Google Books metadata/snippets, trusted book-club guides, admin-pasted notes
     - output should use verified facts/quotes only, summarize source inspiration, and avoid copying guide questions wholesale

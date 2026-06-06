@@ -31,6 +31,30 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
   - Database: `<rollback sql file or note>`
 ```
 
+## 2026-06-06 - Search-Grounded Discussion Guide Generation
+- Version: `v1.9.36`
+- Test commit: `not yet`
+- Prod commit: `not yet`
+- Environments: `test`
+- User-facing changes:
+  - Discussion-guide generation now searches for official/citeable book-club questions before falling back to AI-created questions.
+  - Generated guides request and display a source line, using Gemini grounding links when available.
+  - The fallback prompt now explicitly prefers official author, publisher, or book-club-kit questions when found.
+- Operational changes:
+  - Env vars: none
+  - Database / SQL: none
+  - Branch / deployment notes:
+    - Enables Gemini Grounding with Google Search only for discussion-guide generation calls.
+    - Search grounding may affect Gemini API usage/cost depending on model billing.
+- Validation:
+  - `node --check js/app.js`
+  - `node --check api/gemini.js`
+  - `git diff --check`
+  - Hosted `test` generation review still needed.
+- Rollback:
+  - Code: revert this test release commit
+  - Database: restore previous discussion guide text manually if needed
+
 ## 2026-06-06 - Strip Discussion Guide Intro Chatter
 - Version: `v1.9.35`
 - Test commit: `7845cb0`

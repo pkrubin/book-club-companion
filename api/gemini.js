@@ -33,6 +33,7 @@ export default async function handler(req, res) {
     const responseJsonSchema = body.responseJsonSchema && typeof body.responseJsonSchema === 'object'
         ? body.responseJsonSchema
         : null;
+    const useGoogleSearch = body.useGoogleSearch === true;
     const temperature = Number.isFinite(Number(body.temperature))
         ? Math.max(0, Math.min(1, Number(body.temperature)))
         : 0.7;
@@ -104,6 +105,7 @@ export default async function handler(req, res) {
                         },
                         body: JSON.stringify({
                             contents: [{ parts }],
+                            ...(useGoogleSearch ? { tools: [{ google_search: {} }] } : {}),
                             generationConfig: {
                                 temperature,
                                 maxOutputTokens: maxTokens,
@@ -130,8 +132,16 @@ export default async function handler(req, res) {
                 const data = await response.json();
                 const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
                 const finishReason = data.candidates?.[0]?.finishReason || null;
+                const groundingMetadata = data.candidates?.[0]?.groundingMetadata || null;
+                const groundingSources = groundingMetadata?.groundingChunks
+                    ?.map(chunk => chunk.web)
+                    .filter(source => source?.uri)
+                    .map(source => ({
+                        title: source.title || source.uri,
+                        uri: source.uri
+                    })) || [];
                 console.log(`Gemini Proxy: Success with ${model} for user ${authUser.id}`);
-                return res.status(200).json({ text, modelUsed: model, finishReason });
+                return res.status(200).json({ text, modelUsed: model, finishReason, groundingMetadata, groundingSources });
             } catch (error) {
                 console.error(`Gemini Proxy: Network error on ${model}:`, error);
                 sawNetworkFailure = true;
