@@ -44,6 +44,9 @@ Make Book Club Companion usable and accessible on phones and tablets while conti
     - official/citeable questions should be used directly when available
     - generated fallback should target author-guide patterns: concrete book anchors, reader judgment, personal connection, and natural follow-ups
     - linting should allow strong conversational follow-ups like "Why or why not?" while still rejecting generic or worksheet-like drafts
+  - [x] add official-guide import path for `The Secret Book Society`
+    - regenerate loads official author questions with source instead of asking AI to imitate them
+    - fallback AI lint rejects intros, speculative phrasing, and source-packaging language observed in `v1.9.32`
   - [ ] design source-grounded reader-guide/snippet workflow for admins who want richer context
     - candidate sources: author/publisher guide, Google Books metadata/snippets, trusted book-club guides, admin-pasted notes
     - output should use verified facts/quotes only, summarize source inspiration, and avoid copying guide questions wholesale

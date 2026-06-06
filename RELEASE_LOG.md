@@ -31,6 +31,28 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
   - Database: `<rollback sql file or note>`
 ```
 
+## 2026-06-06 - Official Discussion Guide Import
+- Version: `v1.9.33`
+- Test commit: `not yet`
+- Prod commit: `not yet`
+- Environments: `test`
+- User-facing changes:
+  - Books with official/citeable discussion questions now use those questions directly instead of asking AI to imitate them.
+  - Added the official `The Secret Book Society` author book-club questions with source attribution.
+  - Tightened fallback AI quality checks to reject intros, speculative phrasing, and source-packaging language found in the prior generated draft.
+- Operational changes:
+  - Env vars: none
+  - Database / SQL: none
+  - Branch / deployment notes:
+    - Regenerating `The Secret Book Society` on test will replace the saved AI draft with the official sourced guide.
+- Validation:
+  - `node --check js/app.js`
+  - `git diff --check`
+  - Hosted `test` official-guide import still needed.
+- Rollback:
+  - Code: revert this test release commit
+  - Database: restore previous discussion guide text manually if needed
+
 ## 2026-06-06 - Author-Guide Discussion Prompt Standard
 - Version: `v1.9.32`
 - Test commit: `04d955c`
