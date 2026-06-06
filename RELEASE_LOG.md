@@ -33,7 +33,7 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
 
 ## 2026-06-06 - Search-Grounded Discussion Guide Generation
 - Version: `v1.9.36`
-- Test commit: `not yet`
+- Test commit: `9ade7c3`
 - Prod commit: `not yet`
 - Environments: `test`
 - User-facing changes:
