@@ -33,7 +33,7 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
 
 ## 2026-06-06 - Official Guide Formatting Cleanup
 - Version: `v1.9.34`
-- Test commit: `not yet`
+- Test commit: `8af2448`
 - Prod commit: `not yet`
 - Environments: `test`
 - User-facing changes:
