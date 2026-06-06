@@ -1,6 +1,6 @@
 {
   "name": "book-club-companion",
-  "version": "1.9.38",
+  "version": "1.9.39",
   "description": "Local dev server for Book Club Companion",
   "type": "module",
   "scripts": {
