@@ -31,6 +31,28 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
   - Database: `<rollback sql file or note>`
 ```
 
+## 2026-06-06 - Protect Against Empty Guide Drafts
+- Version: `v1.9.40`
+- Test commit: `not yet`
+- Prod commit: `not yet`
+- Environments: `test`
+- User-facing changes:
+  - Prevented empty or too-short AI guide drafts from overwriting an existing discussion guide.
+  - Added a metadata-only fallback generation pass when search-grounded generation returns too little usable content.
+  - If both attempts fail, the existing guide is left unchanged.
+- Operational changes:
+  - Env vars: none
+  - Database / SQL: none
+  - Branch / deployment notes:
+    - Follow-up after `The Correspondent` ended up with an empty guide view during search-grounded generation testing.
+- Validation:
+  - `node --check js/app.js`
+  - `git diff --check`
+  - Hosted `test` generation review still needed.
+- Rollback:
+  - Code: revert this test release commit
+  - Database: restore previous discussion guide text manually if needed
+
 ## 2026-06-06 - Prefer Guide Source Labels Over Model Labels
 - Version: `v1.9.39`
 - Test commit: `61efed3`

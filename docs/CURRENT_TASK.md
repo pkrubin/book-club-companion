@@ -56,6 +56,7 @@ Make Book Club Companion usable and accessible on phones and tablets while conti
   - [x] fix quality gate so minor warnings do not produce an error-only guide modal
   - [x] add fallback source label when Gemini grounding links are unavailable
   - [x] remove model attribution as the visible source for generated guides
+  - [x] prevent empty or too-short AI drafts from overwriting saved guide text
   - [ ] design source-grounded reader-guide/snippet workflow for admins who want richer context
     - candidate sources: author/publisher guide, Google Books metadata/snippets, trusted book-club guides, admin-pasted notes
     - output should use verified facts/quotes only, summarize source inspiration, and avoid copying guide questions wholesale

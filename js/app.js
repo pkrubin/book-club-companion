@@ -1,5 +1,5 @@
 // --- Configuration ---
-const APP_VERSION = '1.9.39'; // Prefer source labels over model labels
+const APP_VERSION = '1.9.40'; // Protect against empty guide drafts
 
 // --- Gemini AI Configuration ---
 // Uses /api/gemini serverless function for secure API calls
@@ -260,6 +260,13 @@ function normalizeDiscussionGuideText(rawQuestions) {
         .filter(Boolean)
         .filter(line => !isDiscussionGuideIntroLine(line))
         .join('\n\n');
+}
+
+function countDiscussionQuestions(rawQuestions) {
+    return normalizeDiscussionGuideText(rawQuestions)
+        .split(/\n+/)
+        .map(line => line.replace(/^\d+[\.\)]\s*/, '').trim())
+        .filter(line => line.endsWith('?')).length;
 }
 
 function appendGroundingSources(rawQuestions, groundingSources = []) {
@@ -6477,6 +6484,24 @@ Return ONLY a numbered list of 10 to 15 questions plus one Source line.`;
         questions = appendGroundingSources(questions, data.groundingSources || []);
         questions = ensureDiscussionGuideSource(questions, 'AI-generated with Gemini Search grounding and available book metadata.');
         questions = normalizeDiscussionGuideText(questions);
+
+        if (countDiscussionQuestions(questions) < 5) {
+            console.warn('Search-grounded guide draft was empty or too short. Trying metadata-only fallback.');
+            const fallbackData = await callGeminiProxy({
+                prompt: `${prompt}\n\nSearch grounding did not return enough usable questions. Create a concise fallback guide from the provided book metadata only. Return 10 to 12 numbered questions plus one Source line: Source: AI-generated from available book metadata.`,
+                maxTokens: 4000,
+                temperature: 0.65,
+                useGoogleSearch: false
+            });
+
+            questions = (fallbackData.text || '').replace(/[\*\"]/g, '');
+            questions = ensureDiscussionGuideSource(questions, 'AI-generated from available book metadata.');
+            questions = normalizeDiscussionGuideText(questions);
+        }
+
+        if (countDiscussionQuestions(questions) < 5) {
+            throw new Error('The AI did not return enough usable questions, so the existing guide was left unchanged.');
+        }
 
         // Save & Render
         currentDiscussionBook.discussion_questions = questions;
