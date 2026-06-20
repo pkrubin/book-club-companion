@@ -1,7 +1,7 @@
 # Current Task
 
 ## Status
-Mobile accessibility implementation in progress
+Release alignment and production readiness review in progress
 
 ## Usage
 
@@ -15,13 +15,21 @@ Mobile accessibility implementation in progress
 
 ## Big Goal
 
-Make Book Club Companion usable and accessible on phones and tablets while continuing the multi-club architecture work.
+Reconcile the `v1.9.40` test release with production before starting unrelated defect or feature work.
 
 ## Default Start Point
 - Start new work from fresh `origin/test`
 - Use `$book-club-workflow`
 
 ## Active Queue
+
+- [ ] Reconcile the pending test release train
+  - [x] confirm `test` is `v1.9.40` and production is `v1.9.15`
+  - [x] identify missing release WIP limits and unsynchronized branch ancestry as the process failures
+  - [x] add a deterministic release-alignment check and workflow stop gates
+  - [ ] complete the focused admin, member, iPhone, and sandbox discussion-guide smoke test
+  - [ ] make an explicit promote-or-defer decision
+  - [ ] after any production promotion, synchronize `main` history back into `test`
 
 - [ ] Improve AI discussion guide question quality
   - [x] review current AI discussion prompt
@@ -163,7 +171,7 @@ These exist in historical docs or RFCs but should not be treated as the next fea
 ## Suggested Next Decision
 
 Next recommended task:
-- rerun Supabase Security Advisor after GraphQL removal, then plan `SECURITY DEFINER` function execution hardening
+- complete the focused `v1.9.40` smoke test, then either promote it or record the specific blocker; do not start unrelated work first
 
 ## Release Note
 

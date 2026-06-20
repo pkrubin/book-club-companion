@@ -1,6 +1,6 @@
 ---
 name: book-club-workflow
-description: Use when working in the Book Club Companion repo on feature delivery, release preparation, staging verification, production promotion, or release reconciliation. This skill provides the canonical lightweight workflow for building from fresh origin/test, testing safely with the shared database, updating version numbers only at release time, maintaining RELEASE_LOG.md, and keeping docs aligned with live reality.
+description: Use when working in the Book Club Companion repo on feature delivery, release preparation, staging verification, production promotion, release alignment, or release reconciliation. This skill provides the canonical workflow for checking test/prod drift, limiting work in progress, building from fresh origin/test, testing safely with the shared database, maintaining RELEASE_LOG.md, and keeping branches and docs aligned with live reality.
 ---
 
 # Book Club Workflow
@@ -21,6 +21,9 @@ Only read additional docs if the task specifically needs them.
 
 ## Core Rules
 
+- Fetch `origin`, then run `bash .codex/skills/book-club-workflow/scripts/check-release-alignment.sh` before choosing work.
+- If `test` is pending promotion, do not start unrelated feature work. Finish validation, promote, or explicitly defer it with the reason recorded in `docs/CURRENT_TASK.md`.
+- Treat three unpromoted test versions or seven days without a promote/defer decision as a release incident. Make release reconciliation the top task and stop adding scope.
 - Start normal work from fresh `origin/test` in a new worktree.
 - Treat `test` and `prod` as sharing one Supabase database.
 - Prefer sandbox clubs first for testing data-changing behavior.
@@ -30,18 +33,19 @@ Only read additional docs if the task specifically needs them.
 
 ## Default Delivery Loop
 
-1. Inspect git state and confirm the canonical branch/worktree.
-2. Define the change briefly:
+1. Fetch `origin`, run the repo-local alignment script, and inspect git state.
+2. If alignment reports `PENDING_PROMOTION` or `DIVERGED`, resolve the release decision before unrelated work.
+3. Define the change briefly:
    - goal
    - files
    - DB changes: yes or no
    - validation plan
    - rollback plan
-3. Implement locally.
-4. Test on a served app, not `file://`.
-5. If auth is needed, wait for the human to log in first.
-6. Pause for human verification when the change is visually important or authenticated.
-7. Keep `docs/CURRENT_TASK.md` in sync for multi-session work:
+4. Implement locally.
+5. Test on a served app, not `file://`.
+6. If auth is needed, wait for the human to log in first.
+7. Pause for human verification when the change is visually important or authenticated.
+8. Keep `docs/CURRENT_TASK.md` in sync for multi-session work:
    - move the active task to the top
    - update the real next step
    - check off completed items
@@ -62,6 +66,9 @@ Do this only when localhost work is ready:
    - rollback note
 4. Commit and push to `test`.
 5. Have the human verify `test`.
+6. Record the real next action as `promote`, `fix blocking defect`, or `defer with reason`.
+
+Do not create a chain of unrelated test releases. Corrections required for the current candidate may continue, but unrelated work waits until the release decision is closed.
 
 ## Promoting To Prod
 
@@ -70,6 +77,9 @@ Do this only when localhost work is ready:
 3. Merge `test` to `main`.
 4. Update the same `RELEASE_LOG.md` entry with the prod commit.
 5. Verify prod.
+6. Fast-forward or merge the resulting `main` history back into `test`, push `test`, and rerun the alignment script.
+
+The promotion is not complete until production is verified and `origin/main` is an ancestor of `origin/test`.
 
 Preferred recovery after prod issues:
 - hotfix forward first

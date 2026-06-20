@@ -67,6 +67,11 @@ Treat these as archived/legacy context, not primary instructions:
    - Bump `package.json`
    - Update `RELEASE_LOG.md`
 
+6. Limit release work in progress.
+   - Fetch and run `.codex/skills/book-club-workflow/scripts/check-release-alignment.sh` before choosing new work.
+   - If `test` is ahead of production, finish its validation and make a promote-or-defer decision before unrelated work.
+   - Three unpromoted test versions or seven days without a decision is a release incident; stop adding scope and reconcile.
+
 ## Environment Map
 
 - `localhost`: local dev server, usually `http://localhost:8080`
@@ -79,24 +84,26 @@ Branch policy:
 
 ## Standard Workflow
 
-1. Start from fresh `origin/test` in a new worktree.
-2. Define the change briefly:
+1. Fetch `origin` and run the release-alignment check.
+2. Resolve any pending promotion or branch divergence before unrelated feature work.
+3. Start from fresh `origin/test` in a new worktree.
+4. Define the change briefly:
    - goal
    - affected files
    - DB changes: yes or no
    - validation plan
    - rollback plan
-3. Implement locally.
-4. Test on a served app, not `file://`.
-5. Ask for human verification when the change needs authenticated or visual confirmation.
+5. Implement locally.
+6. Test on a served app, not `file://`.
+7. Ask for human verification when the change needs authenticated or visual confirmation.
 
 For work likely to span multiple chats:
-6. Keep `docs/CURRENT_TASK.md` current with:
+8. Keep `docs/CURRENT_TASK.md` current with:
    - active goal
    - the real next step
    - major open risks or decisions
    - completed items checked off
-7. Keep it short and operational, not narrative.
+9. Keep it short and operational, not narrative.
 
 ## Release Workflow
 
@@ -113,6 +120,7 @@ When preparing to push to `test`:
    - validation notes
    - rollback note
 4. Commit and push to `test`.
+5. Do not begin unrelated work until the candidate is promoted or explicitly deferred in `docs/CURRENT_TASK.md`.
 
 When promoting to `main`:
 1. Verify `test` first.
@@ -120,6 +128,7 @@ When promoting to `main`:
 3. Merge `test` to `main`.
 4. Update the same `RELEASE_LOG.md` entry with the prod commit.
 5. Verify prod.
+6. Synchronize the resulting `main` history back into `test` and verify `origin/main` is an ancestor of `origin/test`.
 
 ## Shared Database Caution
 
