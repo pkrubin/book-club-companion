@@ -27,6 +27,7 @@ Reconcile the `v1.9.40` test release with production before starting unrelated d
   - [x] confirm `test` is `v1.9.40` and production is `v1.9.15`
   - [x] identify missing release WIP limits and unsynchronized branch ancestry as the process failures
   - [x] add a deterministic release-alignment check and workflow stop gates
+  - [x] merge existing production history back into the test line without changing application files
   - [ ] complete the focused admin, member, iPhone, and sandbox discussion-guide smoke test
   - [ ] make an explicit promote-or-defer decision
   - [ ] after any production promotion, synchronize `main` history back into `test`
