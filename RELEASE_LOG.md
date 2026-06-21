@@ -33,7 +33,7 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
 
 ## 2026-06-20 - Authenticated Header Collision Fix
 - Version: `v1.9.41`
-- Test commit: `pending`
+- Test commit: `8d58d32`
 - Prod commit: `not yet`
 - Environments: `test`
 - User-facing changes:
