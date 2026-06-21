@@ -491,8 +491,8 @@ body.modal-open {
     }
 }
 
-/* Tablet / small-window header: avoid squeezing desktop nav into one row. */
-@media (min-width: 641px) and (max-width: 900px) {
+/* Tablet / standard-window header: split before brand, nav, and account controls collide. */
+@media (min-width: 641px) and (max-width: 1535px) {
     .mobile-settings-action {
         display: flex;
     }
@@ -575,6 +575,23 @@ body.modal-open {
         min-height: 40px;
         align-items: center;
         justify-content: center;
+    }
+}
+
+@media (min-width: 901px) and (max-width: 1535px) {
+    #app-section nav .text-editorial-headline {
+        max-width: min(34rem, 58vw);
+        font-size: 2rem !important;
+    }
+
+    #club-switcher-btn {
+        max-width: min(20rem, 32vw) !important;
+    }
+}
+
+@media (min-width: 1536px) {
+    #app-section nav > div {
+        max-width: 96rem;
     }
 }
 

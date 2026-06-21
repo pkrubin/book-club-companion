@@ -1,5 +1,5 @@
 // --- Configuration ---
-const APP_VERSION = '1.9.40'; // Protect against empty guide drafts
+const APP_VERSION = '1.9.41'; // Prevent authenticated header collisions
 
 // --- Gemini AI Configuration ---
 // Uses /api/gemini serverless function for secure API calls

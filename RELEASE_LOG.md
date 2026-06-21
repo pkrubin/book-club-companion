@@ -31,6 +31,29 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
   - Database: `<rollback sql file or note>`
 ```
 
+## 2026-06-20 - Authenticated Header Collision Fix
+- Version: `v1.9.41`
+- Test commit: `pending`
+- Prod commit: `not yet`
+- Environments: `test`
+- User-facing changes:
+  - Prevented the authenticated brand, club switcher, navigation, and account controls from overlapping in standard-width desktop windows.
+  - Standard laptop and desktop windows now use a deliberate two-row header; very wide screens retain the single-row desktop header and phones retain the existing compact layout.
+- Operational changes:
+  - Env vars: none
+  - Database / SQL: none
+  - Branch / deployment notes:
+    - Blocking correction discovered during the production member-role smoke test.
+- Validation:
+  - `git diff --check`
+  - Local rendered checks at 390, 900, 1024, 1340, 1536, and 1600 pixels: no header collisions, navigation collisions, or horizontal overflow.
+  - Local screenshots visually reviewed at 390, 1340, and 1600 pixels.
+  - Maximum 125% app text size checked at 900, 1024, 1340, 1536, and 1600 pixels with no brand/club or navigation/account collisions.
+  - Hosted `test` verification at the reported viewport remains required before production promotion.
+- Rollback:
+  - Code: revert this test release commit
+  - Database: not applicable
+
 ## 2026-06-06 - Protect Against Empty Guide Drafts
 - Version: `v1.9.40`
 - Test commit: `4911ee5`
