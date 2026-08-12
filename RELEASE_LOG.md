@@ -46,7 +46,9 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
 - Validation:
   - Hosted `test` authenticated smoke confirmed `v1.9.41` dashboard header had no closed-state overlap at 1340px and 390px.
   - Hosted `test` authenticated smoke found club-switcher open-state overflow at 1340px before this fix.
-  - Local validation and hosted `test` verification for `v1.9.42` still required.
+  - `node --check js/app.js`
+  - `git diff --check`
+  - Hosted `test` `v1.9.42` verification at 1340px confirmed the open club-switcher menu stays inside the viewport with no horizontal overflow.
 - Rollback:
   - Code: revert this test release commit
   - Database: not applicable
