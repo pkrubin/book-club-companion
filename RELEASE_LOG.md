@@ -31,6 +31,26 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
   - Database: `<rollback sql file or note>`
 ```
 
+## 2026-08-12 - Club Switcher Overflow Fix
+- Version: `v1.9.42`
+- Test commit: `pending`
+- Prod commit: `not yet`
+- Environments: `test`
+- User-facing changes:
+  - Prevented the club switcher menu from creating horizontal page overflow when opened in authenticated desktop and standard-width browser windows.
+- Operational changes:
+  - Env vars: none
+  - Database / SQL: none
+  - Branch / deployment notes:
+    - Blocking correction discovered during the focused `v1.9.41` hosted test smoke pass.
+- Validation:
+  - Hosted `test` authenticated smoke confirmed `v1.9.41` dashboard header had no closed-state overlap at 1340px and 390px.
+  - Hosted `test` authenticated smoke found club-switcher open-state overflow at 1340px before this fix.
+  - Local validation and hosted `test` verification for `v1.9.42` still required.
+- Rollback:
+  - Code: revert this test release commit
+  - Database: not applicable
+
 ## 2026-06-20 - Authenticated Header Collision Fix
 - Version: `v1.9.41`
 - Test commit: `8d58d32`

@@ -1,5 +1,5 @@
 // --- Configuration ---
-const APP_VERSION = '1.9.41'; // Prevent authenticated header collisions
+const APP_VERSION = '1.9.42'; // Prevent authenticated menu overflow
 
 // --- Gemini AI Configuration ---
 // Uses /api/gemini serverless function for secure API calls

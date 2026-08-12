@@ -15,7 +15,7 @@ Release alignment and production readiness review in progress
 
 ## Big Goal
 
-Reconcile the `v1.9.41` test release with production before starting unrelated defect or feature work.
+Reconcile the `v1.9.42` test release with production before starting unrelated defect or feature work.
 
 ## Default Start Point
 - Start new work from fresh `origin/test`
@@ -29,8 +29,11 @@ Reconcile the `v1.9.41` test release with production before starting unrelated d
   - [x] add a deterministic release-alignment check and workflow stop gates
   - [x] merge existing production history back into the test line without changing application files
   - [x] fix and locally verify the authenticated header collision shown in the production member smoke test
-  - [ ] verify the `v1.9.41` header on hosted `test` at the reported standard-window width
-  - [ ] complete the focused admin, member, iPhone, and sandbox discussion-guide smoke test
+  - [x] verify the `v1.9.41` header on hosted `test` at the reported standard-window width
+  - [x] complete a focused authenticated hosted `test` smoke pass for dashboard, club switcher, search, library, book modal, guide, import, settings, and iPhone modal layout
+  - [ ] verify the `v1.9.42` club-switcher open-state overflow fix locally and on hosted `test`
+  - [ ] decide whether the currently saved `Demon Copperhead` guide quality is a release blocker or a data/content cleanup item
+  - [ ] complete any remaining member-specific smoke check if Pam wants a non-admin account verified
   - [ ] make an explicit promote-or-defer decision
   - [ ] after any production promotion, synchronize `main` history back into `test`
 
