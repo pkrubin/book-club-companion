@@ -31,6 +31,29 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
   - Database: `<rollback sql file or note>`
 ```
 
+## 2026-08-12 - Broader Discussion Guide Mix
+- Version: `v1.9.43`
+- Test commit: `pending`
+- Prod commit: `not yet`
+- Environments: `test`
+- User-facing changes:
+  - Refined AI discussion-guide generation to cover multiple discussion lanes instead of collapsing around one main idea.
+  - Prompt now asks for several characters, including secondary or surprising characters when verified context supports them.
+  - Added stronger guidance for warm, host-like question flow: accessible opener, characters and choices first, multiple ideas across the list, and a reflective closing question.
+  - Tightened quality checks against school-style openings such as "Analyze," "Examine," "Discuss," and "How does the author..."
+- Operational changes:
+  - Env vars: none
+  - Database / SQL: none
+  - Branch / deployment notes:
+    - No existing guide text is changed by this release until an admin regenerates a guide.
+- Validation:
+  - `node --check js/app.js`
+  - `git diff --check`
+  - Hosted `test` guide-generation review still required before production promotion.
+- Rollback:
+  - Code: revert this test release commit
+  - Database: restore previous discussion guide text manually only if a regenerated guide was saved and needs reversal.
+
 ## 2026-08-12 - Club Switcher Overflow Fix
 - Version: `v1.9.42`
 - Test commit: `d5a23b3`

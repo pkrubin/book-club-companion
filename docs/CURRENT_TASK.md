@@ -15,7 +15,7 @@ Release alignment and production readiness review in progress
 
 ## Big Goal
 
-Reconcile the `v1.9.42` test release with production before starting unrelated defect or feature work.
+Reconcile the `v1.9.43` test release with production before starting unrelated defect or feature work.
 
 ## Default Start Point
 - Start new work from fresh `origin/test`
@@ -32,7 +32,9 @@ Reconcile the `v1.9.42` test release with production before starting unrelated d
   - [x] verify the `v1.9.41` header on hosted `test` at the reported standard-window width
   - [x] complete a focused authenticated hosted `test` smoke pass for dashboard, club switcher, search, library, book modal, guide, import, settings, and iPhone modal layout
   - [x] verify the `v1.9.42` club-switcher open-state overflow fix on hosted `test`
-  - [ ] decide whether the currently saved `Demon Copperhead` guide quality is a release blocker or a data/content cleanup item
+  - [x] decide whether the currently saved `Demon Copperhead` guide quality is a release blocker or a data/content cleanup item
+    - decision: treat as a release-blocking generator quality issue; saved guide text is not changed unless an admin regenerates it
+  - [ ] verify `v1.9.43` discussion-guide prompt/lint improvement on hosted `test`
   - [ ] complete any remaining member-specific smoke check if Pam wants a non-admin account verified
   - [ ] make an explicit promote-or-defer decision
   - [ ] after any production promotion, synchronize `main` history back into `test`
@@ -71,6 +73,8 @@ Reconcile the `v1.9.42` test release with production before starting unrelated d
   - [x] add fallback source label when Gemini grounding links are unavailable
   - [x] remove model attribution as the visible source for generated guides
   - [x] prevent empty or too-short AI drafts from overwriting saved guide text
+  - [x] refine prompt/lint for multiple discussion lanes, multiple characters, secondary characters, less school-like openings, and better host-style flow
+  - [ ] regenerate and review one safe test guide on hosted `test` before production promotion
   - [ ] design source-grounded reader-guide/snippet workflow for admins who want richer context
     - candidate sources: author/publisher guide, Google Books metadata/snippets, trusted book-club guides, admin-pasted notes
     - output should use verified facts/quotes only, summarize source inspiration, and avoid copying guide questions wholesale

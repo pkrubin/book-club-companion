@@ -1,5 +1,5 @@
 // --- Configuration ---
-const APP_VERSION = '1.9.42'; // Prevent authenticated menu overflow
+const APP_VERSION = '1.9.43'; // Broaden discussion guide question mix
 
 // --- Gemini AI Configuration ---
 // Uses /api/gemini serverless function for secure API calls
@@ -6315,6 +6315,16 @@ function lintDiscussionGuideOutput(rawQuestions, title = '') {
         issues.push('Reduce long multi-part questions; short natural follow-ups like "Why or why not?" are fine, but the list should not feel like homework.');
     }
 
+    const schoolOpenings = questions.filter(question => /^(analyze|examine|discuss|consider|evaluate|compare and contrast|how does the author|why do you think the author)\b/i.test(question));
+    if (schoolOpenings.length) {
+        issues.push('Rewrite school-style openings such as Analyze, Examine, Discuss, Consider, Evaluate, or "How does the author..." into warmer book-club conversation starters.');
+    }
+
+    const longQuestionCount = questions.filter(question => question.length > 230).length;
+    if (longQuestionCount > 2) {
+        issues.push('Tighten long questions so most can be read aloud comfortably in one breath.');
+    }
+
     if (verifiedContext?.keywords?.length) {
         const anchoredCount = questions.filter(question => {
             const lowerQuestion = question.toLowerCase();
@@ -6326,7 +6336,7 @@ function lintDiscussionGuideOutput(rawQuestions, title = '') {
         }
     }
 
-    const academicMatches = lower.match(/\b(symbolic|symbolism|motif|theme|themes|narrative structure|character arc)\b/g) || [];
+    const academicMatches = lower.match(/\b(analyze|examine|motif|narrative structure|symbolic|symbolism|theme|themes|character arc)\b/g) || [];
     if (academicMatches.length) {
         issues.push(`Remove school-style literary vocabulary such as ${[...new Set(academicMatches)].join(', ')}.`);
     }
@@ -6425,6 +6435,21 @@ What good questions should do:
 - Include questions that can sustain discussion among adults who have read the book closely.
 - Make the questions interesting enough that readers who liked the book and readers who disliked it both have something to say.
 
+Before writing, make a private coverage plan. Do not output the plan.
+- Cover at least 4 different discussion lanes when the book supports them: character motives, relationships, power/status, family or friendship, secrets/trust, place/community/history, justice/responsibility, grief/loss, love/loyalty, identity/belonging, and personal memory.
+- Include questions about several different characters, not only the protagonist or the most obvious central relationship.
+- Bring in secondary or surprising characters when verified context supports them, especially people whose choices changed the reader's opinion.
+- Do not let one big idea dominate the whole list; if the book has many tensions, let the question set roam.
+- Mix emotional temperatures: some questions should invite warmth or recognition, some should invite disagreement, and some should invite moral complexity.
+- If reliable context is thin, ask readers to name the character, scene, passage, or relationship from their own copy rather than inventing details.
+
+Shape the final list like a real book-club host would:
+- Open with an accessible opinion question that gets people talking quickly.
+- Move through characters, relationships, and choices before broad ideas.
+- Include 2 to 4 questions about secondary characters, side relationships, or less obvious turning points when the book supports them.
+- Include 3 to 5 different big ideas across the list, but do not use the word "theme" in the questions.
+- End with a personal, reflective, or group-connecting question instead of an academic wrap-up.
+
 Accuracy rules:
 - Do not invent quotes, scenes, character actions, plot events, or specific facts.
 - Use only verified source details for names, relationships, facts, quotes, and plot events.
@@ -6438,6 +6463,8 @@ Style rules:
 - Prefer one main idea per question.
 - Short natural follow-ups such as "Why or why not?" are allowed when they make the question more discussable.
 - Avoid long multi-part questions that feel like a worksheet.
+- Avoid school-command openings such as "Analyze," "Examine," "Discuss," "Consider," "Evaluate," or "Compare and contrast."
+- Avoid author-essay openings such as "How does the author..." unless the question is truly about a reader's experience of the book.
 - Do not refer to "the description," "the metadata," "the synopsis," or "the publisher" in the questions.
 - Avoid overusing speculative wording like "imagine," "anticipate," or "what do you think might have happened"; use at most two speculative questions.
 - Avoid literary-school language such as symbolism, symbolic, motif, narrative structure, theme, or character arc.
