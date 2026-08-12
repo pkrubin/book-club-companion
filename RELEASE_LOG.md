@@ -33,7 +33,7 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
 
 ## 2026-08-12 - Precise Quotes and Guide Ordering
 - Version: `v1.9.44`
-- Test commit: `pending`
+- Test commit: `388ab93`
 - Prod commit: `not yet`
 - Environments: `test`
 - User-facing changes:
