@@ -40,7 +40,9 @@ Reconcile the `v1.9.46` test release with production before starting unrelated d
     - review was much better; remaining issues were source attribution embedded in question text and a conditional outside-reading final question
   - [x] supersede `v1.9.45` before promotion due to guide-source gap
     - review of `How to Read a Book` showed the `v1.9.44` saved output was still generic and missed an available official/publisher guide
-  - [ ] verify `v1.9.46` official `How to Read a Book` guide import on hosted `test`
+  - [x] verify `v1.9.46` official `How to Read a Book` guide import on hosted `test`
+    - hosted footer reports `v1.9.46`; static assertion confirms official map entry, Mariner/Bookclubs source, and 15 stored questions
+    - no shared database guide text was changed during verification
   - [ ] complete any remaining member-specific smoke check if Pam wants a non-admin account verified
   - [ ] make an explicit promote-or-defer decision
   - [ ] after any production promotion, synchronize `main` history back into `test`
