@@ -33,7 +33,7 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
 
 ## 2026-08-12 - Guide Source Attribution and Ending Guard
 - Version: `v1.9.45`
-- Test commit: `pending`
+- Test commit: `b4f87ac`
 - Prod commit: `not yet`
 - Environments: `test`
 - User-facing changes:
