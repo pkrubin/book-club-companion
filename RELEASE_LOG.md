@@ -31,6 +31,29 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
   - Database: `<rollback sql file or note>`
 ```
 
+## 2026-08-12 - Precise Quotes and Guide Ordering
+- Version: `v1.9.44`
+- Test commit: `pending`
+- Prod commit: `not yet`
+- Environments: `test`
+- User-facing changes:
+  - Preserved double quotation marks in generated discussion guides so exact verified quotes, epigraphs, and dedications can display correctly.
+  - Tightened generation rules so dedications, epigraphs, quoted lines, and specific phrases must be included exactly in quotation marks or avoided.
+  - Added ordering guidance so opening-material questions appear early and broad "which character resonated" questions do not end the guide.
+  - Expanded the guide mix beyond character questions to include plot movement, turning points, consequences, setting, social forces, opening, and ending.
+- Operational changes:
+  - Env vars: none
+  - Database / SQL: none
+  - Branch / deployment notes:
+    - No existing guide text is changed by this release until an admin regenerates a guide.
+- Validation:
+  - `node --check js/app.js`
+  - `git diff --check`
+  - Hosted `test` guide-generation review still required before production promotion.
+- Rollback:
+  - Code: revert this test release commit
+  - Database: restore previous discussion guide text manually only if a regenerated guide was saved and needs reversal.
+
 ## 2026-08-12 - Broader Discussion Guide Mix
 - Version: `v1.9.43`
 - Test commit: `57a2c91`

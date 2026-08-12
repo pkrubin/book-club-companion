@@ -1,5 +1,5 @@
 // --- Configuration ---
-const APP_VERSION = '1.9.43'; // Broaden discussion guide question mix
+const APP_VERSION = '1.9.44'; // Preserve precise guide quotes
 
 // --- Gemini AI Configuration ---
 // Uses /api/gemini serverless function for secure API calls
@@ -6325,6 +6325,26 @@ function lintDiscussionGuideOutput(rawQuestions, title = '') {
         issues.push('Tighten long questions so most can be read aloud comfortably in one breath.');
     }
 
+    const unquotedReferenceCount = questions.filter(question => {
+        if (/"[^"]+"/.test(question)) return false;
+        if (/\b(which|what)\s+(line|passage|quote)\b/i.test(question)) return false;
+        if (/\bbring\s+(a|one|your)\s+(line|passage|quote)\b/i.test(question)) return false;
+        return /\b(dedication|epigraph|quote from|opens with a quote|line from|phrase from)\b/i.test(question);
+    }).length;
+    if (unquotedReferenceCount) {
+        issues.push('Any question that references a dedication, epigraph, quoted line, or specific phrase must include the exact verified text in double quotes, or avoid that anchor entirely.');
+    }
+
+    const endingQuestion = questions[questions.length - 1] || '';
+    if (/which character|which relationship|resonated most|favorite character|favorite relationship/i.test(endingQuestion)) {
+        issues.push('Do not end with a generic favorite/resonant character or relationship question; place that kind of question early and end with a stronger closing conversation.');
+    }
+
+    const openingAnchorIndex = questions.findIndex(question => /\b(opens?|opening|first chapter|first scene|epigraph|dedication)\b/i.test(question));
+    if (openingAnchorIndex > 4) {
+        issues.push('Questions about the opening, epigraph, dedication, or first scene belong early in the guide, not near the end.');
+    }
+
     if (verifiedContext?.keywords?.length) {
         const anchoredCount = questions.filter(question => {
             const lowerQuestion = question.toLowerCase();
@@ -6421,8 +6441,9 @@ Use this book-club standard:
 Build a natural mix:
 - Several character-and-choice questions about motives, moral ambiguity, difficult decisions, and shifting sympathy.
 - Several concrete-anchor questions about a rumor, object, relationship, social rule, secret, risk, or turning point from the book.
-- A few big-idea questions about freedom, power, friendship, secrecy, courage, identity, justice, or social pressure.
-- One quote, line, or passage question only if useful; if no exact verified quote is provided, ask readers to bring a line or passage from their own copy instead of supplying one.
+- Several plot-and-consequence questions about what happens, why events unfold the way they do, reversals, stakes, cause-and-effect, and how choices change the direction of the story.
+- A few big-idea questions about freedom, power, friendship, secrecy, courage, identity, justice, social pressure, home, class, place, memory, grief, survival, or responsibility.
+- One quote, dedication, epigraph, line, or passage question only if useful and only if exact verified text is available.
 - One or two personal-connection questions that invite the group to relate the book to their own lives.
 
 What good questions should do:
@@ -6439,23 +6460,27 @@ Before writing, make a private coverage plan. Do not output the plan.
 - Cover at least 4 different discussion lanes when the book supports them: character motives, relationships, power/status, family or friendship, secrets/trust, place/community/history, justice/responsibility, grief/loss, love/loyalty, identity/belonging, and personal memory.
 - Include questions about several different characters, not only the protagonist or the most obvious central relationship.
 - Bring in secondary or surprising characters when verified context supports them, especially people whose choices changed the reader's opinion.
+- Include story-level questions about plot movement, turning points, consequences, setting, social forces, structure, opening, ending, or what the book changes in the reader's understanding.
 - Do not let one big idea dominate the whole list; if the book has many tensions, let the question set roam.
 - Mix emotional temperatures: some questions should invite warmth or recognition, some should invite disagreement, and some should invite moral complexity.
 - If reliable context is thin, ask readers to name the character, scene, passage, or relationship from their own copy rather than inventing details.
 
 Shape the final list like a real book-club host would:
 - Open with an accessible opinion question that gets people talking quickly.
-- Move through characters, relationships, and choices before broad ideas.
+- Put any question about the dedication, epigraph, opening quote, first scene, or how the novel begins in the first third of the guide.
+- Place broad "which character or relationship resonated most" questions early, never as the final question.
+- Move through characters, relationships, choices, plot turns, setting, and consequences before broad ideas.
 - Include 2 to 4 questions about secondary characters, side relationships, or less obvious turning points when the book supports them.
 - Include 3 to 5 different big ideas across the list, but do not use the word "theme" in the questions.
-- End with a personal, reflective, or group-connecting question instead of an academic wrap-up.
+- End with a question that feels like a satisfying final conversation: what changed for readers, what they are still arguing with, what they will remember, or what the book asks them to see differently.
 
 Accuracy rules:
 - Do not invent quotes, scenes, character actions, plot events, or specific facts.
 - Use only verified source details for names, relationships, facts, quotes, and plot events.
 - Do not quote the book unless an exact verified quote is provided in the source material.
 - Never provide quoted book text unless exact verified quotes are supplied in the context.
-- If exact quote text is not provided, ask readers which line or passage they noticed instead of supplying one.
+- If you refer to a dedication, epigraph, quoted line, title phrase, or specific passage, include the exact verified text in double quotation marks.
+- If exact quote text is not provided, do not paraphrase it as if you know it; ask readers which line or passage they noticed instead of supplying one.
 - If source detail is limited, frame questions so readers provide the evidence from the book rather than you inventing it.
 
 Style rules:
@@ -6507,7 +6532,7 @@ Return ONLY a numbered list of 10 to 15 questions plus one Source line.`;
         }
 
         // Cleanup response
-        questions = questions.replace(/[\*\"]/g, ''); // Remove bolding/quotes
+        questions = questions.replace(/\*/g, ''); // Remove markdown bolding while preserving verified quotes
         questions = appendGroundingSources(questions, data.groundingSources || []);
         questions = ensureDiscussionGuideSource(questions, 'AI-generated with Gemini Search grounding and available book metadata.');
         questions = normalizeDiscussionGuideText(questions);
@@ -6521,7 +6546,7 @@ Return ONLY a numbered list of 10 to 15 questions plus one Source line.`;
                 useGoogleSearch: false
             });
 
-            questions = (fallbackData.text || '').replace(/[\*\"]/g, '');
+            questions = (fallbackData.text || '').replace(/\*/g, '');
             questions = ensureDiscussionGuideSource(questions, 'AI-generated from available book metadata.');
             questions = normalizeDiscussionGuideText(questions);
         }
