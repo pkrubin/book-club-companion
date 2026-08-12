@@ -1,7 +1,7 @@
 # Current Task
 
 ## Status
-Release alignment and production readiness review in progress
+Production promoted and release alignment cleanup in progress
 
 ## Usage
 
@@ -15,7 +15,7 @@ Release alignment and production readiness review in progress
 
 ## Big Goal
 
-Reconcile the `v1.9.47` test release with production before starting unrelated defect or feature work.
+Keep `test` and `main` clean after the `v1.9.47` production promotion.
 
 ## Default Start Point
 - Start new work from fresh `origin/test`
@@ -23,7 +23,7 @@ Reconcile the `v1.9.47` test release with production before starting unrelated d
 
 ## Active Queue
 
-- [ ] Reconcile the pending test release train
+- [x] Reconcile the pending test release train
   - [x] confirm `test` is `v1.9.40` and production is `v1.9.15`
   - [x] identify missing release WIP limits and unsynchronized branch ancestry as the process failures
   - [x] add a deterministic release-alignment check and workflow stop gates
@@ -45,9 +45,14 @@ Reconcile the `v1.9.47` test release with production before starting unrelated d
     - no shared database guide text was changed during verification
   - [x] verify `v1.9.47` clearer official-guide success message on hosted `test`
     - hosted footer reports `v1.9.47`
-  - [ ] complete any remaining member-specific smoke check if Pam wants a non-admin account verified
-  - [ ] make an explicit promote-or-defer decision
-  - [ ] after any production promotion, synchronize `main` history back into `test`
+  - [x] complete any remaining member-specific smoke check if Pam wants a non-admin account verified
+    - skipped by decision; Pam approved production promotion after test guide verification
+  - [x] make an explicit promote-or-defer decision
+    - decision: promote `v1.9.47` to production
+  - [x] promote `origin/test` state `c66d85f` to `main`
+    - rollback anchor before promotion: `70929f9`
+  - [x] verify production footer reports `v1.9.47`
+  - [ ] after production promotion, synchronize `main` history back into `test`
 
 - [ ] Improve AI discussion guide question quality
   - [x] review current AI discussion prompt

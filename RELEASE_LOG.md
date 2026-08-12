@@ -31,24 +31,28 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
   - Database: `<rollback sql file or note>`
 ```
 
-## 2026-08-12 - Clear Official Guide Success Message
+## 2026-08-12 - Production Promotion and Official Guide Cleanup
 - Version: `v1.9.47`
 - Test commit: `32181cf`
-- Prod commit: `not yet`
-- Environments: `test`
+- Prod commit: `c66d85f`
+- Environments: `test`, `prod`
 - User-facing changes:
+  - Promoted the current `test` release train to production at `v1.9.47`.
+  - Added the official/publisher `How to Read a Book` discussion guide so regeneration uses the real book-club questions with precise quoted passages instead of a generic AI-created fallback.
   - Reworded the official-guide regeneration alert so admins can tell it succeeded and saved sourced questions.
 - Operational changes:
   - Env vars: none
   - Database / SQL: none
   - Branch / deployment notes:
-    - No data is changed by this code release; regenerating an official guide still saves the official sourced questions as designed.
+    - Production was promoted by fast-forwarding `main` from rollback anchor `70929f9` to tested `origin/test` state `c66d85f`.
+    - No data is changed by the code release; regenerating an official guide still saves the official sourced questions as designed.
 - Validation:
   - `node --check js/app.js`
   - `git diff --check`
-  - Hosted `test` footer verification still required after deployment.
+  - Hosted `test` footer reports `v1.9.47`.
+  - Hosted `prod` footer reports `v1.9.47`.
 - Rollback:
-  - Code: revert this test release commit
+  - Code: restore production from rollback anchor `70929f9` if an emergency rollback is required.
   - Database: not applicable
 
 ## 2026-08-12 - Official How to Read a Book Guide
