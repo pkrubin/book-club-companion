@@ -33,7 +33,7 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
 
 ## 2026-08-12 - Club Switcher Overflow Fix
 - Version: `v1.9.42`
-- Test commit: `pending`
+- Test commit: `d5a23b3`
 - Prod commit: `not yet`
 - Environments: `test`
 - User-facing changes:
