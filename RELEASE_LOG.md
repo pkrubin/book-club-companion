@@ -33,7 +33,7 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
 
 ## 2026-08-12 - Official How to Read a Book Guide
 - Version: `v1.9.46`
-- Test commit: `pending`
+- Test commit: `dcf17f7`
 - Prod commit: `not yet`
 - Environments: `test`
 - User-facing changes:
