@@ -31,6 +31,26 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
   - Database: `<rollback sql file or note>`
 ```
 
+## 2026-08-12 - Clear Official Guide Success Message
+- Version: `v1.9.47`
+- Test commit: `pending`
+- Prod commit: `not yet`
+- Environments: `test`
+- User-facing changes:
+  - Reworded the official-guide regeneration alert so admins can tell it succeeded and saved sourced questions.
+- Operational changes:
+  - Env vars: none
+  - Database / SQL: none
+  - Branch / deployment notes:
+    - No data is changed by this code release; regenerating an official guide still saves the official sourced questions as designed.
+- Validation:
+  - `node --check js/app.js`
+  - `git diff --check`
+  - Hosted `test` footer verification still required after deployment.
+- Rollback:
+  - Code: revert this test release commit
+  - Database: not applicable
+
 ## 2026-08-12 - Official How to Read a Book Guide
 - Version: `v1.9.46`
 - Test commit: `dcf17f7`

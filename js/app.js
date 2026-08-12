@@ -1,5 +1,5 @@
 // --- Configuration ---
-const APP_VERSION = '1.9.46'; // Import official How to Read a Book guide
+const APP_VERSION = '1.9.47'; // Clarify official guide success message
 
 // --- Gemini AI Configuration ---
 // Uses /api/gemini serverless function for secure API calls
@@ -6445,7 +6445,7 @@ async function generateDiscussionQuestionsAI() {
             }
 
             openDiscussionModal(currentDiscussionBook);
-            showSimpleAlert('Official guide loaded with source.');
+            showSimpleAlert('Success: loaded the official publisher guide and saved the sourced questions.');
             return;
         }
 
