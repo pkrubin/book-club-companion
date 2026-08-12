@@ -1,5 +1,5 @@
 // --- Configuration ---
-const APP_VERSION = '1.9.44'; // Preserve precise guide quotes
+const APP_VERSION = '1.9.45'; // Tighten guide source and ending rules
 
 // --- Gemini AI Configuration ---
 // Uses /api/gemini serverless function for secure API calls
@@ -6335,9 +6335,18 @@ function lintDiscussionGuideOutput(rawQuestions, title = '') {
         issues.push('Any question that references a dedication, epigraph, quoted line, or specific phrase must include the exact verified text in double quotes, or avoid that anchor entirely.');
     }
 
+    const sourceAttributionInQuestionCount = questions.filter(question => /\b(oprah'?s book club|author'?s guide|publisher'?s guide|reader'?s guide|bookclubs|goodreads|source)\s+(asked|asks|question|guide|says|notes)\b/i.test(question)).length;
+    if (sourceAttributionInQuestionCount) {
+        issues.push('Remove source attribution from the question text; use or adapt the question naturally and cite the source only in the Source line.');
+    }
+
     const endingQuestion = questions[questions.length - 1] || '';
     if (/which character|which relationship|resonated most|favorite character|favorite relationship/i.test(endingQuestion)) {
         issues.push('Do not end with a generic favorite/resonant character or relationship question; place that kind of question early and end with a stronger closing conversation.');
+    }
+
+    if (/\bif you have read|if not|inspired to read|compared with another book\b/i.test(endingQuestion)) {
+        issues.push('End with a question everyone can answer from this book alone, not a conditional comparison that depends on outside reading.');
     }
 
     const openingAnchorIndex = questions.findIndex(question => /\b(opens?|opening|first chapter|first scene|epigraph|dedication)\b/i.test(question));
@@ -6362,6 +6371,10 @@ function lintDiscussionGuideOutput(rawQuestions, title = '') {
     }
 
     return issues;
+}
+
+function getBlockingDiscussionGuideIssues(issues = []) {
+    return issues.filter(issue => /exact verified text|source attribution|question text|Do not end|everyone can answer|belong early|school-style|literary vocabulary|Return only numbered|Return 10 to 15/i.test(issue));
 }
 
 async function generateDiscussionQuestionsAI() {
@@ -6428,6 +6441,7 @@ Decision rule:
 - If citeable reader-guide questions exist but are not official, use them only if they are clearly intended for book clubs and cite the source.
 - If no citeable questions exist, create 10 to 15 questions in the same author-guide style using only verified grounded context and the baseline description.
 - If 10 strong questions are enough, stop at 10; if the verified source material supports 15 strong questions, include up to 15.
+- Do not write source attribution inside a question, such as "Oprah's Book Club asked..." or "The publisher guide asks..." Put source attribution only in the final Source line.
 
 Use this book-club standard:
 - Start from concrete verified book anchors: named characters, rumors, moral choices, recurring objects, historical details, relationships, secrets, risks, and turning points.
@@ -6473,6 +6487,7 @@ Shape the final list like a real book-club host would:
 - Include 2 to 4 questions about secondary characters, side relationships, or less obvious turning points when the book supports them.
 - Include 3 to 5 different big ideas across the list, but do not use the word "theme" in the questions.
 - End with a question that feels like a satisfying final conversation: what changed for readers, what they are still arguing with, what they will remember, or what the book asks them to see differently.
+- The final question must be answerable by everyone who read this book; do not end with a conditional question that requires reading another book or outside material.
 
 Accuracy rules:
 - Do not invent quotes, scenes, character actions, plot events, or specific facts.
@@ -6490,6 +6505,7 @@ Style rules:
 - Avoid long multi-part questions that feel like a worksheet.
 - Avoid school-command openings such as "Analyze," "Examine," "Discuss," "Consider," "Evaluate," or "Compare and contrast."
 - Avoid author-essay openings such as "How does the author..." unless the question is truly about a reader's experience of the book.
+- Avoid source-packaging phrases inside questions such as "Oprah's Book Club asked," "the author guide asks," or "the publisher notes."
 - Do not refer to "the description," "the metadata," "the synopsis," or "the publisher" in the questions.
 - Avoid overusing speculative wording like "imagine," "anticipate," or "what do you think might have happened"; use at most two speculative questions.
 - Avoid literary-school language such as symbolism, symbolic, motif, narrative structure, theme, or character arc.
@@ -6537,6 +6553,11 @@ Return ONLY a numbered list of 10 to 15 questions plus one Source line.`;
         questions = ensureDiscussionGuideSource(questions, 'AI-generated with Gemini Search grounding and available book metadata.');
         questions = normalizeDiscussionGuideText(questions);
 
+        const blockingIssues = getBlockingDiscussionGuideIssues(lintDiscussionGuideOutput(questions, title));
+        if (blockingIssues.length) {
+            throw new Error(`The AI draft still had quality issues, so the existing guide was left unchanged: ${blockingIssues.join(' ')}`);
+        }
+
         if (countDiscussionQuestions(questions) < 5) {
             console.warn('Search-grounded guide draft was empty or too short. Trying metadata-only fallback.');
             const fallbackData = await callGeminiProxy({
@@ -6549,6 +6570,11 @@ Return ONLY a numbered list of 10 to 15 questions plus one Source line.`;
             questions = (fallbackData.text || '').replace(/\*/g, '');
             questions = ensureDiscussionGuideSource(questions, 'AI-generated from available book metadata.');
             questions = normalizeDiscussionGuideText(questions);
+
+            const fallbackBlockingIssues = getBlockingDiscussionGuideIssues(lintDiscussionGuideOutput(questions, title));
+            if (fallbackBlockingIssues.length) {
+                throw new Error(`The fallback AI draft still had quality issues, so the existing guide was left unchanged: ${fallbackBlockingIssues.join(' ')}`);
+            }
         }
 
         if (countDiscussionQuestions(questions) < 5) {

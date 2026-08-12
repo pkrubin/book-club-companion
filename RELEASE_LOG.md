@@ -31,6 +31,28 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
   - Database: `<rollback sql file or note>`
 ```
 
+## 2026-08-12 - Guide Source Attribution and Ending Guard
+- Version: `v1.9.45`
+- Test commit: `pending`
+- Prod commit: `not yet`
+- Environments: `test`
+- User-facing changes:
+  - Prevented source-attribution phrases such as "Oprah's Book Club asked..." from appearing inside generated question text.
+  - Added final-question guidance so guides end with a question every reader can answer from the current book, not a conditional outside-reading comparison.
+  - Changed severe guide-quality issues from warnings into save blockers after retries, preserving the existing guide instead of overwriting it with a flawed draft.
+- Operational changes:
+  - Env vars: none
+  - Database / SQL: none
+  - Branch / deployment notes:
+    - No existing guide text is changed by this release until an admin regenerates a guide.
+- Validation:
+  - `node --check js/app.js`
+  - `git diff --check`
+  - Hosted `test` guide-generation review still required before production promotion.
+- Rollback:
+  - Code: revert this test release commit
+  - Database: restore previous discussion guide text manually only if a regenerated guide was saved and needs reversal.
+
 ## 2026-08-12 - Precise Quotes and Guide Ordering
 - Version: `v1.9.44`
 - Test commit: `388ab93`

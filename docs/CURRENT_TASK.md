@@ -15,7 +15,7 @@ Release alignment and production readiness review in progress
 
 ## Big Goal
 
-Reconcile the `v1.9.44` test release with production before starting unrelated defect or feature work.
+Reconcile the `v1.9.45` test release with production before starting unrelated defect or feature work.
 
 ## Default Start Point
 - Start new work from fresh `origin/test`
@@ -36,7 +36,9 @@ Reconcile the `v1.9.44` test release with production before starting unrelated d
     - decision: treat as a release-blocking generator quality issue; saved guide text is not changed unless an admin regenerates it
   - [x] verify `v1.9.43` discussion-guide prompt/lint improvement on hosted `test`
     - review found remaining issues: quoted dedication/epigraph references were not preserved, opening quote question appeared too late, final question was weak, and output leaned too heavily toward character questions
-  - [ ] verify `v1.9.44` precise quote, ordering, and plot/turning-point guide refinement on hosted `test`
+  - [x] verify `v1.9.44` precise quote, ordering, and plot/turning-point guide refinement on hosted `test`
+    - review was much better; remaining issues were source attribution embedded in question text and a conditional outside-reading final question
+  - [ ] verify `v1.9.45` source-attribution, ending-question, and severe-quality save-blocking guardrails on hosted `test`
   - [ ] complete any remaining member-specific smoke check if Pam wants a non-admin account verified
   - [ ] make an explicit promote-or-defer decision
   - [ ] after any production promotion, synchronize `main` history back into `test`
@@ -80,6 +82,8 @@ Reconcile the `v1.9.44` test release with production before starting unrelated d
   - [x] preserve generated-guide double quotes and add rules for exact dedication/epigraph/quote handling
   - [x] add ordering guardrails for opening-material and final questions
   - [x] expand prompt beyond character questions into plot movement, turning points, consequences, setting, and social forces
+  - [x] add source-attribution-in-question and conditional-ending guardrails
+  - [x] block saving drafts that still have severe quote/source/order/style issues after retries
   - [ ] regenerate and review one safe test guide on hosted `test` before production promotion
   - [ ] design source-grounded reader-guide/snippet workflow for admins who want richer context
     - candidate sources: author/publisher guide, Google Books metadata/snippets, trusted book-club guides, admin-pasted notes
