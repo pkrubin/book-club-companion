@@ -31,6 +31,27 @@ Use this file as the lightweight audit trail for `test` and `prod` rollouts.
   - Database: `<rollback sql file or note>`
 ```
 
+## 2026-08-12 - Official How to Read a Book Guide
+- Version: `v1.9.46`
+- Test commit: `pending`
+- Prod commit: `not yet`
+- Environments: `test`
+- User-facing changes:
+  - Added the official/publisher `How to Read a Book` discussion guide so regeneration uses the real book-club questions with precise quoted passages instead of a generic AI-created fallback.
+  - Keeps source attribution out of the question text and appends the source line at the end of the guide.
+- Operational changes:
+  - Env vars: none
+  - Database / SQL: none
+  - Branch / deployment notes:
+    - No existing saved guide text changes until an admin chooses to regenerate and confirms replacement.
+- Validation:
+  - `node --check js/app.js`
+  - `git diff --check`
+  - Hosted `test` verification still required before production promotion.
+- Rollback:
+  - Code: revert this test release commit
+  - Database: restore previous discussion guide text manually only if an admin regenerated and saved the official guide and wants to undo it.
+
 ## 2026-08-12 - Guide Source Attribution and Ending Guard
 - Version: `v1.9.45`
 - Test commit: `b4f87ac`

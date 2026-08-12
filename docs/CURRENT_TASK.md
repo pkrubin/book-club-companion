@@ -15,7 +15,7 @@ Release alignment and production readiness review in progress
 
 ## Big Goal
 
-Reconcile the `v1.9.45` test release with production before starting unrelated defect or feature work.
+Reconcile the `v1.9.46` test release with production before starting unrelated defect or feature work.
 
 ## Default Start Point
 - Start new work from fresh `origin/test`
@@ -38,7 +38,9 @@ Reconcile the `v1.9.45` test release with production before starting unrelated d
     - review found remaining issues: quoted dedication/epigraph references were not preserved, opening quote question appeared too late, final question was weak, and output leaned too heavily toward character questions
   - [x] verify `v1.9.44` precise quote, ordering, and plot/turning-point guide refinement on hosted `test`
     - review was much better; remaining issues were source attribution embedded in question text and a conditional outside-reading final question
-  - [ ] verify `v1.9.45` source-attribution, ending-question, and severe-quality save-blocking guardrails on hosted `test`
+  - [x] supersede `v1.9.45` before promotion due to guide-source gap
+    - review of `How to Read a Book` showed the `v1.9.44` saved output was still generic and missed an available official/publisher guide
+  - [ ] verify `v1.9.46` official `How to Read a Book` guide import on hosted `test`
   - [ ] complete any remaining member-specific smoke check if Pam wants a non-admin account verified
   - [ ] make an explicit promote-or-defer decision
   - [ ] after any production promotion, synchronize `main` history back into `test`
@@ -84,6 +86,8 @@ Reconcile the `v1.9.45` test release with production before starting unrelated d
   - [x] expand prompt beyond character questions into plot movement, turning points, consequences, setting, and social forces
   - [x] add source-attribution-in-question and conditional-ending guardrails
   - [x] block saving drafts that still have severe quote/source/order/style issues after retries
+  - [x] add official-guide import path for `How to Read a Book`
+    - regeneration should load the Mariner publisher questions via Bookclubs instead of asking AI to recreate them
   - [ ] regenerate and review one safe test guide on hosted `test` before production promotion
   - [ ] design source-grounded reader-guide/snippet workflow for admins who want richer context
     - candidate sources: author/publisher guide, Google Books metadata/snippets, trusted book-club guides, admin-pasted notes

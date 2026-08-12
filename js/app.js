@@ -1,5 +1,5 @@
 // --- Configuration ---
-const APP_VERSION = '1.9.45'; // Tighten guide source and ending rules
+const APP_VERSION = '1.9.46'; // Import official How to Read a Book guide
 
 // --- Gemini AI Configuration ---
 // Uses /api/gemini serverless function for secure API calls
@@ -6215,6 +6215,29 @@ const OFFICIAL_DISCUSSION_GUIDES = {
             'Hat pins and poisons were tools of both fear and empowerment. Did it surprise you that women once took lessons in self-defense using hat pins? Would you have taken hat pin self-defense classes?',
             'Female friendships and solidarity are at the heart of the Secret Book Society. How does your own group support one another? What kind and encouraging things have your friends done for you?',
             'The Secret Book Society is described as both a refuge and a risk. Do you think you would have joined such a group if you lived in Victorian London? Why or why not?'
+        ]
+    },
+    'How to Read a Book': {
+        sourceName: 'Mariner publisher discussion guide via Bookclubs',
+        sourceUrl: 'https://bookclubs.com/discussion-guides/how-to-read-a-book-a-novel',
+        mirroredSourceName: 'BookBrowse discussion guide',
+        mirroredSourceUrl: 'https://www.bookbrowse.com/bb_briefs/reading_guides/index.cfm/ezine_preview_number/18666/how-to-read-a-book',
+        questions: [
+            `Thinking of Misha, Violet observes: "My theory is that all humans secretly long for the mother they always wanted. This longing turns half of us into resentful babies who didn’t get properly mothered, and the second half into surrogate mothers for the first half." Is Violet projecting here, or is this a truth you recognized as true as soon as you read it? Were there other observations that struck you in that same way?`,
+            `In all of Monica Wood's novels, characters are shown at work. How do you think seeing Frank, Harriet, and Violet at work deepens our sense of who they are?`,
+            `Though she doesn't quite know it, Violet is on a journey of self-forgiveness. How does working with the parrots contribute to that journey? How do animals in general contribute to our sense of who we are?`,
+            `When Frank and Harriet meet, they have an entire life behind them, plenty of mileage on their bodies and on their psyches. How does this affect their budding relationship? How is "old" love different from "young" love? How is it the same?`,
+            `Violet tells Misha, "The writer writes the words. The given reader reads the words. And the book, the unique and unrepeatable book, doesn’t exist until the given reader meets the writer on the page." What life experience did you, the given reader, bring to this book that made it exist?`,
+            `In one of the final scenes, Violet's prison experience returns to her in a profoundly different light. How does her interaction with Dawna-Lynn demonstrate how Violet has changed since her release?`,
+            `At the end, when you realize that Violet has been teaching us not "how to read a book" but how to read this book, what did you think?`,
+            `Were you aware of avian-cognition research before meeting Ollie and his colleagues? Were there other things you learned by temporarily living these characters' lives?`,
+            `How do you explain Dr. Petrov's overwhelming influence on Violet? What does she need that he provides?`,
+            `Seeing Violet for the first time, Frank "plummeted into the ditch of memory." How did this happen so fast? What does this incident in the bookstore show us about how memories work, especially those we try to suppress?`,
+            `Violet has spent two years in prison and yet she retains a sense of innocence: "I move along with the other people . . . memorizing my route so I can get back, what if I can’t find my way back?" Why is she not more street-hardened by her experience?`,
+            `Early on, Harriet observes: "Once Sophie left for good, this—this dusty quiet— would once again become the sound of evening." Does this imminent "quiet" affect Harriet's desire to help Violet? Might she have acted differently had Sophie decided to stay?`,
+            `Of his current job, Frank observes: "His demotion to handyman felt like cool air whooshing through his body." After a career as a professional machinist, why is this minor bookstore job such a joy?`,
+            `The novel features many instances of generational miscommunication, as when Baker warns Frank off ordering flowers, or when Sophie unapologetically googles Harriet's students. Sometimes the generation gap is comical, sometimes poignant, sometimes all too recognizable. In what ways did the multigenerational cast of characters affect you as a reader?`,
+            `Did you notice all the parent/child relationships in this novel? Violet and her mother; Harriet and her daughters; Frank and his daughter; the incarcerated women and their children. How do these relationships help us understand the characters? Do they have anything in common as parents?`
         ]
     }
 };
