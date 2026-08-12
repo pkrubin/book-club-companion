@@ -43,7 +43,8 @@ Reconcile the `v1.9.47` test release with production before starting unrelated d
   - [x] verify `v1.9.46` official `How to Read a Book` guide import on hosted `test`
     - hosted footer reports `v1.9.46`; static assertion confirms official map entry, Mariner/Bookclubs source, and 15 stored questions
     - no shared database guide text was changed during verification
-  - [ ] verify `v1.9.47` clearer official-guide success message on hosted `test`
+  - [x] verify `v1.9.47` clearer official-guide success message on hosted `test`
+    - hosted footer reports `v1.9.47`
   - [ ] complete any remaining member-specific smoke check if Pam wants a non-admin account verified
   - [ ] make an explicit promote-or-defer decision
   - [ ] after any production promotion, synchronize `main` history back into `test`
