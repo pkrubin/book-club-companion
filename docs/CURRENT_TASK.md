@@ -1,7 +1,7 @@
 # Current Task
 
 ## Status
-Production promoted and release alignment cleanup in progress
+Post-promotion sandbox verification found guide-generation defects
 
 ## Usage
 
@@ -15,7 +15,7 @@ Production promoted and release alignment cleanup in progress
 
 ## Big Goal
 
-Keep `test` and `main` clean after the `v1.9.47` production promotion.
+Fix the remaining discussion-guide generation failure path without disturbing the clean `v1.9.47` production/test alignment.
 
 ## Default Start Point
 - Start new work from fresh `origin/test`
@@ -52,7 +52,22 @@ Keep `test` and `main` clean after the `v1.9.47` production promotion.
   - [x] promote `origin/test` state `c66d85f` to `main`
     - rollback anchor before promotion: `70929f9`
   - [x] verify production footer reports `v1.9.47`
-  - [ ] after production promotion, synchronize `main` history back into `test`
+  - [x] after production promotion, synchronize `main` history back into `test`
+    - alignment script reports `ALIGNED`; `origin/main` and `origin/test` both point at `e6193bb`
+
+- [ ] Fix post-promotion sandbox verification findings
+  - [x] verify authenticated `test` opens at `v1.9.47`
+  - [x] switch to sandbox club `Pam's Books`
+  - [x] add `The Hobbit` to the sandbox library
+  - [x] save and reopen a manual `The Hobbit` discussion guide
+    - manual edit/save/display persistence works
+  - [ ] fix AI guide generation when retries fail quality lint
+    - `The Hobbit` AI generation retried, then displayed `AI draft was not saved...` instead of producing a usable draft or keeping the error out of the guide body
+    - a second retry failed with `Failed to fetch`
+    - console logs: `Discussion guide quality retry 1/2/3`, then quality-blocking error, then `TypeError: Failed to fetch`
+  - [ ] investigate `Test` status visibility after update
+    - `Mary Poppins` was added in sandbox, changed to `Test`, then disappeared from both default and `Test` filtered library views
+    - avoid using `Test` status for further UI verification until this is understood
 
 - [ ] Improve AI discussion guide question quality
   - [x] review current AI discussion prompt
